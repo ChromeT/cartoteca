@@ -87,6 +87,12 @@ export default function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
+  // Timers State
+  const [dropEnd, setDropEnd] = useState<number | null>(null);
+  const [grabEnd, setGrabEnd] = useState<number | null>(null);
+  const [workEnd, setWorkEnd] = useState<number | null>(null);
+  const [now, setNow] = useState(Date.now());
+
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
   const [fCode, setFCode] = useState('');
@@ -220,6 +226,62 @@ export default function App() {
       if (savedInv) setInventory(JSON.parse(savedInv));
     }
   }, []);
+
+  // --- TIMERS LOGIC ---
+  useEffect(() => {
+    if (!user) return;
+    const loadT = (key: string) => {
+      const v = localStorage.getItem(`cartoteca:${user.uid}:${key}`);
+      return v ? parseInt(v, 10) : null;
+    };
+    setDropEnd(loadT('drop'));
+    setGrabEnd(loadT('grab'));
+    setWorkEnd(loadT('work'));
+
+    const iv = setInterval(() => setNow(Date.now()), 1000);
+    return () => clearInterval(iv);
+  }, [user]);
+
+  const startTimer = (type: 'drop' | 'grab' | 'work', minutes: number) => {
+    if (!user) return;
+    const target = Date.now() + minutes * 60 * 1000;
+    localStorage.setItem(`cartoteca:${user.uid}:${type}`, target.toString());
+    if (type === 'drop') setDropEnd(target);
+    if (type === 'grab') setGrabEnd(target);
+    if (type === 'work') setWorkEnd(target);
+    if (Notification.permission === 'default') Notification.requestPermission();
+  };
+
+  const renderTimer = (label: string, end: number | null, onClick: () => void) => {
+    const diff = end ? end - now : 0;
+    const isReady = diff <= 0;
+    const m = isReady ? 0 : Math.floor(diff / 60000);
+    const s = isReady ? 0 : Math.floor((diff % 60000) / 1000);
+    return (
+      <div 
+        onClick={onClick}
+        title={`Klik untuk memulai timer ${label}`}
+        style={{ 
+          background: isReady ? '#298246' : '#17140f',
+          border: '1px solid #3a3327',
+          padding: '6px 12px',
+          borderRadius: '6px',
+          cursor: 'pointer',
+          display: 'flex',
+          flexDirection: 'column',
+          alignItems: 'center',
+          gap: '2px',
+          transition: 'all 0.2s',
+          minWidth: '55px'
+        }}
+      >
+        <span style={{ fontSize: '10px', color: isReady ? '#e8dbce' : '#9c8f76', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
+        <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: '#fff' }}>
+          {isReady ? 'READY' : `${m}:${s.toString().padStart(2, '0')}`}
+        </span>
+      </div>
+    );
+  };
 
   function getDefaultTags(): CustomTag[] {
     return [
@@ -1822,6 +1884,19 @@ export default function App() {
           </div>
         </div>
       )}
+
+      {/* FLOATING TIMERS */}
+      <div style={{
+        position: 'fixed', bottom: '24px', right: '24px',
+        display: 'flex', gap: '8px', zIndex: 100,
+        background: '#1c1912', padding: '8px',
+        borderRadius: '10px', border: '1px solid #3a3327',
+        boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
+      }}>
+        {renderTimer('Drop', dropEnd, () => startTimer('drop', 30))}
+        {renderTimer('Grab', grabEnd, () => startTimer('grab', 10))}
+        {renderTimer('Work', workEnd, () => startTimer('work', 30))}
+      </div>
 
     </div>
   );
