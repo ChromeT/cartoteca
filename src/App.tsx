@@ -409,7 +409,7 @@ export default function App() {
     let successCount = 0;
 
     for (const line of lines) {
-      const cleanLine = line.replace(/[\*_`~]/g, '').trim();
+      const cleanLine = line.replace(/[\*_`~▫▪●○]/g, '').trim();
       if (!cleanLine) continue;
 
       const segments = cleanLine.split(/\s*·\s*|\s*\|\s*|\s*•\s*/);
@@ -540,7 +540,7 @@ export default function App() {
       return;
     }
 
-    const cleanText = discordText.replace(/[\*_`~|]/g, '').trim();
+    const cleanText = discordText.replace(/[\*_`~|▫▪●○]/g, '').trim();
 
     // Try multi-line parsing
     const lines = cleanText.split('\n');
@@ -702,12 +702,12 @@ export default function App() {
 
   function mapConditionString(str: string): string | null {
     const s = str.trim().toLowerCase();
-    if (['mint', 'mt'].includes(s)) return 'Mint';
-    if (['excellent', 'ex', 'great'].includes(s)) return 'Great';
-    if (['fine', 'fn', 'good', 'gd'].includes(s)) return 'Good';
-    if (['fair', 'fr', 'average'].includes(s)) return 'Average';
+    if (['mint', 'mt', '★★★★'].includes(s)) return 'Mint';
+    if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) return 'Great';
+    if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) return 'Good';
+    if (['fair', 'fr', 'average', '★☆☆☆'].includes(s)) return 'Average';
     if (['poor', 'pr'].includes(s)) return 'Poor';
-    if (['damaged', 'dm'].includes(s)) return 'Damaged';
+    if (['damaged', 'dm', '☆☆☆☆'].includes(s)) return 'Damaged';
     return null;
   }
 
