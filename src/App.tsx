@@ -1,5 +1,7 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db } from './firebase';
+import { db, auth } from './firebase';
+import { onAuthStateChanged, signOut, User } from 'firebase/auth';
+import LoginPage from './LoginPage';
 import { 
   collection, 
   onSnapshot, 
@@ -48,6 +50,7 @@ interface CustomTag {
 
 export default function App() {
   // --- STATE ---
+  const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
@@ -126,41 +129,47 @@ export default function App() {
     }
   };
 
+  // --- AUTH STATE LISTENER ---
+  useEffect(() => {
+    const unsubAuth = onAuthStateChanged(auth, (firebaseUser) => {
+      setUser(firebaseUser);
+      // Reset data when user changes
+      setCards([]);
+      setWishlist([]);
+      setCustomTags([]);
+    });
+    return () => unsubAuth();
+  }, []);
+
   // --- DATA LOADING & PERSISTENCE ---
   useEffect(() => {
+    if (!user) return;
+
     if (isFirebaseConfigured()) {
-      console.log("Firebase is configured. Syncing Firestore collections.");
-      
-      // Real-time cards sync
-      const unsubCards = onSnapshot(collection(db, "cards"), (snapshot) => {
+      console.log('Firebase configured. Loading data for user:', user.uid);
+
+      // Real-time cards sync (user-scoped)
+      const unsubCards = onSnapshot(collection(db, 'users', user.uid, 'cards'), (snapshot) => {
         const list: Card[] = [];
-        snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() } as Card);
-        });
+        snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as Card));
         setCards(list);
       });
 
-      // Real-time wishlist sync
-      const unsubWish = onSnapshot(collection(db, "wishlist"), (snapshot) => {
+      // Real-time wishlist sync (user-scoped)
+      const unsubWish = onSnapshot(collection(db, 'users', user.uid, 'wishlist'), (snapshot) => {
         const list: WishlistItem[] = [];
-        snapshot.forEach((doc) => {
-          list.push({ id: doc.id, ...doc.data() } as WishlistItem);
-        });
+        snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as WishlistItem));
         setWishlist(list);
       });
 
-      // Real-time custom tags sync
-      const unsubTags = onSnapshot(collection(db, "tags"), (snapshot) => {
+      // Real-time custom tags sync (user-scoped)
+      const unsubTags = onSnapshot(collection(db, 'users', user.uid, 'tags'), (snapshot) => {
         const list: CustomTag[] = [];
-        snapshot.forEach((doc) => {
-          list.push(doc.data() as CustomTag);
-        });
+        snapshot.forEach((d) => list.push(d.data() as CustomTag));
         if (list.length > 0) {
           setCustomTags(list);
         } else {
-          // Pre-populate if Firestore tags collection is empty
-          const defaults = getDefaultTags();
-          setCustomTags(defaults);
+          setCustomTags(getDefaultTags());
         }
       });
 
@@ -170,15 +179,15 @@ export default function App() {
         unsubTags();
       };
     } else {
-      console.log("Using LocalStorage fallback database (Firebase config keys are placeholders).");
-      
-      const savedCards = localStorage.getItem('cartoteca:cards');
+      console.log('Using LocalStorage fallback.');
+      const uid = user.uid;
+      const savedCards = localStorage.getItem(`cartoteca:${uid}:cards`);
       if (savedCards) setCards(JSON.parse(savedCards));
 
-      const savedWishlist = localStorage.getItem('cartoteca:wishlist');
+      const savedWishlist = localStorage.getItem(`cartoteca:${uid}:wishlist`);
       if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
 
-      const savedTags = localStorage.getItem('cartoteca:tags');
+      const savedTags = localStorage.getItem(`cartoteca:${uid}:tags`);
       if (savedTags) {
         setCustomTags(JSON.parse(savedTags));
       } else {
@@ -434,11 +443,11 @@ export default function App() {
       createdAt: cardFormId ? (cards.find(c => c.id === cardFormId)?.createdAt || Date.now()) : Date.now()
     };
 
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured() && user) {
       if (cardFormId) {
-        await updateDoc(doc(db, "cards", cardFormId), data);
+        await updateDoc(doc(db, 'users', user.uid, 'cards', cardFormId), data);
       } else {
-        await addDoc(collection(db, "cards"), data);
+        await addDoc(collection(db, 'users', user.uid, 'cards'), data);
       }
     } else {
       let updatedCards = [];
@@ -459,8 +468,8 @@ export default function App() {
   async function handleDeleteCard(id: string) {
     if (!confirm('Yakin ingin menghapus kartu ini?')) return;
 
-    if (isFirebaseConfigured()) {
-      await deleteDoc(doc(db, "cards", id));
+    if (isFirebaseConfigured() && user) {
+      await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
     } else {
       const updated = cards.filter(c => c.id !== id);
       setCards(updated);
@@ -504,11 +513,11 @@ export default function App() {
       notes: wNotes.trim()
     };
 
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured() && user) {
       if (wishFormId) {
-        await updateDoc(doc(db, "wishlist", wishFormId), data);
+        await updateDoc(doc(db, 'users', user.uid, 'wishlist', wishFormId), data);
       } else {
-        await addDoc(collection(db, "wishlist"), data);
+        await addDoc(collection(db, 'users', user.uid, 'wishlist'), data);
       }
     } else {
       let updatedWish = [];
@@ -528,8 +537,8 @@ export default function App() {
   async function handleDeleteWish(id: string) {
     if (!confirm('Hapus dari wishlist?')) return;
 
-    if (isFirebaseConfigured()) {
-      await deleteDoc(doc(db, "wishlist", id));
+    if (isFirebaseConfigured() && user) {
+      await deleteDoc(doc(db, 'users', user.uid, 'wishlist', id));
     } else {
       const updated = wishlist.filter(w => w.id !== id);
       setWishlist(updated);
@@ -578,10 +587,11 @@ export default function App() {
       list.push(newTag);
     }
 
-    if (isFirebaseConfigured()) {
-      // Sync tag item to Firestore (using name as document ref key or batching)
-      // For simplicity, we can set a documents inside tags collection
-      await addDoc(collection(db, "tags"), newTag);
+    if (isFirebaseConfigured() && user) {
+      // Use tag name as doc ID to avoid duplicates
+      const tagDocRef = doc(db, 'users', user.uid, 'tags', name);
+      const { setDoc } = await import('firebase/firestore');
+      await setDoc(tagDocRef, newTag);
     } else {
       setCustomTags(list);
       syncLocal('cartoteca:tags', list);
@@ -610,9 +620,20 @@ export default function App() {
     setCards(updatedCards);
     syncLocal('cartoteca:cards', updatedCards);
 
-    if (isFirebaseConfigured()) {
-      // Sync removals to Firestore
-      alert("Tag terhapus lokal. Di database Firestore, mohon lakukan update manual jika perlu.");
+    if (isFirebaseConfigured() && user) {
+      const tagDocRef = doc(db, 'users', user.uid, 'tags', name.toLowerCase());
+      const { deleteDoc: delDoc } = await import('firebase/firestore');
+      await delDoc(tagDocRef);
+      // Also update all cards that have this tag
+      const batch = writeBatch(db);
+      const updatedCardsForFirestore = cards.filter(c =>
+        c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).includes(name.toLowerCase())
+      );
+      updatedCardsForFirestore.forEach(c => {
+        const arr = c.tags!.split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== name.toLowerCase());
+        batch.update(doc(db, 'users', user.uid, 'cards', c.id), { tags: arr.join(', ') });
+      });
+      await batch.commit();
     }
   }
 
@@ -640,10 +661,10 @@ export default function App() {
   async function handleBatchDelete() {
     if (!confirm(`Hapus ${selectedCards.size} kartu terpilih?`)) return;
 
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured() && user) {
       const batch = writeBatch(db);
       selectedCards.forEach(id => {
-        batch.delete(doc(db, "cards", id));
+        batch.delete(doc(db, 'users', user.uid, 'cards', id));
       });
       await batch.commit();
     } else {
@@ -657,7 +678,7 @@ export default function App() {
   async function handleBatchSaveTags() {
     if (batchSelectedTags.length === 0) return;
 
-    if (isFirebaseConfigured()) {
+    if (isFirebaseConfigured() && user) {
       const batch = writeBatch(db);
       cards.forEach(c => {
         if (selectedCards.has(c.id)) {
@@ -667,7 +688,7 @@ export default function App() {
               currentTags.push(tag.toLowerCase());
             }
           });
-          batch.update(doc(db, "cards", c.id), { tags: currentTags.join(', ') });
+          batch.update(doc(db, 'users', user.uid, 'cards', c.id), { tags: currentTags.join(', ') });
         }
       });
       await batch.commit();
@@ -890,6 +911,21 @@ export default function App() {
     return Array.from(used).sort();
   };
 
+  // Auth gating
+  if (user === undefined) {
+    return (
+      <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#17140f' }}>
+        <div style={{ fontFamily: "'IBM Plex Mono', monospace", color: '#9c8f76', fontSize: '14px' }}>Memuat...</div>
+      </div>
+    );
+  }
+  if (user === null) {
+    return <LoginPage />;
+  }
+
+  // Extract username from email (username@cartoteca.app)
+  const displayName = user.email?.replace('@cartoteca.app', '') || 'Pengguna';
+
   return (
     <div id="app">
       <div className="wrap">
@@ -908,6 +944,26 @@ export default function App() {
             <div className="mini-stat"><b>{new Set(cards.map(c => c.series).filter(Boolean)).size}</b><span>Series</span></div>
             <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
             <div className="mini-stat"><b>{avgEffort}</b><span>Avg Eff</span></div>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginLeft: '8px', paddingLeft: '12px', borderLeft: '1px solid #3a3327' }}>
+              <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#9c8f76' }}>
+                👤 {displayName}
+              </span>
+              <button
+                onClick={() => signOut(auth)}
+                title="Keluar"
+                style={{
+                  background: 'transparent', border: '1px solid #3a3327',
+                  borderRadius: '6px', padding: '4px 10px',
+                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                  fontWeight: 600, color: '#9c8f76', cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.borderColor = '#d8923e'; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#9c8f76'; (e.target as HTMLButtonElement).style.borderColor = '#3a3327'; }}
+              >
+                Keluar
+              </button>
+            </div>
           </div>
         </header>
 
