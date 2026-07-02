@@ -501,6 +501,7 @@ export default function App() {
           createdAt: Date.now()
         });
         successCount++;
+        }
       }
     }
 
