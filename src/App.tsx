@@ -768,7 +768,10 @@ export default function App() {
   }
 
   async function handleSaveCard() {
-    if (!fName.trim()) return;
+    if (!fName.trim()) {
+      alert("Nama karakter wajib diisi!");
+      return;
+    }
 
     const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : null;
     const currentPriceHistory = oldCard?.priceHistory ? [...oldCard.priceHistory] : [];
@@ -813,10 +816,15 @@ export default function App() {
     }
 
     if (isFirebaseConfigured() && user) {
-      if (cardFormId) {
-        await updateDoc(doc(db, 'users', user.uid, 'cards', cardFormId), data);
-      } else {
-        await addDoc(collection(db, 'users', user.uid, 'cards'), data);
+      try {
+        if (cardFormId) {
+          await updateDoc(doc(db, 'users', user.uid, 'cards', cardFormId), data);
+        } else {
+          await addDoc(collection(db, 'users', user.uid, 'cards'), data);
+        }
+      } catch (error: any) {
+        alert("Gagal menyimpan ke database Firebase: " + error.message);
+        return; // Hentikan proses jika gagal
       }
     } else {
       let updatedCards = [];
