@@ -5,12 +5,13 @@ import { getAuth } from "firebase/auth";
 // TODO: Ganti dengan kredensial Firebase Project milik Anda sendiri
 // Konfigurasi ini bisa didapatkan dari Console Firebase -> Project Settings -> General -> Web Apps
 const firebaseConfig = {
-  apiKey: "YOUR_API_KEY",
-  authDomain: "YOUR_PROJECT_ID.firebaseapp.com",
-  projectId: "YOUR_PROJECT_ID",
-  storageBucket: "YOUR_PROJECT_ID.appspot.com",
-  messagingSenderId: "YOUR_MESSAGING_SENDER_ID",
-  appId: "YOUR_APP_ID"
+  apiKey: "AIzaSyBXAjaBrB8eAyMajlCvVJe_9prohjk3EJk",
+  authDomain: "cartoteca-666.firebaseapp.com",
+  projectId: "cartoteca-666",
+  storageBucket: "cartoteca-666.firebasestorage.app",
+  messagingSenderId: "49269578015",
+  appId: "1:49269578015:web:00375818ad112e0173382a",
+  measurementId: "G-4126PD132D"
 };
 
 // Initialize Firebase
