@@ -477,9 +477,13 @@ export default function App() {
       }
 
       if (pCode && pName && pName !== 'Unknown Character') {
-        newCards.push({
-          id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 9),
-          code: pCode,
+        const isDuplicateInBinder = cards.some(c => c.code && c.code.toLowerCase() === pCode.toLowerCase());
+        const isDuplicateInBatch = newCards.some(c => c.code && c.code.toLowerCase() === pCode.toLowerCase());
+        
+        if (!isDuplicateInBinder && !isDuplicateInBatch) {
+          newCards.push({
+            id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 9),
+            code: pCode,
           print: pPrint,
           edition: pEdition,
           name: pName,
