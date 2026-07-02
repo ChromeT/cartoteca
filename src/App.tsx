@@ -10,7 +10,9 @@ import {
   deleteDoc, 
   doc, 
   setDoc,
-  writeBatch 
+  writeBatch,
+  getDocs,
+  getDoc
 } from 'firebase/firestore';
 
 // --- TYPES ---
@@ -199,46 +201,53 @@ export default function App() {
     if (isFirebaseConfigured()) {
       console.log('Firebase configured. Loading data for user:', user.uid);
 
-      // Real-time cards sync (user-scoped)
-      const unsubCards = onSnapshot(collection(db, 'users', user.uid, 'cards'), (snapshot) => {
-        const list: Card[] = [];
-        snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as Card));
-        setCards(list);
-      });
+      const loadData = async () => {
+        try {
+          // Cards
+          const cardsSnap = await getDocs(collection(db, 'users', user.uid, 'cards'));
+          const cList: Card[] = [];
+          cardsSnap.forEach((d) => cList.push({ id: d.id, ...d.data() } as Card));
+          setCards(cList);
+          syncLocal('cards', cList);
 
-      // Real-time wishlist sync (user-scoped)
-      const unsubWish = onSnapshot(collection(db, 'users', user.uid, 'wishlist'), (snapshot) => {
-        const list: WishlistItem[] = [];
-        snapshot.forEach((d) => list.push({ id: d.id, ...d.data() } as WishlistItem));
-        setWishlist(list);
-      });
+          // Wishlist
+          const wishSnap = await getDocs(collection(db, 'users', user.uid, 'wishlist'));
+          const wList: WishlistItem[] = [];
+          wishSnap.forEach((d) => wList.push({ id: d.id, ...d.data() } as WishlistItem));
+          setWishlist(wList);
+          syncLocal('wishlist', wList);
 
-      // Real-time custom tags sync (user-scoped)
-      const unsubTags = onSnapshot(collection(db, 'users', user.uid, 'tags'), (snapshot) => {
-        const list: CustomTag[] = [];
-        snapshot.forEach((d) => list.push(d.data() as CustomTag));
-        if (list.length > 0) {
-          setCustomTags(list);
-        } else {
-          setCustomTags(getDefaultTags());
+          // Tags
+          const tagsSnap = await getDocs(collection(db, 'users', user.uid, 'tags'));
+          const tList: CustomTag[] = [];
+          tagsSnap.forEach((d) => tList.push(d.data() as CustomTag));
+          if (tList.length > 0) {
+            setCustomTags(tList);
+            syncLocal('tags', tList);
+          } else {
+            setCustomTags(getDefaultTags());
+          }
+
+          // Inventory
+          const invSnap = await getDoc(doc(db, 'users', user.uid, 'inventory', 'main'));
+          if (invSnap.exists()) {
+            setInventory(invSnap.data() as Inventory);
+            syncLocal('inv', invSnap.data());
+          } else {
+            setInventory({ tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 });
+          }
+        } catch (error: any) {
+          console.error("Firebase read error:", error);
+          alert("Peringatan: Gagal memuat data dari Cloud (" + error.message + "). Memuat data dari cache lokal.");
+          // Fallback if network blocked
+          const savedCards = localStorage.getItem(`cartoteca:${user.uid}:cards`);
+          if (savedCards) setCards(JSON.parse(savedCards));
         }
-      });
-
-      // Real-time inventory sync
-      const unsubInv = onSnapshot(doc(db, 'users', user.uid, 'inventory', 'main'), (docSnap) => {
-        if (docSnap.exists()) {
-          setInventory(docSnap.data() as Inventory);
-        } else {
-          setInventory({ tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 });
-        }
-      });
-
-      return () => {
-        unsubCards();
-        unsubWish();
-        unsubTags();
-        unsubInv();
       };
+
+      loadData();
+
+      return () => {};
     } else {
       console.log('Using LocalStorage fallback.');
       const uid = user.uid;
