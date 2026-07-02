@@ -4,7 +4,6 @@ import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import LoginPage from './LoginPage';
 import { 
   collection, 
-  onSnapshot, 
   addDoc, 
   updateDoc, 
   deleteDoc, 
@@ -115,9 +114,6 @@ export default function App() {
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [bulkImportFeedback, setBulkImportFeedback] = useState({ text: '', isError: false, isSuccess: false });
-
-  // Custom Tags Modal
-  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
   
   const [viewMode, setViewMode] = useState<'list' | 'album'>(
     (localStorage.getItem('cartoteca:viewMode') as 'list' | 'album') || 'album'
