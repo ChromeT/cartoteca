@@ -110,6 +110,16 @@ export default function App() {
   const [workerSlotIds, setWorkerSlotIds] = useState<(string | null)[]>([null, null, null]);
   const [nodeMultiplier, setNodeMultiplier] = useState<number>(1.15);
 
+  const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
+  const [bulkText, setBulkText] = useState('');
+  const [viewMode, setViewMode] = useState<'list' | 'album'>(
+    (localStorage.getItem('cartoteca:viewMode') as 'list' | 'album') || 'album'
+  );
+
+  useEffect(() => {
+    localStorage.setItem('cartoteca:viewMode', viewMode);
+  }, [viewMode]);
+
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
   const [fCode, setFCode] = useState('');
@@ -391,6 +401,139 @@ export default function App() {
   }
 
   // --- DISCORD COMMAND TEXT PARSER ---
+  async function handleBulkImportExecute() {
+    if (!bulkText.trim()) return;
+
+    const lines = bulkText.trim().split('\n');
+    const newCards: Card[] = [];
+    let successCount = 0;
+
+    for (const line of lines) {
+      const cleanLine = line.replace(/[\*_`~]/g, '').trim();
+      if (!cleanLine) continue;
+
+      const segments = cleanLine.split(/\s*·\s*|\s*\|\s*|\s*•\s*/);
+      if (segments.length < 3) continue; // Not a valid Karuta card line
+
+      let pCode = '';
+      let pPrint: number | null = null;
+      let pEdition: number | null = null;
+      let pCondition = 'Good';
+      let pEffort: number | null = null;
+      let pWish: number | null = null;
+      const unassigned: string[] = [];
+
+      segments.forEach(seg => {
+        const s = seg.trim();
+        if (!s) return;
+
+        const codeM = s.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,6})$/) || s.match(/^[a-zA-Z0-9]{5,6}$/);
+        if (codeM && !pCode) {
+          const check = (codeM[1] || codeM[0]).toLowerCase();
+          if (isNaN(Number(check))) {
+            pCode = check;
+            return;
+          }
+        }
+
+        const printM = s.match(/#(\d+)/) || s.match(/^(\d+)$/);
+        if (printM && pPrint === null) {
+          if (s.startsWith('#') || s.length < 5) {
+            pPrint = parseInt(printM[1]);
+            return;
+          }
+        }
+
+        const edM = s.match(/◈\s*(\d+)/) || s.match(/ed(?:isi)?\s*(\d+)/i);
+        if (edM) { pEdition = parseInt(edM[1]); return; }
+
+        const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i);
+        if (effM) { pEffort = parseInt(effM[1]); return; }
+
+        const cond = mapConditionString(s);
+        if (cond) { pCondition = cond; return; }
+
+        const wishM = s.match(/(\d+)\s*(?:wishlist|wish)/i);
+        if (wishM) { pWish = parseInt(wishM[1]); return; }
+
+        if (s.toLowerCase().startsWith('kd ')) {
+          const part = s.split(' ')[1];
+          if (part && part.length >= 5) pCode = part.toLowerCase();
+          return;
+        }
+
+        unassigned.push(s);
+      });
+
+      let pName = 'Unknown Character';
+      let pSeries = '';
+      if (unassigned.length >= 2) {
+        pSeries = unassigned.pop() || '';
+        pName = unassigned.join(' ').trim();
+      } else if (unassigned.length === 1) {
+        pName = unassigned[0];
+      }
+
+      if (pCode && pName && pName !== 'Unknown Character') {
+        newCards.push({
+          id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 9),
+          code: pCode,
+          print: pPrint,
+          edition: pEdition,
+          name: pName,
+          series: pSeries,
+          condition: pCondition,
+          effort: pEffort,
+          wish: pWish,
+          price: null,
+          isWorker: false,
+          isTrade: false,
+          frame: '',
+          dye: '',
+          tags: '',
+          notes: '',
+          createdAt: Date.now()
+        });
+        successCount++;
+      }
+    }
+
+    if (newCards.length === 0) {
+      alert("Tidak ada kartu valid yang terdeteksi dari teks yang Anda masukkan.");
+      return;
+    }
+
+    if (!confirm(`Berhasil mendeteksi ${newCards.length} kartu! Tambahkan ke koleksi?`)) return;
+
+    const mergedCards = [...cards, ...newCards];
+    setCards(mergedCards);
+    syncLocal('cartoteca:cards', mergedCards);
+
+    if (isFirebaseConfigured() && user) {
+      try {
+        const syncChunks = async (items: Card[]) => {
+          for (let i = 0; i < items.length; i += 400) {
+            const chunk = items.slice(i, i + 400);
+            const batch = writeBatch(db);
+            for (const item of chunk) {
+              batch.set(doc(db, 'users', user.uid, 'cards', item.id), item);
+            }
+            await batch.commit();
+          }
+        };
+        await syncChunks(newCards);
+        alert(`${successCount} kartu berhasil diimpor & sinkron ke Cloud!`);
+      } catch (err: any) {
+        alert("Sebagian kartu mungkin belum tersinkron ke cloud: " + err.message);
+      }
+    } else {
+      alert(`${successCount} kartu berhasil diimpor ke aplikasi!`);
+    }
+
+    setIsBulkImportModalOpen(false);
+    setBulkText('');
+  }
+
   function handleParseText() {
     if (!discordText.trim()) {
       setParserFeedback({ text: '❌ Teks kosong. Silakan paste teks info Discord.', isError: true, isSuccess: false });
@@ -1309,7 +1452,24 @@ export default function App() {
                 </select>
                 
                 <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
-                <button className="btn secondary" onClick={() => setIsBackupModalOpen(true)}>💾 Backup/Restore</button>
+                <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (Copas k!c)</button>
+                
+                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', background: '#1c1912', borderRadius: '6px', padding: '4px' }}>
+                  <button 
+                    title="List View"
+                    onClick={() => setViewMode('list')}
+                    style={{ background: viewMode === 'list' ? '#3a3327' : 'transparent', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    📝
+                  </button>
+                  <button 
+                    title="Album View"
+                    onClick={() => setViewMode('album')}
+                    style={{ background: viewMode === 'album' ? '#3a3327' : 'transparent', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
+                  >
+                    🎴
+                  </button>
+                </div>
               </div>
 
               {/* Batch Actions Panel */}
@@ -1329,15 +1489,47 @@ export default function App() {
                 <div className="empty">
                   <div className="stamp-big">🎴</div>
                   <h3>Binder masih kosong</h3>
-                  <p>Masukkan kartu Karuta Anda secara manual atau gunakan parser Discord paste di atas.</p>
+                  <p>Masukkan kartu Karuta Anda secara manual atau gunakan Bulk Import di atas.</p>
                   <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu Pertama</button>
                 </div>
               ) : (
-                <div className="binder">
+                <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
                   {getFilteredCards().map(c => {
                     const isSelected = selectedCards.has(c.id);
                     const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
                     
+                    if (viewMode === 'album') {
+                      return (
+                        <div 
+                          key={c.id}
+                          className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''}`}
+                          onClick={(e) => handleSleeveContainerClick(c.id, e)}
+                        >
+                          <div 
+                            className="select-indicator" 
+                            style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
+                            onClick={(e) => toggleSleeveSelect(c.id, e)}
+                          />
+                          <div className="nc-code">{c.code}</div>
+                          <div className="nc-print">#{c.print !== null ? c.print : '—'}</div>
+                          
+                          {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
+                          {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
+                          
+                          <div className="nc-bottom">
+                            <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
+                            <div className="nc-series">{c.series || 'Unknown'}</div>
+                            <div className="nc-meta">
+                              <span>◈{c.edition || '?'}</span>
+                              <span style={{ margin: '0 4px' }}>|</span>
+                              <span>{c.condition}</span>
+                            </div>
+                          </div>
+                        </div>
+                      );
+                    }
+
+                    // Standard List View
                     return (
                       <div 
                         key={c.id}
@@ -2065,6 +2257,36 @@ export default function App() {
                   ⚠️ Mulai Pulihkan Data
                 </button>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BULK IMPORT */}
+      {isBulkImportModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: '0', color: '#5ea396', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                📥 Bulk Import via Text
+              </h3>
+              <button onClick={() => setIsBulkImportModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
+                Buka Discord, jalankan perintah <code style={{ background: '#1c1912', padding: '2px 4px', borderRadius: '4px' }}>k!c</code>, lalu <b>copy semua teks balasan</b> (hingga puluhan baris) dan paste di bawah ini:
+              </p>
+              <textarea 
+                className="input-field" 
+                style={{ width: '100%', height: '250px', fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', background: '#1c1912', color: '#e8dbce', border: '1px solid #3a3327', borderRadius: '8px', padding: '12px' }}
+                placeholder={`Contoh:\nkd · mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano\nkd · asdfg · ◈2 · #100 · Good · 330 effort · Rem · Re:Zero`}
+                value={bulkText}
+                onChange={(e) => setBulkText(e.target.value)}
+              />
+              <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }}>
+                🚀 Proses & Simpan Semua Kartu
+              </button>
             </div>
           </div>
         </div>

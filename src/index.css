@@ -1117,6 +1117,169 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   letter-spacing: 0.05em;
 }
 
+/* ---------- Album View (Phase 6) ---------- */
+.album-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(160px, 1fr));
+  gap: 16px;
+  padding: 16px;
+  border-radius: var(--border-radius);
+}
+
+.native-card {
+  aspect-ratio: 2 / 3;
+  width: 100%;
+  background: linear-gradient(135deg, #2a251b 0%, #17140f 100%);
+  border-radius: 8px;
+  border: 1px solid #3a3327;
+  position: relative;
+  overflow: hidden;
+  display: flex;
+  flex-direction: column;
+  justify-content: space-between;
+  box-shadow: 0 4px 12px rgba(0,0,0,0.2);
+  transition: transform 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275), box-shadow 0.2s, border-color 0.2s;
+  cursor: pointer;
+  user-select: none;
+}
+
+.native-card:hover {
+  transform: translateY(-5px) scale(1.02);
+  box-shadow: 0 10px 20px rgba(0,0,0,0.4);
+  z-index: 10;
+}
+
+.native-card.selected {
+  border-color: #5ea396;
+  box-shadow: 0 0 0 3px rgba(94, 163, 150, 0.3);
+}
+
+.native-card .select-indicator {
+  position: absolute;
+  top: 8px;
+  left: 8px; /* code is top left, wait let's move indicator to top-left to replace code temporarily when hovering? No, code is top left, indicator can be top right below print? No, put indicator top left, move code down if selected. Or just put indicator dead center */
+  width: 18px;
+  height: 18px;
+  border: 1px solid var(--paper-line);
+  border-radius: 4px;
+  display: none;
+  align-items: center;
+  justify-content: center;
+  background: rgba(23, 20, 15, 0.8);
+  z-index: 5;
+}
+
+.native-card:hover .select-indicator {
+  display: flex;
+}
+
+.native-card.selected .select-indicator {
+  display: flex;
+  background: #5ea396;
+  border-color: #5ea396;
+}
+.native-card.selected .select-indicator::after {
+  content: "✓";
+  color: #fff;
+  font-size: 12px;
+  font-weight: bold;
+}
+
+.native-card.selected .nc-code {
+  opacity: 0; /* Hide code when indicator is shown */
+}
+
+.nc-code {
+  position: absolute;
+  top: 8px;
+  left: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 700;
+  color: #d8923e;
+  background: rgba(23, 20, 15, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 2;
+  transition: opacity 0.2s;
+}
+
+.nc-print {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  font-family: var(--font-mono);
+  font-size: 11px;
+  font-weight: 800;
+  color: #e8dbce;
+  background: rgba(23, 20, 15, 0.9);
+  padding: 2px 6px;
+  border-radius: 4px;
+  z-index: 2;
+}
+
+.nc-badge {
+  position: absolute;
+  left: 8px;
+  font-size: 12px;
+  background: rgba(23, 20, 15, 0.9);
+  padding: 4px;
+  border-radius: 4px;
+  z-index: 2;
+}
+.nc-badge.worker { top: 32px; }
+.nc-badge.trade { top: 60px; }
+
+.nc-bottom {
+  position: absolute;
+  bottom: 0;
+  left: 0;
+  right: 0;
+  background: linear-gradient(to top, rgba(23,20,15,0.95) 0%, rgba(23,20,15,0.8) 70%, transparent 100%);
+  padding: 24px 12px 12px 12px;
+  z-index: 2;
+}
+
+.nc-character {
+  font-size: 14px;
+  font-weight: 800;
+  color: #e8dbce;
+  line-height: 1.2;
+  margin-bottom: 2px;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+
+.nc-series {
+  font-size: 10px;
+  font-weight: 600;
+  color: #9c8f76;
+  text-transform: uppercase;
+  letter-spacing: 0.05em;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+  margin-bottom: 6px;
+}
+
+.nc-meta {
+  display: flex;
+  align-items: center;
+  font-family: var(--font-mono);
+  font-size: 10px;
+  color: #a48e71;
+  font-weight: 600;
+}
+
+/* Condition Frames */
+.native-card.condition-mint { border: 2px solid #5ea396; }
+.native-card.condition-great { border: 1px solid #71b8ab; }
+.native-card.condition-good { border: 1px solid #6d481b; }
+.native-card.condition-average { border: 1px dashed #6d481b; }
+.native-card.condition-poor { border: 1px solid #5c4535; filter: saturate(0.7); }
+.native-card.condition-damaged { border: 1px dashed #5c4535; filter: saturate(0.5); opacity: 0.8; }
+
 /* ---------- Responsive ---------- */
 @media (max-width: 520px) {
   .field-row, .field-row-3 {
@@ -1144,5 +1307,11 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   
   .toolbar > * {
     width: 100%;
+  }
+  
+  .album-grid {
+    grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+    gap: 12px;
+    padding: 12px;
   }
 }
