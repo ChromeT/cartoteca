@@ -429,7 +429,7 @@ export default function App() {
 
         const cleanedSeg = s.replace(/^[^a-zA-Z0-9]+/, '');
 
-        const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,6})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,6}$/);
+        const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,8})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
         if (codeM && !pCode) {
           const check = (codeM[1] || codeM[0]).toLowerCase();
           if (isNaN(Number(check))) {
@@ -596,7 +596,7 @@ export default function App() {
 
           const cleanedSeg = s.replace(/^[^a-zA-Z0-9]+/, '');
 
-          const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,6})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,6}$/);
+          const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,8})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
           if (codeM && !parsedCode) {
             const check = (codeM[1] || codeM[0]).toLowerCase();
             if (isNaN(Number(check))) {
