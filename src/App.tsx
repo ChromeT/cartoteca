@@ -1,0 +1,1559 @@
+import React, { useState, useEffect, useRef } from 'react';
+import { db } from './firebase';
+import { 
+  collection, 
+  onSnapshot, 
+  addDoc, 
+  updateDoc, 
+  deleteDoc, 
+  doc, 
+  writeBatch 
+} from 'firebase/firestore';
+
+// --- TYPES ---
+interface Card {
+  id: string;
+  code: string;
+  print: number | null;
+  edition: number | null;
+  name: string;
+  series: string;
+  condition: string;
+  effort: number | null;
+  wish: number | null;
+  price: number | null;
+  isWorker: boolean;
+  isTrade: boolean;
+  frame: string;
+  dye: string;
+  tags: string; // Comma separated tag names
+  notes: string;
+  createdAt: number;
+}
+
+interface WishlistItem {
+  id: string;
+  name: string;
+  series: string;
+  priority: 'high' | 'med' | 'low';
+  targetWish: number | null;
+  notes: string;
+}
+
+interface CustomTag {
+  name: string;
+  color: string;
+  desc: string;
+}
+
+export default function App() {
+  // --- STATE ---
+  const [cards, setCards] = useState<Card[]>([]);
+  const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
+  const [customTags, setCustomTags] = useState<CustomTag[]>([]);
+  const [activeTab, setActiveTab] = useState<string>('collection');
+  
+  // Filters & Search
+  const [searchQuery, setSearchQuery] = useState('');
+  const [selectedCondition, setSelectedCondition] = useState('');
+  const [selectedTag, setSelectedTag] = useState('');
+  const [sortOption, setSortOption] = useState('recent');
+  
+  // Wishlist Search & Sort
+  const [wishSearchQuery, setWishSearchQuery] = useState('');
+  const [wishSortOption, setWishSortOption] = useState('priority-desc');
+
+  // Batch actions
+  const [selectedCards, setSelectedCards] = useState<Set<string>>(new Set());
+
+  // Modals Toggles
+  const [isCardModalOpen, setIsCardModalOpen] = useState(false);
+  const [isWishModalOpen, setIsWishModalOpen] = useState(false);
+  const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
+  const [isBatchTagModalOpen, setIsBatchTagModalOpen] = useState(false);
+
+  // Form Fields - Card
+  const [cardFormId, setCardFormId] = useState('');
+  const [fCode, setFCode] = useState('');
+  const [fPrint, setFPrint] = useState<number | ''>('');
+  const [fEdition, setFEdition] = useState<number | ''>('');
+  const [fName, setFName] = useState('');
+  const [fSeries, setFSeries] = useState('');
+  const [fCondition, setFCondition] = useState('Good');
+  const [fEffort, setFEffort] = useState<number | ''>('');
+  const [fWish, setFWish] = useState<number | ''>('');
+  const [fPrice, setFPrice] = useState<number | ''>('');
+  const [fIsWorker, setFIsWorker] = useState(false);
+  const [fIsTrade, setFIsTrade] = useState(false);
+  const [fFrame, setFFrame] = useState('');
+  const [fDye, setFDye] = useState('');
+  const [fNotes, setFNotes] = useState('');
+  const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
+
+  // Parser text area
+  const [discordText, setDiscordText] = useState('');
+  const [parserFeedback, setParserFeedback] = useState({ text: 'Siap memproses teks', isError: false, isSuccess: false });
+
+  // Form Fields - Wishlist
+  const [wishFormId, setWishFormId] = useState('');
+  const [wName, setWName] = useState('');
+  const [wSeries, setWSeries] = useState('');
+  const [wPriority, setWPriority] = useState<'high' | 'med' | 'low'>('med');
+  const [wTargetWish, setWTargetWish] = useState<number | ''>('');
+  const [wNotes, setWNotes] = useState('');
+
+  // Form Fields - Custom Tags
+  const [tagNameInput, setTagNameInput] = useState('');
+  const [tagColorInput, setTagColorInput] = useState('#5ea396');
+  const [tagDescInput, setTagDescInput] = useState('');
+
+  // Batch Tags Form
+  const [batchSelectedTags, setBatchSelectedTags] = useState<string[]>([]);
+
+  // Backup File Ref
+  const fileInputRef = useRef<HTMLInputElement>(null);
+  const [backupFileName, setBackupFileName] = useState('Belum ada file terpilih');
+  const [backupFileContent, setBackupFileContent] = useState<any>(null);
+
+  // --- CHECK FIREBASE CONNECTION ---
+  // If the user hasn't configured Firebase keys, fallback to LocalStorage
+  const isFirebaseConfigured = () => {
+    try {
+      // Check if db config is initialized and has a valid project ID
+      return db && (db as any)._databaseId && (db as any)._databaseId.projectId !== "YOUR_PROJECT_ID";
+    } catch {
+      return false;
+    }
+  };
+
+  // --- DATA LOADING & PERSISTENCE ---
+  useEffect(() => {
+    if (isFirebaseConfigured()) {
+      console.log("Firebase is configured. Syncing Firestore collections.");
+      
+      // Real-time cards sync
+      const unsubCards = onSnapshot(collection(db, "cards"), (snapshot) => {
+        const list: Card[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as Card);
+        });
+        setCards(list);
+      });
+
+      // Real-time wishlist sync
+      const unsubWish = onSnapshot(collection(db, "wishlist"), (snapshot) => {
+        const list: WishlistItem[] = [];
+        snapshot.forEach((doc) => {
+          list.push({ id: doc.id, ...doc.data() } as WishlistItem);
+        });
+        setWishlist(list);
+      });
+
+      // Real-time custom tags sync
+      const unsubTags = onSnapshot(collection(db, "tags"), (snapshot) => {
+        const list: CustomTag[] = [];
+        snapshot.forEach((doc) => {
+          list.push(doc.data() as CustomTag);
+        });
+        if (list.length > 0) {
+          setCustomTags(list);
+        } else {
+          // Pre-populate if Firestore tags collection is empty
+          const defaults = getDefaultTags();
+          setCustomTags(defaults);
+        }
+      });
+
+      return () => {
+        unsubCards();
+        unsubWish();
+        unsubTags();
+      };
+    } else {
+      console.log("Using LocalStorage fallback database (Firebase config keys are placeholders).");
+      
+      const savedCards = localStorage.getItem('cartoteca:cards');
+      if (savedCards) setCards(JSON.parse(savedCards));
+
+      const savedWishlist = localStorage.getItem('cartoteca:wishlist');
+      if (savedWishlist) setWishlist(JSON.parse(savedWishlist));
+
+      const savedTags = localStorage.getItem('cartoteca:tags');
+      if (savedTags) {
+        setCustomTags(JSON.parse(savedTags));
+      } else {
+        setCustomTags(getDefaultTags());
+      }
+    }
+  }, []);
+
+  function getDefaultTags(): CustomTag[] {
+    return [
+      { name: 'waifu', color: '#8b5cf6', desc: 'Karakter favorit utama' },
+      { name: 'trade', color: '#b85c5c', desc: 'Kartu siap barter / jual' },
+      { name: 'deck-1', color: '#3b82f6', desc: 'Worker deck utama' },
+      { name: 'keeper', color: '#e0b84c', desc: 'Koleksi disimpan' }
+    ];
+  }
+
+  // LocalStorage save sync helper
+  const syncLocal = (key: string, data: any) => {
+    if (!isFirebaseConfigured()) {
+      localStorage.setItem(key, JSON.stringify(data));
+    }
+  };
+
+  // --- DYNAMIC COLOR HASH ---
+  function getTagColor(tagName: string) {
+    const found = customTags.find(t => t.name.toLowerCase() === tagName.toLowerCase().trim());
+    if (found) return found.color;
+    
+    // Stable color hash
+    let hash = 0;
+    const name = tagName.trim();
+    for (let i = 0; i < name.length; i++) {
+      hash = name.charCodeAt(i) + ((hash << 5) - hash);
+    }
+    const h = Math.abs(hash % 360);
+    return `hsl(${h}, 55%, 42%)`;
+  }
+
+  // --- DISCORD COMMAND TEXT PARSER ---
+  function handleParseText() {
+    if (!discordText.trim()) {
+      setParserFeedback({ text: '❌ Teks kosong. Silakan paste teks info Discord.', isError: true, isSuccess: false });
+      return;
+    }
+
+    const cleanText = discordText.replace(/[\*_`~|]/g, '').trim();
+
+    // Try multi-line parsing
+    const lines = cleanText.split('\n');
+    let hasLabelMatch = false;
+
+    let parsedName = '';
+    let parsedSeries = '';
+    let parsedCode = '';
+    let parsedPrint: number | null = null;
+    let parsedEdition: number | null = null;
+    let parsedCondition = 'Good';
+    let parsedEffort: number | null = null;
+    let parsedWish: number | null = null;
+
+    lines.forEach(line => {
+      const charM = line.match(/(?:Character|Karakter)\s*:\s*(.+)/i);
+      const seriesM = line.match(/(?:Series|Anime|Show)\s*:\s*(.+)/i);
+      const codeM = line.match(/(?:Code|Kode)\s*:\s*([a-zA-Z0-9]{5,6})/i);
+      const printM = line.match(/(?:Print|Nomor)\s*:\s*#?(\d+)/i);
+      const edM = line.match(/(?:Edition|Edisi|Ed)\s*:\s*◈?(\d+)/i);
+      const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*(\w+)/i);
+      const effM = line.match(/(?:Effort|Eff)\s*:\s*(\d+)/i);
+      const wishM = line.match(/(?:Wishlists|Wishlist|Wish)\s*:\s*([\d,.]+)/i);
+
+      if (charM) { parsedName = charM[1].trim(); hasLabelMatch = true; }
+      if (seriesM) { parsedSeries = seriesM[1].trim(); hasLabelMatch = true; }
+      if (codeM) { parsedCode = codeM[1].toLowerCase().trim(); hasLabelMatch = true; }
+      if (printM) { parsedPrint = parseInt(printM[1]); hasLabelMatch = true; }
+      if (edM) { parsedEdition = parseInt(edM[1]); hasLabelMatch = true; }
+      if (condM) {
+        const cond = mapConditionString(condM[1]);
+        if (cond) parsedCondition = cond;
+        hasLabelMatch = true;
+      }
+      if (effM) { parsedEffort = parseInt(effM[1]); hasLabelMatch = true; }
+      if (wishM) {
+        parsedWish = parseInt(wishM[1].replace(/[,.]/g, ''));
+        hasLabelMatch = true;
+      }
+    });
+
+    if (!hasLabelMatch) {
+      // Try single-line split parsing
+      const segments = cleanText.split(/\s*·\s*|\s*\|\s*|\s*•\s*/);
+      if (segments.length > 1) {
+        const unassigned: string[] = [];
+
+        segments.forEach(seg => {
+          const s = seg.trim();
+          if (!s) return;
+
+          const codeM = s.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,6})$/) || s.match(/^[a-zA-Z0-9]{5,6}$/);
+          if (codeM && !parsedCode) {
+            const check = (codeM[1] || codeM[0]).toLowerCase();
+            if (isNaN(Number(check))) {
+              parsedCode = check;
+              return;
+            }
+          }
+
+          const printM = s.match(/#(\d+)/) || s.match(/^(\d+)$/);
+          if (printM && parsedPrint === null) {
+            if (s.startsWith('#') || s.length < 5) {
+              parsedPrint = parseInt(printM[1]);
+              return;
+            }
+          }
+
+          const edM = s.match(/◈\s*(\d+)/) || s.match(/ed(?:isi)?\s*(\d+)/i);
+          if (edM) {
+            parsedEdition = parseInt(edM[1]);
+            return;
+          }
+
+          const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i);
+          if (effM) {
+            parsedEffort = parseInt(effM[1]);
+            return;
+          }
+
+          const cond = mapConditionString(s);
+          if (cond) {
+            parsedCondition = cond;
+            return;
+          }
+
+          const wishM = s.match(/(\d+)\s*(?:wishlist|wish)/i);
+          if (wishM) {
+            parsedWish = parseInt(wishM[1]);
+            return;
+          }
+
+          if (s.toLowerCase().startsWith('kd ') || s.toLowerCase().startsWith('kinfo ') || s.toLowerCase().startsWith('kv ')) {
+            const part = s.split(' ')[1];
+            if (part && part.length >= 5) parsedCode = part.toLowerCase();
+            return;
+          }
+
+          unassigned.push(s);
+        });
+
+        if (unassigned.length > 0) parsedName = unassigned[0];
+        if (unassigned.length > 1) parsedSeries = unassigned[1];
+      } else {
+        // Fallback simple word parse
+        const words = cleanText.split(/\s+/);
+        if (words.length === 1 && words[0].length >= 5 && words[0].length <= 6) {
+          parsedCode = words[0].toLowerCase();
+        } else if (words.length === 2 && ['kd', 'kinfo', 'kv'].includes(words[0].toLowerCase()) && words[1].length >= 5) {
+          parsedCode = words[1].toLowerCase();
+        }
+      }
+    }
+
+    if (parsedName || parsedCode) {
+      if (parsedCode) setFCode(parsedCode);
+      if (parsedPrint !== null) setFPrint(parsedPrint);
+      if (parsedEdition !== null) setFEdition(parsedEdition);
+      if (parsedName) setFName(parsedName);
+      if (parsedSeries) setFSeries(parsedSeries);
+      setFCondition(parsedCondition);
+      if (parsedEffort !== null) setFEffort(parsedEffort);
+      if (parsedWish !== null) setFWish(parsedWish);
+
+      setParserFeedback({ text: '✨ Pengisian otomatis berhasil!', isError: false, isSuccess: true });
+    } else {
+      setParserFeedback({ text: '❌ Gagal menganalisis teks. Isi manual.', isError: true, isSuccess: false });
+    }
+  }
+
+  function mapConditionString(str: string): string | null {
+    const s = str.trim().toLowerCase();
+    if (['mint', 'mt'].includes(s)) return 'Mint';
+    if (['excellent', 'ex', 'great'].includes(s)) return 'Great';
+    if (['fine', 'fn', 'good', 'gd'].includes(s)) return 'Good';
+    if (['fair', 'fr', 'average'].includes(s)) return 'Average';
+    if (['poor', 'pr'].includes(s)) return 'Poor';
+    if (['damaged', 'dm'].includes(s)) return 'Damaged';
+    return null;
+  }
+
+  // --- CRUD CARD OPERATIONS ---
+  function openCardModal(card: Card | null = null) {
+    setDiscordText('');
+    setParserFeedback({ text: 'Siap memproses teks', isError: false, isSuccess: false });
+
+    if (card) {
+      setCardFormId(card.id);
+      setFCode(card.code);
+      setFPrint(card.print !== null ? card.print : '');
+      setFEdition(card.edition !== null ? card.edition : '');
+      setFName(card.name);
+      setFSeries(card.series);
+      setFCondition(card.condition);
+      setFEffort(card.effort !== null ? card.effort : '');
+      setFWish(card.wish !== null ? card.wish : '');
+      setFPrice(card.price !== null ? card.price : '');
+      setFIsWorker(card.isWorker);
+      setFIsTrade(card.isTrade);
+      setFFrame(card.frame);
+      setFDye(card.dye);
+      setFNotes(card.notes);
+      
+      const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+      setCardSelectedTags(tagsArray);
+    } else {
+      setCardFormId('');
+      setFCode('');
+      setFPrint('');
+      setFEdition('');
+      setFName('');
+      setFSeries('');
+      setFCondition('Good');
+      setFEffort('');
+      setFWish('');
+      setFPrice('');
+      setFIsWorker(false);
+      setFIsTrade(false);
+      setFFrame('');
+      setFDye('');
+      setFNotes('');
+      setCardSelectedTags([]);
+    }
+    setIsCardModalOpen(true);
+  }
+
+  async function handleSaveCard() {
+    if (!fName.trim()) return;
+
+    const data: Omit<Card, 'id'> = {
+      code: fCode.trim().toLowerCase(),
+      print: fPrint !== '' ? Number(fPrint) : null,
+      edition: fEdition !== '' ? Number(fEdition) : null,
+      name: fName.trim(),
+      series: fSeries.trim(),
+      condition: fCondition,
+      effort: fEffort !== '' ? Number(fEffort) : null,
+      wish: fWish !== '' ? Number(fWish) : null,
+      price: fPrice !== '' ? Number(fPrice) : null,
+      isWorker: fIsWorker,
+      isTrade: fIsTrade,
+      frame: fFrame.trim(),
+      dye: fDye.trim(),
+      tags: cardSelectedTags.join(', '),
+      notes: fNotes.trim(),
+      createdAt: cardFormId ? (cards.find(c => c.id === cardFormId)?.createdAt || Date.now()) : Date.now()
+    };
+
+    if (isFirebaseConfigured()) {
+      if (cardFormId) {
+        await updateDoc(doc(db, "cards", cardFormId), data);
+      } else {
+        await addDoc(collection(db, "cards"), data);
+      }
+    } else {
+      let updatedCards = [];
+      if (cardFormId) {
+        updatedCards = cards.map(c => c.id === cardFormId ? { ...data, id: cardFormId } : c);
+      } else {
+        const newCard = { ...data, id: 'card-' + Date.now() };
+        updatedCards = [...cards, newCard];
+      }
+      setCards(updatedCards);
+      syncLocal('cartoteca:cards', updatedCards);
+    }
+
+    setIsCardModalOpen(false);
+    setSelectedCards(new Set()); // Reset selections
+  }
+
+  async function handleDeleteCard(id: string) {
+    if (!confirm('Yakin ingin menghapus kartu ini?')) return;
+
+    if (isFirebaseConfigured()) {
+      await deleteDoc(doc(db, "cards", id));
+    } else {
+      const updated = cards.filter(c => c.id !== id);
+      setCards(updated);
+      syncLocal('cartoteca:cards', updated);
+    }
+    
+    // Remove from selected set
+    const updatedSelected = new Set(selectedCards);
+    updatedSelected.delete(id);
+    setSelectedCards(updatedSelected);
+  }
+
+  // --- CRUD WISHLIST OPERATIONS ---
+  function openWishModal(w: WishlistItem | null = null) {
+    if (w) {
+      setWishFormId(w.id);
+      setWName(w.name);
+      setWSeries(w.series);
+      setWPriority(w.priority);
+      setWTargetWish(w.targetWish !== null ? w.targetWish : '');
+      setWNotes(w.notes);
+    } else {
+      setWishFormId('');
+      setWName('');
+      setWSeries('');
+      setWPriority('med');
+      setWTargetWish('');
+      setWNotes('');
+    }
+    setIsWishModalOpen(true);
+  }
+
+  async function handleSaveWish() {
+    if (!wName.trim()) return;
+
+    const data: Omit<WishlistItem, 'id'> = {
+      name: wName.trim(),
+      series: wSeries.trim(),
+      priority: wPriority,
+      targetWish: wTargetWish !== '' ? Number(wTargetWish) : null,
+      notes: wNotes.trim()
+    };
+
+    if (isFirebaseConfigured()) {
+      if (wishFormId) {
+        await updateDoc(doc(db, "wishlist", wishFormId), data);
+      } else {
+        await addDoc(collection(db, "wishlist"), data);
+      }
+    } else {
+      let updatedWish = [];
+      if (wishFormId) {
+        updatedWish = wishlist.map(w => w.id === wishFormId ? { ...data, id: wishFormId } : w);
+      } else {
+        const newWish = { ...data, id: 'wish-' + Date.now() };
+        updatedWish = [...wishlist, newWish];
+      }
+      setWishlist(updatedWish);
+      syncLocal('cartoteca:wishlist', updatedWish);
+    }
+
+    setIsWishModalOpen(false);
+  }
+
+  async function handleDeleteWish(id: string) {
+    if (!confirm('Hapus dari wishlist?')) return;
+
+    if (isFirebaseConfigured()) {
+      await deleteDoc(doc(db, "wishlist", id));
+    } else {
+      const updated = wishlist.filter(w => w.id !== id);
+      setWishlist(updated);
+      syncLocal('cartoteca:wishlist', updated);
+    }
+  }
+
+  function handleClaimWish(item: WishlistItem) {
+    // Delete from wishlist first
+    handleDeleteWish(item.id);
+    
+    // Open card modal pre-filled
+    openCardModal({
+      id: '',
+      code: '',
+      print: null,
+      edition: null,
+      name: item.name,
+      series: item.series,
+      condition: 'Good',
+      effort: null,
+      wish: item.targetWish,
+      price: null,
+      isWorker: false,
+      isTrade: false,
+      frame: '',
+      dye: '',
+      tags: '',
+      notes: item.notes,
+      createdAt: Date.now()
+    });
+  }
+
+  // --- CUSTOM TAG OPERATIONS ---
+  async function handleSaveTag() {
+    const name = tagNameInput.trim().toLowerCase().replace(/,/g, '');
+    if (!name) return;
+
+    const newTag = { name, color: tagColorInput, desc: tagDescInput.trim() };
+    const list = [...customTags];
+    const index = list.findIndex(t => t.name.toLowerCase() === name);
+
+    if (index > -1) {
+      list[index] = newTag;
+    } else {
+      list.push(newTag);
+    }
+
+    if (isFirebaseConfigured()) {
+      // Sync tag item to Firestore (using name as document ref key or batching)
+      // For simplicity, we can set a documents inside tags collection
+      await addDoc(collection(db, "tags"), newTag);
+    } else {
+      setCustomTags(list);
+      syncLocal('cartoteca:tags', list);
+    }
+
+    setTagNameInput('');
+    setTagDescInput('');
+  }
+
+  async function handleDeleteCustomTag(name: string) {
+    if (!confirm(`Hapus tag "${name}"? Tag ini juga akan dilepas dari kartu.`)) return;
+
+    // Remove from custom tags config list
+    const updatedTags = customTags.filter(t => t.name.toLowerCase() !== name.toLowerCase());
+    setCustomTags(updatedTags);
+    syncLocal('cartoteca:tags', updatedTags);
+
+    // Strip tags from all cards
+    const updatedCards = cards.map(c => {
+      if (c.tags) {
+        const arr = c.tags.split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== name.toLowerCase());
+        c.tags = arr.join(', ');
+      }
+      return c;
+    });
+    setCards(updatedCards);
+    syncLocal('cartoteca:cards', updatedCards);
+
+    if (isFirebaseConfigured()) {
+      // Sync removals to Firestore
+      alert("Tag terhapus lokal. Di database Firestore, mohon lakukan update manual jika perlu.");
+    }
+  }
+
+  // --- SELECTION & BATCH ACTIONS ---
+  function toggleSleeveSelect(id: string, e: React.MouseEvent) {
+    e.stopPropagation();
+    const updated = new Set(selectedCards);
+    if (updated.has(id)) {
+      updated.delete(id);
+    } else {
+      updated.add(id);
+    }
+    setSelectedCards(updated);
+  }
+
+  function handleSleeveContainerClick(id: string, e: React.MouseEvent) {
+    if (e.ctrlKey || e.metaKey || e.shiftKey) {
+      toggleSleeveSelect(id, e);
+    } else {
+      const found = cards.find(c => c.id === id);
+      if (found) openCardModal(found);
+    }
+  }
+
+  async function handleBatchDelete() {
+    if (!confirm(`Hapus ${selectedCards.size} kartu terpilih?`)) return;
+
+    if (isFirebaseConfigured()) {
+      const batch = writeBatch(db);
+      selectedCards.forEach(id => {
+        batch.delete(doc(db, "cards", id));
+      });
+      await batch.commit();
+    } else {
+      const updated = cards.filter(c => !selectedCards.has(c.id));
+      setCards(updated);
+      syncLocal('cartoteca:cards', updated);
+    }
+    setSelectedCards(new Set());
+  }
+
+  async function handleBatchSaveTags() {
+    if (batchSelectedTags.length === 0) return;
+
+    if (isFirebaseConfigured()) {
+      const batch = writeBatch(db);
+      cards.forEach(c => {
+        if (selectedCards.has(c.id)) {
+          const currentTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+          batchSelectedTags.forEach(tag => {
+            if (!currentTags.includes(tag.toLowerCase())) {
+              currentTags.push(tag.toLowerCase());
+            }
+          });
+          batch.update(doc(db, "cards", c.id), { tags: currentTags.join(', ') });
+        }
+      });
+      await batch.commit();
+    } else {
+      const updated = cards.map(c => {
+        if (selectedCards.has(c.id)) {
+          const currentTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+          batchSelectedTags.forEach(tag => {
+            if (!currentTags.includes(tag.toLowerCase())) {
+              currentTags.push(tag.toLowerCase());
+            }
+          });
+          return { ...c, tags: currentTags.join(', ') };
+        }
+        return c;
+      });
+      setCards(updated);
+      syncLocal('cartoteca:cards', updated);
+    }
+
+    setIsBatchTagModalOpen(false);
+    setSelectedCards(new Set());
+  }
+
+  // Toggle card tag selection inside standard card modal
+  function toggleCardModalTagChip(name: string) {
+    const active = [...cardSelectedTags];
+    const index = active.findIndex(t => t.toLowerCase() === name.toLowerCase());
+    if (index > -1) {
+      active.splice(index, 1);
+    } else {
+      active.push(name);
+    }
+    setCardSelectedTags(active);
+  }
+
+  function toggleBatchModalTagChip(name: string) {
+    const active = [...batchSelectedTags];
+    const index = active.findIndex(t => t.toLowerCase() === name.toLowerCase());
+    if (index > -1) {
+      active.splice(index, 1);
+    } else {
+      active.push(name);
+    }
+    setBatchSelectedTags(active);
+  }
+
+  // --- BACKUP & RESTORE ---
+  function triggerExportJSON() {
+    const exportData = {
+      app: 'cartoteca',
+      version: '1.2',
+      exportedAt: new Date().toISOString(),
+      cards,
+      wishlist,
+      customTags
+    };
+
+    const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
+    const downloadAnchor = document.createElement('a');
+    downloadAnchor.setAttribute("href", dataStr);
+    downloadAnchor.setAttribute("download", `cartoteca_backup_${Date.now()}.json`);
+    document.body.appendChild(downloadAnchor);
+    downloadAnchor.click();
+    downloadAnchor.remove();
+  }
+
+  function handleFileSelect(e: React.ChangeEvent<HTMLInputElement>) {
+    const file = e.target.files?.[0];
+    if (file) {
+      setBackupFileName(file.name);
+      const reader = new FileReader();
+      reader.onload = function(evt) {
+        try {
+          const parsed = JSON.parse(evt.target?.result as string);
+          setBackupFileContent(parsed);
+        } catch (err) {
+          alert('Format file JSON salah atau korup.');
+          setBackupFileContent(null);
+        }
+      };
+      reader.readAsText(file);
+    }
+  }
+
+  async function handleApplyRestore() {
+    if (!backupFileContent || backupFileContent.app !== 'cartoteca') {
+      alert('Backup JSON Cartoteca tidak valid.');
+      return;
+    }
+
+    if (confirm('Menimpa seluruh data saat ini dengan isi file backup?')) {
+      const importedCards = backupFileContent.cards || [];
+      const importedWishlist = backupFileContent.wishlist || [];
+      const importedTags = backupFileContent.customTags || [];
+
+      setCards(importedCards);
+      setWishlist(importedWishlist);
+      setCustomTags(importedTags);
+
+      syncLocal('cartoteca:cards', importedCards);
+      syncLocal('cartoteca:wishlist', importedWishlist);
+      syncLocal('cartoteca:tags', importedTags);
+
+      if (isFirebaseConfigured()) {
+        alert("Data berhasil dipulihkan secara lokal di web browser. Silakan sinkronisasikan ulang database Firestore Anda.");
+      } else {
+        alert('Data berhasil dipulihkan!');
+      }
+      setIsBackupModalOpen(false);
+    }
+  }
+
+  // --- FILTER & SORT ENGINE ---
+  const getFilteredCards = () => {
+    let list = [...cards];
+
+    // Text search query
+    if (searchQuery.trim()) {
+      const q = searchQuery.toLowerCase().trim();
+      list = list.filter(c => 
+        (c.name || '').toLowerCase().includes(q) ||
+        (c.series || '').toLowerCase().includes(q) ||
+        (c.code || '').toLowerCase().includes(q) ||
+        (c.tags || '').toLowerCase().includes(q) ||
+        (c.notes || '').toLowerCase().includes(q)
+      );
+    }
+
+    // Condition filter
+    if (selectedCondition) {
+      list = list.filter(c => c.condition === selectedCondition);
+    }
+
+    // Custom Tag filter
+    if (selectedTag) {
+      list = list.filter(c => {
+        const itemTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()) : [];
+        return itemTags.includes(selectedTag.toLowerCase());
+      });
+    }
+
+    // Sort order
+    if (sortOption === 'effort-desc') list.sort((a, b) => (b.effort || 0) - (a.effort || 0));
+    else if (sortOption === 'effort-asc') list.sort((a, b) => (a.effort || 0) - (b.effort || 0));
+    else if (sortOption === 'print-asc') list.sort((a, b) => (a.print || 999999) - (b.print || 999999));
+    else if (sortOption === 'edition-desc') list.sort((a, b) => (b.edition || 0) - (a.edition || 0));
+    else if (sortOption === 'wish-desc') list.sort((a, b) => (b.wish || 0) - (a.wish || 0));
+    else if (sortOption === 'name') list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    else list.sort((a, b) => (b.createdAt || 0) - (a.createdAt || 0)); // Recent
+
+    return list;
+  };
+
+  const getFilteredWishlist = () => {
+    let list = [...wishlist];
+
+    if (wishSearchQuery.trim()) {
+      const q = wishSearchQuery.toLowerCase().trim();
+      list = list.filter(w => 
+        (w.name || '').toLowerCase().includes(q) ||
+        (w.series || '').toLowerCase().includes(q) ||
+        (w.notes || '').toLowerCase().includes(q)
+      );
+    }
+
+    if (wishSortOption === 'priority-desc') {
+      const order = { high: 0, med: 1, low: 2 };
+      list.sort((a, b) => order[a.priority] - order[b.priority]);
+    } else if (wishSortOption === 'name') {
+      list.sort((a, b) => (a.name || '').localeCompare(b.name || ''));
+    } else if (wishSortOption === 'series') {
+      list.sort((a, b) => (a.series || '').localeCompare(b.series || ''));
+    }
+
+    return list;
+  };
+
+  // --- STATS CALCULATOR ---
+  const totalCards = cards.length;
+  const efforts = cards.map(c => Number(c.effort)).filter(n => !isNaN(n) && n > 0);
+  const avgEffort = efforts.length ? Math.round(efforts.reduce((a, b) => a + b, 0) / efforts.length) : 0;
+  const lowPrint = cards.filter(c => c.print !== null && Number(c.print) <= 99).length;
+  const mintCount = cards.filter(c => c.condition === 'Mint').length;
+
+  const getConditionStats = () => {
+    const counts: Record<string, number> = { 'Damaged': 0, 'Poor': 0, 'Average': 0, 'Good': 0, 'Great': 0, 'Mint': 0 };
+    cards.forEach(c => { if (counts[c.condition] !== undefined) counts[c.condition]++; });
+    return counts;
+  };
+
+  const getTopSeriesStats = () => {
+    const counts: Record<string, number> = {};
+    cards.forEach(c => { const s = c.series || '(Tanpa series)'; counts[s] = (counts[s] || 0) + 1; });
+    return Object.entries(counts).sort((a, b) => b[1] - a[1]).slice(0, 5);
+  };
+
+  const getEditionStats = () => {
+    const counts: Record<string, number> = {};
+    cards.forEach(c => {
+      const ed = c.edition !== null ? '◈' + c.edition : 'Tanpa Edisi';
+      counts[ed] = (counts[ed] || 0) + 1;
+    });
+    return Object.entries(counts).sort((a, b) => b[0].localeCompare(a[0]));
+  };
+
+  const getTopEffortCards = () => {
+    return [...cards].filter(c => c.effort).sort((a, b) => (b.effort || 0) - (a.effort || 0)).slice(0, 5);
+  };
+
+  // Get dynamic dynamic tags actually used in binder
+  const getUsedTags = () => {
+    const used = new Set<string>();
+    cards.forEach(c => {
+      if (c.tags) {
+        c.tags.split(',').forEach(t => { if (t.trim()) used.add(t.trim().toLowerCase()); });
+      }
+    });
+    customTags.forEach(t => used.add(t.name.toLowerCase()));
+    return Array.from(used).sort();
+  };
+
+  return (
+    <div id="app">
+      <div className="wrap">
+        
+        {/* HEADER */}
+        <header className="hdr">
+          <div className="brand">
+            <div className="hanko">🎴</div>
+            <div>
+              <h1>Cartoteca</h1>
+              <p>Karuta Companion App — Hybrid Edition</p>
+            </div>
+          </div>
+          <div className="mini-stats">
+            <div className="mini-stat"><b>{totalCards}</b><span>Kartu</span></div>
+            <div className="mini-stat"><b>{new Set(cards.map(c => c.series).filter(Boolean)).size}</b><span>Series</span></div>
+            <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
+            <div className="mini-stat"><b>{avgEffort}</b><span>Avg Eff</span></div>
+          </div>
+        </header>
+
+        {/* NAVIGATION TABS */}
+        <nav className="tabs">
+          <button className={`tab-btn ${activeTab === 'collection' ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Koleksi</button>
+          <button className={`tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
+          <button className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
+          <button className={`tab-btn ${activeTab === 'tags-manager' ? 'active' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>
+        </nav>
+
+        {/* MAIN BODY AREA */}
+        <main className="content-area">
+          
+          {/* TAB: BINDER COLLECTION */}
+          {activeTab === 'collection' && (
+            <div>
+              <div className="toolbar">
+                <div className="search-wrapper">
+                  <input 
+                    className="search-box" 
+                    type="text" 
+                    placeholder="Cari nama karakter, series, kode, atau tag..." 
+                    value={searchQuery}
+                    onChange={(e) => setSearchQuery(e.target.value)}
+                  />
+                  {searchQuery && <span className="clear-search" onClick={() => setSearchQuery('')}>&times;</span>}
+                </div>
+                
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
+                  <option value="recent">Terbaru ditambahkan</option>
+                  <option value="effort-desc">Effort tertinggi</option>
+                  <option value="effort-asc">Effort terendah</option>
+                  <option value="print-asc">Print number terendah</option>
+                  <option value="edition-desc">Edisi terbaru (◈)</option>
+                  <option value="wish-desc">Wish tertinggi (Value)</option>
+                  <option value="name">Nama A-Z</option>
+                </select>
+                
+                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)}>
+                  <option value="">Semua kondisi</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Poor">Poor</option>
+                  <option value="Average">Average</option>
+                  <option value="Good">Good</option>
+                  <option value="Great">Great</option>
+                  <option value="Mint">Mint</option>
+                </select>
+
+                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)}>
+                  <option value="">Semua Tag</option>
+                  {getUsedTags().map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+                
+                <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
+                <button className="btn secondary" onClick={() => setIsBackupModalOpen(true)}>💾 Backup/Restore</button>
+              </div>
+
+              {/* Batch Actions Panel */}
+              {selectedCards.size > 0 && (
+                <div className="batch-panel">
+                  <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
+                  <div className="batch-actions">
+                    <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Tambah Tag</button>
+                    <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Hapus Terpilih</button>
+                    <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Batal</button>
+                  </div>
+                </div>
+              )}
+
+              {/* Grid List */}
+              {cards.length === 0 ? (
+                <div className="empty">
+                  <div className="stamp-big">🎴</div>
+                  <h3>Binder masih kosong</h3>
+                  <p>Masukkan kartu Karuta Anda secara manual atau gunakan parser Discord paste di atas.</p>
+                  <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu Pertama</button>
+                </div>
+              ) : (
+                <div className="binder">
+                  {getFilteredCards().map(c => {
+                    const isSelected = selectedCards.has(c.id);
+                    const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
+                    
+                    return (
+                      <div 
+                        key={c.id}
+                        className={`sleeve ${c.condition.toLowerCase() === 'mint' ? 'mint' : ''} ${c.condition.toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
+                        onClick={(e) => handleSleeveContainerClick(c.id, e)}
+                      >
+                        <div 
+                          className="select-indicator" 
+                          style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
+                          onClick={(e) => toggleSleeveSelect(c.id, e)}
+                        />
+
+                        <div className="stampbadge">
+                          <b>{c.print !== null ? `#${c.print}` : '—'}</b>
+                          <span>PRINT</span>
+                        </div>
+
+                        <p className="card-name">{c.name || '(Tanpa Nama)'}</p>
+                        <p className="card-series" title={c.series}>{c.series || 'Series belum diisi'}</p>
+
+                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                          {c.code ? <span className="card-code">{c.code}</span> : <span />}
+                          <div style={{ display: 'flex', gap: '4px' }}>
+                            {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
+                            {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
+                          </div>
+                        </div>
+
+                        <div className="card-meta">
+                          {c.edition !== null && <span className="chip edition">◈{c.edition}</span>}
+                          <span className="chip">{c.condition}</span>
+                          {c.effort !== null && <span className="chip effort">{c.effort} eff</span>}
+                          {itemTags.map(tag => (
+                            <span key={tag} className="custom-tag-chip" style={{ backgroundColor: getTagColor(tag) }}>{tag}</span>
+                          ))}
+                        </div>
+
+                        {(c.wish || c.price || c.frame || c.dye || c.notes) && (
+                          <div className="card-details-row">
+                            {c.wish && <div><span>Wishlists:</span> <b>{c.wish.toLocaleString()}</b></div>}
+                            {c.price && <div><span>Est. Harga:</span> <b>{c.price} Tickets</b></div>}
+                            {c.frame && <div><span>Frame:</span> <b>{c.frame}</b></div>}
+                            {c.dye && <div><span>Dye:</span> <b>{c.dye}</b></div>}
+                            {c.notes && <div style={{ display: 'block', fontStyle: 'italic', marginTop: '2px' }}>"{c.notes}"</div>}
+                          </div>
+                        )}
+
+                        <div className="card-actions">
+                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
+                          <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Hapus</button>
+                        </div>
+                      </div>
+                    );
+                  })}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: WISHLIST */}
+          {activeTab === 'wishlist' && (
+            <div>
+              <div className="toolbar">
+                <input 
+                  className="search-box" 
+                  type="text" 
+                  placeholder="Cari nama wishlist..." 
+                  value={wishSearchQuery}
+                  onChange={(e) => setWishSearchQuery(e.target.value)}
+                />
+                <select value={wishSortOption} onChange={(e) => setWishSortOption(e.target.value)}>
+                  <option value="priority-desc">Prioritas tertinggi</option>
+                  <option value="name">Nama A-Z</option>
+                  <option value="series">Series A-Z</option>
+                </select>
+                <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist</button>
+              </div>
+
+              {wishlist.length === 0 ? (
+                <div className="empty">
+                  <div className="stamp-big">✨</div>
+                  <h3>Belum ada wishlist</h3>
+                  <p>Catat karakter incaran kamu agar tidak terlewatkan saat drop muncul.</p>
+                  <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist Pertama</button>
+                </div>
+              ) : (
+                <div className="binder">
+                  {getFilteredWishlist().map(w => (
+                    <div key={w.id} className="sleeve" style={{ borderLeft: '4px solid var(--jade)' }}>
+                      <div className="stampbadge" style={{ borderColor: 'var(--jade)', color: 'var(--jade)' }}>
+                        <b>願</b>
+                        <span>WISH</span>
+                      </div>
+                      <p className="card-name">{w.name}</p>
+                      <p className="card-series">{w.series || 'Series belum diisi'}</p>
+
+                      <div className="card-meta">
+                        <span className={`wish-priority ${w.priority}`}>
+                          {w.priority === 'high' ? '🚨 Prioritas Tinggi' : w.priority === 'med' ? '⚡ Prioritas Sedang' : '🌱 Prioritas Rendah'}
+                        </span>
+                        {w.targetWish && <span className="chip">Target: {w.targetWish} wish</span>}
+                      </div>
+
+                      {w.notes && <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '4px', fontStyle: 'italic' }}>"{w.notes}"</div>}
+
+                      <div className="card-actions">
+                        <button className="icon-btn" onClick={() => openWishModal(w)}>✏️ Edit</button>
+                        <button className="icon-btn delete" onClick={() => handleDeleteWish(w.id)}>🗑️ Hapus</button>
+                        <button 
+                          className="btn btn-sm" 
+                          style={{ marginLeft: 'auto', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }}
+                          onClick={() => handleClaimWish(w)}
+                        >
+                          🎉 Klaim
+                        </button>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              )}
+            </div>
+          )}
+
+          {/* TAB: STATISTICS */}
+          {activeTab === 'stats' && (
+            <div>
+              <div className="stats-grid">
+                <div className="stat-card"><b>{totalCards}</b><span>Total Kartu</span></div>
+                <div className="stat-card"><b>{avgEffort}</b><span>Rata-Rata Effort</span></div>
+                <div className="stat-card"><b>{lowPrint}</b><span>Low Print (≤99)</span></div>
+                <div className="stat-card"><b>{mintCount}</b><span>Kondisi Mint (MT)</span></div>
+              </div>
+
+              <div className="charts-layout">
+                <div className="bars">
+                  <h4>Distribusi Kondisi</h4>
+                  {Object.entries(getConditionStats()).map(([k, v]) => {
+                    const maxVal = Math.max(1, ...Object.values(getConditionStats()));
+                    return (
+                      <div className="bar-row" key={k}>
+                        <div className="label">{k}</div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${(v / maxVal) * 100}%` }} />
+                        </div>
+                        <div className="count">{v}</div>
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div className="bars">
+                  <h4>Series Terbanyak</h4>
+                  {getTopSeriesStats().length > 0 ? getTopSeriesStats().map(([k, v]) => {
+                    const maxVal = Math.max(1, ...getTopSeriesStats().map(s => s[1]));
+                    return (
+                      <div className="bar-row" key={k}>
+                        <div className="label" title={k}>{k}</div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${(v / maxVal) * 100}%`, backgroundColor: 'var(--stamp)' }} />
+                        </div>
+                        <div className="count">{v}</div>
+                      </div>
+                    );
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data series.</p>}
+                </div>
+              </div>
+
+              <div className="charts-layout" style={{ marginTop: '16px' }}>
+                <div className="bars">
+                  <h4>Edisi Kartu ◈</h4>
+                  {getEditionStats().length > 0 ? getEditionStats().map(([k, v]) => {
+                    const maxVal = Math.max(1, ...getEditionStats().map(e => e[1]));
+                    return (
+                      <div className="bar-row" key={k}>
+                        <div className="label">{k}</div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${(v / maxVal) * 100}%`, backgroundColor: 'var(--gold)' }} />
+                        </div>
+                        <div className="count">{v}</div>
+                      </div>
+                    );
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data edisi.</p>}
+                </div>
+
+                <div className="bars">
+                  <h4>Kontributor Effort Teratas</h4>
+                  {getTopEffortCards().length > 0 ? getTopEffortCards().map(c => {
+                    const maxVal = getTopEffortCards()[0]?.effort || 1;
+                    return (
+                      <div className="bar-row" key={c.id}>
+                        <div className="label" title={c.name}>{c.name}</div>
+                        <div className="bar-track">
+                          <div className="bar-fill" style={{ width: `${((c.effort || 0) / maxVal) * 100}%`, backgroundColor: 'var(--jade-soft)' }} />
+                        </div>
+                        <div className="count">{c.effort}</div>
+                      </div>
+                    );
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data effort.</p>}
+                </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: TAGS MANAGER */}
+          {activeTab === 'tags-manager' && (
+            <div className="tags-manager-layout">
+              <div className="tag-form-card">
+                <h4>Tambah / Edit Tag</h4>
+                <div className="field">
+                  <label>Nama Tag *</label>
+                  <input 
+                    type="text" 
+                    placeholder="mis. waifu, trade, deck-1"
+                    value={tagNameInput}
+                    onChange={(e) => setTagNameInput(e.target.value)}
+                  />
+                </div>
+                <div className="field">
+                  <label>Warna Tag</label>
+                  <div className="tag-color-picker">
+                    <input 
+                      type="color" 
+                      value={tagColorInput} 
+                      onChange={(e) => setTagColorInput(e.target.value)}
+                    />
+                    <div className="color-presets">
+                      {['#5ea396', '#d8923e', '#e0b84c', '#b85c5c', '#8b5cf6', '#3b82f6'].map(color => (
+                        <span 
+                          key={color} 
+                          className="preset" 
+                          style={{ backgroundColor: color }} 
+                          onClick={() => setTagColorInput(color)}
+                        />
+                      ))}
+                    </div>
+                  </div>
+                </div>
+                <div className="field">
+                  <label>Deskripsi Tag</label>
+                  <input 
+                    type="text" 
+                    placeholder="Keterangan opsional"
+                    value={tagDescInput}
+                    onChange={(e) => setTagDescInput(e.target.value)}
+                  />
+                </div>
+                <button className="btn" style={{ width: '100%' }} onClick={handleSaveTag}>Simpan Tag</button>
+              </div>
+
+              <div className="tag-list-card">
+                <h4>Daftar Tag Kustom</h4>
+                <div className="tag-table-container">
+                  <table className="tag-table">
+                    <thead>
+                      <tr>
+                        <th>Tag</th>
+                        <th>Keterangan</th>
+                        <th>Jumlah Kartu</th>
+                        <th>Aksi</th>
+                      </tr>
+                    </thead>
+                    <tbody>
+                      {customTags.length === 0 ? (
+                        <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>Belum ada tag kustom.</td></tr>
+                      ) : (
+                        customTags.map(t => {
+                          const cardCount = cards.filter(c => c.tags?.split(',').map(tg => tg.trim().toLowerCase()).includes(t.name.toLowerCase())).length;
+                          return (
+                            <tr key={t.name}>
+                              <td><span className="custom-tag-chip" style={{ backgroundColor: t.color }}>{t.name}</span></td>
+                              <td>{t.desc || '—'}</td>
+                              <td><b>{cardCount}</b> kartu</td>
+                              <td>
+                                <button className="icon-btn" onClick={() => { setTagNameInput(t.name); setTagColorInput(t.color); setTagDescInput(t.desc); }}>✏️ Edit</button>
+                                <button className="icon-btn delete" onClick={() => handleDeleteCustomTag(t.name)}>🗑️ Hapus</button>
+                              </td>
+                            </tr>
+                          );
+                        })
+                      )}
+                    </tbody>
+                  </table>
+                </div>
+              </div>
+            </div>
+          )}
+
+        </main>
+
+        {/* FOOTER */}
+        <footer className="footer">
+          <div>CARTOTECA • Karuta Companion App</div>
+          <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6 }}>© 2026 ChromeT • Didesain dengan estetika Hanko & Washi</div>
+        </footer>
+
+      </div>
+
+      {/* MODAL: ADD / EDIT CARD */}
+      {isCardModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>{cardFormId ? 'Edit Detail Kartu' : 'Tambah Kartu Baru'}</h2>
+              <button className="close-modal-btn" onClick={() => setIsCardModalOpen(false)}>&times;</button>
+            </div>
+
+            {/* Parser Section */}
+            <div className="parser-section">
+              <details>
+                <summary>✨ <b>Auto-fill via Discord Text</b> (Paste info Keqing / Karuta)</summary>
+                <div className="parser-body">
+                  <textarea 
+                    placeholder="Tempel teks Discord di sini... Contoh: kd mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano" 
+                    rows={3}
+                    value={discordText}
+                    onChange={(e) => setDiscordText(e.target.value)}
+                  />
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                    <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
+                    <button className="btn btn-sm" onClick={handleParseText}>Proses Teks</button>
+                  </div>
+                </div>
+              </details>
+            </div>
+
+            <div className="field-row-3">
+              <div className="field">
+                <label>Kode Kartu</label>
+                <input type="text" placeholder="mis. mz4xq" value={fCode} onChange={(e) => setFCode(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Print Num</label>
+                <input type="number" placeholder="mis. 14" value={fPrint} onChange={(e) => setFPrint(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+              <div className="field">
+                <label>Edisi ◈</label>
+                <input type="number" placeholder="mis. 3" value={fEdition} onChange={(e) => setFEdition(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Nama Karakter *</label>
+              <input type="text" placeholder="mis. Megumi Kato" value={fName} onChange={(e) => setFName(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Series / Anime</label>
+              <input type="text" placeholder="mis. Saekano" value={fSeries} onChange={(e) => setFSeries(e.target.value)} />
+            </div>
+
+            <div className="field-row-3">
+              <div className="field">
+                <label>Kondisi</label>
+                <select value={fCondition} onChange={(e) => setFCondition(e.target.value)}>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Poor">Poor</option>
+                  <option value="Average">Average</option>
+                  <option value="Good">Good</option>
+                  <option value="Great">Great</option>
+                  <option value="Mint">Mint</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Effort</label>
+                <input type="number" placeholder="mis. 420" value={fEffort} onChange={(e) => setFEffort(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+              <div className="field">
+                <label>Wish Count</label>
+                <input type="number" placeholder="mis. 1200" value={fWish} onChange={(e) => setFWish(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+            </div>
+
+            <div className="field-row">
+              <div className="field">
+                <label>Estimasi Harga (Ticket)</label>
+                <input type="number" placeholder="mis. 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+              <div className="field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
+                <label style={{ marginBottom: '8px' }}>Status / Posisi</label>
+                <div style={{ display: 'flex', gap: '12px', alignItems: 'center', height: '36px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={fIsWorker} onChange={(e) => setFIsWorker(e.target.checked)} style={{ width: 'auto' }} /> Worker Deck
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer' }}>
+                    <input type="checkbox" checked={fIsTrade} onChange={(e) => setFIsTrade(e.target.checked)} style={{ width: 'auto' }} /> Trade / Sale
+                  </label>
+                </div>
+              </div>
+            </div>
+
+            <div className="field-row">
+              <div className="field">
+                <label>Frame Name</label>
+                <input type="text" placeholder="mis. Maple Frame" value={fFrame} onChange={(e) => setFFrame(e.target.value)} />
+              </div>
+              <div className="field">
+                <label>Dye Name / Color</label>
+                <input type="text" placeholder="mis. Purple Haze" value={fDye} onChange={(e) => setFDye(e.target.value)} />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Tag Koleksi (Klik untuk memilih)</label>
+              <div className="tag-selector-grid">
+                {customTags.map(t => {
+                  const isSel = cardSelectedTags.includes(t.name.toLowerCase());
+                  return (
+                    <span 
+                      key={t.name}
+                      className={`tag-select-chip ${isSel ? 'selected' : ''}`}
+                      style={isSel ? { backgroundColor: t.color, borderColor: 'transparent', color: '#fff' } : undefined}
+                      onClick={() => toggleCardModalTagChip(t.name)}
+                    >
+                      {t.name}
+                    </span>
+                  );
+                })}
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Catatan Tambahan</label>
+              <textarea placeholder="Tulis catatan, detail trade, dll..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={() => setIsCardModalOpen(false)}>Batal</button>
+              <button className="btn" onClick={handleSaveCard}>Simpan Kartu</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: ADD / EDIT WISHLIST */}
+      {isWishModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>{wishFormId ? 'Edit Detail Wishlist' : 'Tambah Ke Wishlist'}</h2>
+              <button className="close-modal-btn" onClick={() => setIsWishModalOpen(false)}>&times;</button>
+            </div>
+
+            <div className="field">
+              <label>Nama Karakter *</label>
+              <input type="text" placeholder="mis. Nezuko Kamado" value={wName} onChange={(e) => setWName(e.target.value)} required />
+            </div>
+            <div className="field">
+              <label>Series / Anime</label>
+              <input type="text" placeholder="mis. Kimetsu no Yaiba" value={wSeries} onChange={(e) => setWSeries(e.target.value)} />
+            </div>
+
+            <div className="field-row">
+              <div className="field">
+                <label>Prioritas</label>
+                <select value={wPriority} onChange={(e) => setWPriority(e.target.value as any)}>
+                  <option value="high">Tinggi</option>
+                  <option value="med">Sedang</option>
+                  <option value="low">Rendah</option>
+                </select>
+              </div>
+              <div className="field">
+                <label>Target Wish Count</label>
+                <input type="number" placeholder="mis. 800" value={wTargetWish} onChange={(e) => setWTargetWish(e.target.value === '' ? '' : Number(e.target.value))} />
+              </div>
+            </div>
+
+            <div className="field">
+              <label>Catatan Target</label>
+              <textarea placeholder="mis. Cari edisi 4 ke atas..." rows={2} value={wNotes} onChange={(e) => setWNotes(e.target.value)} />
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={() => setIsWishModalOpen(false)}>Batal</button>
+              <button className="btn" onClick={handleSaveWish}>Simpan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BACKUP & RESTORE */}
+      {isBackupModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal">
+            <div className="modal-header">
+              <h2>Backup & Restore Data</h2>
+              <button className="close-modal-btn" onClick={() => setIsBackupModalOpen(false)}>&times;</button>
+            </div>
+
+            <div className="backup-section">
+              <h3>💾 Ekspor Data</h3>
+              <p>Simpan seluruh koleksi, wishlist, dan tag kustom Anda ke dalam file JSON.</p>
+              <button className="btn" style={{ width: '100%' }} onClick={triggerExportJSON}>Unduh Backup (.json)</button>
+            </div>
+
+            <hr style={{ border: '0', borderTop: '1px dashed var(--paper-line)', margin: '20px 0' }} />
+
+            <div className="backup-section">
+              <h3>📥 Impor Data</h3>
+              <p>Muat data koleksi dari file backup JSON sebelumnya. Data lama akan tertimpa.</p>
+              <div className="import-area">
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  style={{ display: 'none' }} 
+                  ref={fileInputRef} 
+                  onChange={handleFileSelect}
+                />
+                <button className="btn secondary" style={{ width: '100%' }} onClick={() => fileInputRef.current?.click()}>Pilih File JSON</button>
+                <div style={{ marginTop: '8px', fontSize: '12.5px', color: 'var(--ink-soft)' }}>{backupFileName}</div>
+              </div>
+              <button 
+                className="btn" 
+                style={{ width: '100%', marginTop: '12px', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }} 
+                disabled={!backupFileContent}
+                onClick={handleApplyRestore}
+              >
+                Impor & Terapkan Data
+              </button>
+            </div>
+
+            <div className="modal-actions" style={{ marginTop: '24px' }}>
+              <button className="btn secondary" onClick={() => setIsBackupModalOpen(false)}>Tutup</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BATCH TAG ADD */}
+      {isBatchTagModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '380px' }}>
+            <div className="modal-header">
+              <h3>Tambah Tag Massal</h3>
+              <button className="close-modal-btn" onClick={() => setIsBatchTagModalOpen(false)}>&times;</button>
+            </div>
+            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '0' }}>Pilih tag yang ingin ditambahkan ke kartu terpilih:</p>
+
+            <div className="tag-selector-grid" style={{ marginBottom: '18px' }}>
+              {customTags.map(t => {
+                const isSel = batchSelectedTags.includes(t.name.toLowerCase());
+                return (
+                  <span 
+                    key={t.name}
+                    className={`tag-select-chip ${isSel ? 'selected' : ''}`}
+                    style={isSel ? { backgroundColor: t.color, borderColor: 'transparent', color: '#fff' } : undefined}
+                    onClick={() => toggleBatchModalTagChip(t.name)}
+                  >
+                    {t.name}
+                  </span>
+                );
+              })}
+            </div>
+
+            <div className="modal-actions">
+              <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Batal</button>
+              <button className="btn" onClick={handleBatchSaveTags}>Terapkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+    </div>
+  );
+}
