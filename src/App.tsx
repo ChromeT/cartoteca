@@ -74,6 +74,7 @@ export default function App() {
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isBatchTagModalOpen, setIsBatchTagModalOpen] = useState(false);
+  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
@@ -949,6 +950,21 @@ export default function App() {
                 👤 {displayName}
               </span>
               <button
+                onClick={() => setIsProfileModalOpen(true)}
+                title="Profil"
+                style={{
+                  background: 'transparent', border: '1px solid #3a3327',
+                  borderRadius: '6px', padding: '4px 10px',
+                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                  fontWeight: 600, color: '#d8923e', cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
+              >
+                Profil
+              </button>
+              <button
                 onClick={() => signOut(auth)}
                 title="Keluar"
                 style={{
@@ -1605,6 +1621,82 @@ export default function App() {
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Batal</button>
               <button className="btn" onClick={handleBatchSaveTags}>Terapkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: COLLECTOR PROFILE */}
+      {isProfileModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '420px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#d8923e', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
+                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#17140f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
+                  👤
+                </div>
+                <div>
+                  <h3 style={{ margin: '0', color: '#17140f', fontSize: '18px', fontWeight: 800 }}>{displayName}</h3>
+                  <div style={{ color: '#6d481b', fontSize: '12px', fontWeight: 600 }}>Collector Profile</div>
+                </div>
+              </div>
+              <button onClick={() => setIsProfileModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#17140f', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* Stats Grid */}
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: '#17140f', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Total Cards</div>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#e8dbce' }}>{totalCards}</div>
+                </div>
+                <div style={{ background: '#17140f', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Wishlisted</div>
+                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#e8dbce' }}>{cards.reduce((sum, c) => sum + (c.wish || 0), 0)}</div>
+                </div>
+              </div>
+
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Prints</div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
+                  <span><span style={{ color: '#9c8f76' }}>SP (1-9):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print < 10).length}</span></span>
+                  <span><span style={{ color: '#9c8f76' }}>LP (10-99):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 10 && c.print <= 99).length}</span></span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '6px' }}>
+                  <span><span style={{ color: '#9c8f76' }}>MP (100-999):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 100 && c.print <= 999).length}</span></span>
+                  <span><span style={{ color: '#9c8f76' }}>HP (1000+):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 1000).length}</span></span>
+                </div>
+              </div>
+
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Editions</div>
+                <div style={{ display: 'flex', gap: '16px', fontSize: '13px', flexWrap: 'wrap' }}>
+                  {[1, 2, 3, 4, 5, 6].map(ed => (
+                    <span key={ed}><span style={{ color: '#9c8f76' }}>◈{ed}:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.edition === ed).length}</span></span>
+                  ))}
+                </div>
+              </div>
+
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                  <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Conditions</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
+                    <span><span style={{ color: '#9c8f76' }}>Mint:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Mint').length}</span></span>
+                    <span><span style={{ color: '#9c8f76' }}>Excellent:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Excellent' || c.condition === 'Great').length}</span></span>
+                    <span><span style={{ color: '#9c8f76' }}>Good:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Good' || c.condition === 'Average').length}</span></span>
+                    <span><span style={{ color: '#9c8f76' }}>Poor:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Poor' || c.condition === 'Damaged').length}</span></span>
+                  </div>
+                </div>
+                
+                <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                  <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Upgrades</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
+                    <span><span style={{ color: '#9c8f76' }}>Framed:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.frame && c.frame.trim() !== '').length}</span></span>
+                    <span><span style={{ color: '#9c8f76' }}>Dyed:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.dye && c.dye.trim() !== '').length}</span></span>
+                    <span><span style={{ color: '#9c8f76' }}>Worker:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.isWorker).length}</span></span>
+                  </div>
+                </div>
+              </div>
             </div>
           </div>
         </div>
