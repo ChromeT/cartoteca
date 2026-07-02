@@ -263,7 +263,7 @@ export default function App() {
       const savedInv = localStorage.getItem(`cartoteca:${uid}:inv`);
       if (savedInv) setInventory(JSON.parse(savedInv));
     }
-  }, []);
+  }, [user]);
 
   // --- TIMERS LOGIC ---
   useEffect(() => {
