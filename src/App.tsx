@@ -32,6 +32,14 @@ interface Card {
   tags: string; // Comma separated tag names
   notes: string;
   createdAt: number;
+  stats?: {
+    toughness: string;
+    quickness: string;
+    purity: string;
+    style: string;
+    wellness: string;
+    appeal: string;
+  };
 }
 
 interface WishlistItem {
@@ -94,6 +102,10 @@ export default function App() {
   const [now, setNow] = useState(Date.now());
   const [notified, setNotified] = useState<Record<string, boolean>>({ drop: true, grab: true, work: true });
 
+  // Worker Optimizer State
+  const [workerSlotIds, setWorkerSlotIds] = useState<(string | null)[]>([null, null, null]);
+  const [nodeMultiplier, setNodeMultiplier] = useState<number>(1.15);
+
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
   const [fCode, setFCode] = useState('');
@@ -111,6 +123,7 @@ export default function App() {
   const [fDye, setFDye] = useState('');
   const [fNotes, setFNotes] = useState('');
   const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
+  const [fStats, setFStats] = useState<Card['stats'] | undefined>(undefined);
 
   // Parser text area
   const [discordText, setDiscordText] = useState('');
@@ -249,9 +262,28 @@ export default function App() {
       work: !wEnd || n >= wEnd,
     });
 
+    const w = localStorage.getItem(`cartoteca:${user.uid}:workers`);
+    if (w) setWorkerSlotIds(JSON.parse(w));
+    const m = localStorage.getItem(`cartoteca:${user.uid}:nodemult`);
+    if (m) setNodeMultiplier(parseFloat(m));
+
     const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
   }, [user]);
+
+  const handleSetWorker = (index: number, cardId: string | null) => {
+    if (!user) return;
+    const newSlots = [...workerSlotIds];
+    newSlots[index] = cardId;
+    setWorkerSlotIds(newSlots);
+    localStorage.setItem(`cartoteca:${user.uid}:workers`, JSON.stringify(newSlots));
+  };
+
+  const handleSetNodeMultiplier = (val: number) => {
+    if (!user) return;
+    setNodeMultiplier(val);
+    localStorage.setItem(`cartoteca:${user.uid}:nodemult`, val.toString());
+  };
 
   useEffect(() => {
     const checkAlarm = (type: string, end: number | null) => {
@@ -492,6 +524,35 @@ export default function App() {
     }
   }
 
+  const handleParseKiwi = async () => {
+    try {
+      const text = await navigator.clipboard.readText();
+      const getStat = (name: string) => {
+        const m = text.match(new RegExp(`${name}:?\\s*\\*?\\*?([A-S0-9]+)\\*?\\*?`, 'i'));
+        return m ? m[1].toUpperCase() : 'E';
+      };
+      
+      const parsedStats = {
+        toughness: getStat('Toughness'),
+        quickness: getStat('Quickness'),
+        purity: getStat('Purity'),
+        style: getStat('Style'),
+        wellness: getStat('Wellness'),
+        appeal: getStat('Appeal')
+      };
+      
+      if (Object.values(parsedStats).every(v => v === 'E') && !text.toLowerCase().includes('toughness')) {
+        alert("Teks tidak valid! Pastikan Anda meng-copy balasan k!wi (Work Info) dari bot Karuta.");
+        return;
+      }
+      
+      setFStats(parsedStats);
+      alert("Berhasil ekstrak status pekerja k!wi!");
+    } catch (e) {
+      alert("Gagal membaca clipboard. Mohon izinkan akses di browser atau paste manual lalu gunakan fitur lain.");
+    }
+  };
+
   function mapConditionString(str: string): string | null {
     const s = str.trim().toLowerCase();
     if (['mint', 'mt'].includes(s)) return 'Mint';
@@ -524,6 +585,7 @@ export default function App() {
       setFFrame(card.frame);
       setFDye(card.dye);
       setFNotes(card.notes);
+      setFStats(card.stats);
       
       const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       setCardSelectedTags(tagsArray);
@@ -543,6 +605,7 @@ export default function App() {
       setFFrame('');
       setFDye('');
       setFNotes('');
+      setFStats(undefined);
       setCardSelectedTags([]);
     }
     setIsCardModalOpen(true);
@@ -567,6 +630,7 @@ export default function App() {
       dye: fDye.trim(),
       tags: cardSelectedTags.join(', '),
       notes: fNotes.trim(),
+      stats: fStats,
       createdAt: cardFormId ? (cards.find(c => c.id === cardFormId)?.createdAt || Date.now()) : Date.now()
     };
 
@@ -1128,6 +1192,7 @@ export default function App() {
         <nav className="tabs">
           <button className={`tab-btn ${activeTab === 'collection' ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Koleksi</button>
           <button className={`tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
+          <button className={`tab-btn ${activeTab === 'workers' ? 'active' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Pekerja</button>
           <button className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
           <button className={`tab-btn ${activeTab === 'tags-manager' ? 'active' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>
         </nav>
@@ -1494,6 +1559,99 @@ export default function App() {
             </div>
           )}
 
+          {/* TAB: WORKER OPTIMIZER */}
+          {activeTab === 'workers' && (
+            <div className="stats-grid">
+              <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+                <h3 style={{ marginBottom: '16px' }}>💼 Kalkulator Pekerja (Node Optimizer)</h3>
+                <p style={{ color: 'var(--ink-soft)', fontSize: '13px', marginBottom: '20px' }}>
+                  Pilih 3 kartu pekerja terbaik Anda, masukkan estimasi Node Multiplier, dan lihat potensi Bits yang dihasilkan.
+                </p>
+                
+                <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', overflowX: 'auto' }}>
+                  {[0, 1, 2].map(slotIdx => {
+                    const card = cards.find(c => c.id === workerSlotIds[slotIdx]);
+                    return (
+                      <div key={slotIdx} style={{ flex: 1, minWidth: '150px', padding: '16px', background: '#1c1912', border: '1px dashed #3a3327', borderRadius: '8px', textAlign: 'center' }}>
+                        <h4 style={{ color: '#9c8f76', marginBottom: '12px' }}>Pekerja {slotIdx + 1}</h4>
+                        {card ? (
+                          <>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#e8dbce', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.name}</div>
+                            <div style={{ fontSize: '12px', color: '#d8923e', marginBottom: '12px', fontFamily: 'monospace' }}>Effort: {card.effort || 0}</div>
+                            {card.stats && (
+                              <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '12px' }}>
+                                {Object.entries(card.stats).map(([k,v]) => (
+                                  <div key={k} style={{ fontSize: '9px', background: '#2a251b', padding: '2px 4px', borderRadius: '2px', color: v === 'S' ? '#d8923e' : v === 'A' ? '#5ea396' : '#e8dbce' }}>
+                                    {k[0].toUpperCase()}:{v}
+                                  </div>
+                                ))}
+                              </div>
+                            )}
+                            <button className="btn secondary" style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }} onClick={() => handleSetWorker(slotIdx, null)}>Lepas</button>
+                          </>
+                        ) : (
+                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Slot Kosong</div>
+                        )}
+                      </div>
+                    );
+                  })}
+                </div>
+
+                <div style={{ background: '#1c1912', padding: '20px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
+                  <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+                    <div style={{ fontSize: '14px', color: '#9c8f76' }}>Node Multiplier:</div>
+                    <input 
+                      type="number" 
+                      step="0.01" 
+                      min="0"
+                      value={nodeMultiplier} 
+                      onChange={e => handleSetNodeMultiplier(Number(e.target.value))}
+                      style={{ width: '80px', padding: '8px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', borderRadius: '4px' }}
+                    />
+                  </div>
+                  <div style={{ textAlign: 'right' }}>
+                    <div style={{ fontSize: '12px', color: '#9c8f76', marginBottom: '4px' }}>Estimasi Bit per Drop:</div>
+                    <div style={{ fontSize: '24px', fontWeight: 700, color: '#5ea396', fontFamily: 'monospace' }}>
+                      {Math.round(workerSlotIds.map(id => cards.find(c => c.id === id)?.effort || 0).reduce((a, b) => a + b, 0) * nodeMultiplier)} 🔵
+                    </div>
+                  </div>
+                </div>
+              </div>
+
+              <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
+                <h4 style={{ marginBottom: '16px' }}>Daftar Kartu Pekerja Anda</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Klik kartu di bawah ini untuk menugaskannya ke slot yang kosong (Hanya menampilkan kartu dengan centang 'Worker' atau memiliki nilai Effort tinggi).</p>
+                <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '16px' }}>
+                  {cards.filter(c => c.isWorker || c.tags.includes('worker') || c.tags.includes('deck-1') || (c.effort && c.effort > 0)).sort((a,b) => (b.effort||0)-(a.effort||0)).slice(0, 50).map(c => {
+                    const isUsed = workerSlotIds.includes(c.id);
+                    return (
+                      <div 
+                        key={c.id} 
+                        onClick={() => {
+                          if (!isUsed) {
+                            const emptyIdx = workerSlotIds.findIndex(id => id === null);
+                            if (emptyIdx !== -1) handleSetWorker(emptyIdx, c.id);
+                            else handleSetWorker(2, c.id); // overwrite 3rd slot if full
+                          }
+                        }}
+                        style={{ 
+                          minWidth: '120px', maxWidth: '140px', padding: '12px', background: isUsed ? '#2a251b' : '#1c1912', border: '1px solid #3a3327', 
+                          borderRadius: '8px', cursor: isUsed ? 'not-allowed' : 'pointer', opacity: isUsed ? 0.5 : 1, transition: '0.2s'
+                        }}
+                      >
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8dbce', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+                        <div style={{ fontSize: '14px', color: '#d8923e', fontWeight: 'bold', fontFamily: 'monospace' }}>{c.effort || 0} E</div>
+                      </div>
+                    );
+                  })}
+                  {cards.length > 0 && cards.filter(c => c.isWorker || (c.effort && c.effort > 0)).length === 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Tidak ada kartu yang ditandai sebagai Worker atau memiliki nilai effort.</div>
+                  )}
+                </div>
+              </div>
+            </div>
+          )}
+
         </main>
 
         {/* FOOTER */}
@@ -1516,21 +1674,37 @@ export default function App() {
             {/* Parser Section */}
             <div className="parser-section">
               <details>
-                <summary>✨ <b>Auto-fill via Discord Text</b> (Paste info Keqing / Karuta)</summary>
+                <summary>✨ <b>Auto-fill via Discord Text</b> (Paste info Keqing / k!wi)</summary>
                 <div className="parser-body">
                   <textarea 
-                    placeholder="Tempel teks Discord di sini... Contoh: kd mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano" 
+                    placeholder="Tempel teks Discord di sini... (k!c atau k!wi)" 
                     rows={3}
                     value={discordText}
                     onChange={(e) => setDiscordText(e.target.value)}
                   />
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                     <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
-                    <button className="btn btn-sm" onClick={handleParseText}>Proses Teks</button>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button className="btn btn-sm secondary" onClick={handleParseKiwi}>Parse k!wi (Dari Clipboard)</button>
+                      <button className="btn btn-sm" onClick={handleParseText}>Parse k!c / Keqing</button>
+                    </div>
                   </div>
                 </div>
               </details>
             </div>
+            
+            {fStats && (
+              <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px dashed #3a3327', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
+                <div style={{ width: '100%', fontSize: '11px', color: '#9c8f76', textAlign: 'center', marginBottom: '4px' }}>Status Pekerja (k!wi)</div>
+                {Object.entries(fStats).map(([k, v]) => (
+                  <div key={k} style={{ background: '#2a251b', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <span style={{ color: '#9c8f76', textTransform: 'capitalize' }}>{k.substring(0,3)}</span>
+                    <span style={{ color: v === 'S' ? '#d8923e' : v === 'A' ? '#5ea396' : '#fff', fontWeight: 'bold' }}>{v}</span>
+                  </div>
+                ))}
+                <button className="btn secondary btn-sm" style={{ padding: '2px 6px', fontSize: '10px' }} onClick={() => setFStats(undefined)}>Hapus Status</button>
+              </div>
+            )}
 
             <div className="field-row-3">
               <div className="field">
