@@ -803,6 +803,14 @@ export default function App() {
       priceHistory: currentPriceHistory,
       createdAt: oldCard ? oldCard.createdAt : Date.now()
     };
+    
+    // Remove undefined values to prevent Firestore crashes
+    if (data.stats === undefined) {
+      delete data.stats;
+    }
+    if (data.priceHistory === undefined) {
+      delete data.priceHistory;
+    }
 
     if (isFirebaseConfigured() && user) {
       if (cardFormId) {
