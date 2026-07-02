@@ -40,6 +40,10 @@ interface Card {
     wellness: string;
     appeal: string;
   };
+  priceHistory?: {
+    date: number;
+    price: number;
+  }[];
 }
 
 interface WishlistItem {
@@ -614,6 +618,19 @@ export default function App() {
   async function handleSaveCard() {
     if (!fName.trim()) return;
 
+    const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : null;
+    const currentPriceHistory = oldCard?.priceHistory ? [...oldCard.priceHistory] : [];
+    
+    // Seed history if missing
+    if (oldCard && oldCard.price !== null && currentPriceHistory.length === 0) {
+      currentPriceHistory.push({ date: oldCard.createdAt, price: oldCard.price });
+    }
+
+    const parsedNewPrice = fPrice !== '' ? Number(fPrice) : null;
+    if (parsedNewPrice !== null && parsedNewPrice !== oldCard?.price) {
+      currentPriceHistory.push({ date: Date.now(), price: parsedNewPrice });
+    }
+
     const data: Omit<Card, 'id'> = {
       code: fCode.trim().toLowerCase(),
       print: fPrint !== '' ? Number(fPrint) : null,
@@ -623,7 +640,7 @@ export default function App() {
       condition: fCondition,
       effort: fEffort !== '' ? Number(fEffort) : null,
       wish: fWish !== '' ? Number(fWish) : null,
-      price: fPrice !== '' ? Number(fPrice) : null,
+      price: parsedNewPrice,
       isWorker: fIsWorker,
       isTrade: fIsTrade,
       frame: fFrame.trim(),
@@ -631,7 +648,8 @@ export default function App() {
       tags: cardSelectedTags.join(', '),
       notes: fNotes.trim(),
       stats: fStats,
-      createdAt: cardFormId ? (cards.find(c => c.id === cardFormId)?.createdAt || Date.now()) : Date.now()
+      priceHistory: currentPriceHistory,
+      createdAt: oldCard ? oldCard.createdAt : Date.now()
     };
 
     if (isFirebaseConfigured() && user) {
@@ -1756,6 +1774,19 @@ export default function App() {
               <div className="field">
                 <label>Estimasi Harga (Ticket)</label>
                 <input type="number" placeholder="mis. 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
+                {cardFormId && cards.find(c => c.id === cardFormId)?.priceHistory && cards.find(c => c.id === cardFormId)!.priceHistory!.length > 0 && (
+                  <div style={{ background: '#17140f', padding: '8px', borderRadius: '4px', border: '1px solid #3a3327', marginTop: '8px' }}>
+                    <div style={{ fontSize: '10px', color: '#9c8f76', marginBottom: '4px' }}>📉 Riwayat Perubahan Harga</div>
+                    <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60px', overflowY: 'auto' }}>
+                      {cards.find(c => c.id === cardFormId)!.priceHistory!.map((h, i) => (
+                        <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8dbce', borderBottom: '1px dashed #3a3327', paddingBottom: '2px' }}>
+                          <span style={{ color: 'var(--ink-soft)' }}>{new Date(h.date).toLocaleDateString()}</span>
+                          <span style={{ fontWeight: 'bold', color: '#d8923e' }}>{h.price} 🎟️</span>
+                        </div>
+                      ))}
+                    </div>
+                  </div>
+                )}
               </div>
               <div className="field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
                 <label style={{ marginBottom: '8px' }}>Status / Posisi</label>
