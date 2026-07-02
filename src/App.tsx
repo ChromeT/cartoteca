@@ -949,11 +949,12 @@ export default function App() {
   function triggerExportJSON() {
     const exportData = {
       app: 'cartoteca',
-      version: '1.2',
+      version: '1.3',
       exportedAt: new Date().toISOString(),
       cards,
       wishlist,
-      customTags
+      customTags,
+      inventory
     };
 
     const dataStr = "data:text/json;charset=utf-8," + encodeURIComponent(JSON.stringify(exportData, null, 2));
@@ -989,23 +990,55 @@ export default function App() {
       return;
     }
 
-    if (confirm('Menimpa seluruh data saat ini dengan isi file backup?')) {
+    if (confirm('Perhatian: Fitur ini akan menimpa dan menggabungkan data Anda saat ini dengan isi file backup. Proses di cloud (jika aktif) mungkin memakan waktu. Lanjutkan?')) {
       const importedCards = backupFileContent.cards || [];
       const importedWishlist = backupFileContent.wishlist || [];
       const importedTags = backupFileContent.customTags || [];
+      const importedInventory = backupFileContent.inventory || { tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 };
 
+      // Local State & LocalStorage update first for snappy UI
       setCards(importedCards);
       setWishlist(importedWishlist);
       setCustomTags(importedTags);
+      setInventory(importedInventory);
 
       syncLocal('cartoteca:cards', importedCards);
       syncLocal('cartoteca:wishlist', importedWishlist);
       syncLocal('cartoteca:tags', importedTags);
+      localStorage.setItem(`cartoteca:${user?.uid}:inventory`, JSON.stringify(importedInventory));
 
-      if (isFirebaseConfigured()) {
-        alert("Data berhasil dipulihkan secara lokal di web browser. Silakan sinkronisasikan ulang database Firestore Anda.");
+      if (isFirebaseConfigured() && user) {
+        try {
+          alert("Mulai menyinkronkan data ke Cloud Firestore. Jangan tutup aplikasi...");
+          
+          // Use writeBatch to write in chunks of 400 (limit is 500)
+          const syncChunks = async (items: any[], path: string) => {
+            for (let i = 0; i < items.length; i += 400) {
+              const chunk = items.slice(i, i + 400);
+              const batch = writeBatch(db);
+              for (const item of chunk) {
+                batch.set(doc(db, 'users', user.uid, path, item.id), item);
+              }
+              await batch.commit();
+            }
+          };
+
+          await syncChunks(importedCards, 'cards');
+          await syncChunks(importedWishlist, 'wishlist');
+          
+          const tagBatch = writeBatch(db);
+          importedTags.forEach((t: any) => {
+            tagBatch.set(doc(db, 'users', user.uid, 'tags', t.name.toLowerCase()), t);
+          });
+          tagBatch.set(doc(db, 'users', user.uid, 'inventory', 'main'), importedInventory);
+          await tagBatch.commit();
+          
+          alert("Sinkronisasi Cloud Selesai! Data berhasil dipulihkan.");
+        } catch (e: any) {
+          alert("Gagal sinkronisasi cloud: " + e.message);
+        }
       } else {
-        alert('Data berhasil dipulihkan!');
+        alert('Data berhasil dipulihkan secara lokal!');
       }
       setIsBackupModalOpen(false);
     }
@@ -1171,6 +1204,21 @@ export default function App() {
                 onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
               >
                 🎒 Inventory
+              </button>
+              <button
+                onClick={() => setIsBackupModalOpen(true)}
+                title="Data Backup"
+                style={{
+                  background: 'transparent', border: '1px solid #3a3327',
+                  borderRadius: '6px', padding: '4px 10px',
+                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                  fontWeight: 600, color: '#5ea396', cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#5ea396'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#5ea396'; }}
+              >
+                💾 Backup
               </button>
               <button
                 onClick={() => setIsProfileModalOpen(true)}
@@ -1967,6 +2015,56 @@ export default function App() {
             <div className="modal-actions">
               <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Batal</button>
               <button className="btn" onClick={handleBatchSaveTags}>Terapkan</button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BACKUP & RESTORE */}
+      {isBackupModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '400px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: '0', color: '#5ea396', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                💾 Data Backup & Restore
+              </h3>
+              <button onClick={() => setIsBackupModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Export (Cadangkan Data)</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Unduh seluruh koleksi kartu, wishlist, dan pengaturan Anda sebagai file JSON.</p>
+                <button className="btn" onClick={triggerExportJSON} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
+                  📥 Download File JSON
+                </button>
+              </div>
+
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Import (Pulihkan Data)</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Pilih file JSON backup untuk memulihkan koleksi Anda. (Perhatian: akan menimpa data yang ada secara lokal).</p>
+                <input 
+                  type="file" 
+                  accept=".json" 
+                  onChange={handleFileSelect} 
+                  ref={fileInputRef}
+                  style={{ display: 'none' }}
+                />
+                <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
+                  <button className="btn secondary" onClick={() => fileInputRef.current?.click()} style={{ padding: '6px 12px', fontSize: '12px' }}>Pilih File...</button>
+                  <span style={{ fontSize: '11px', color: '#9c8f76', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
+                    {backupFileName}
+                  </span>
+                </div>
+                <button 
+                  className="btn" 
+                  style={{ width: '100%', background: backupFileContent ? '#b85c5c' : '#3a3327', color: backupFileContent ? '#fff' : '#9c8f76', opacity: backupFileContent ? 1 : 0.5, cursor: backupFileContent ? 'pointer' : 'not-allowed' }} 
+                  onClick={handleApplyRestore}
+                  disabled={!backupFileContent}
+                >
+                  ⚠️ Mulai Pulihkan Data
+                </button>
+              </div>
             </div>
           </div>
         </div>
