@@ -92,6 +92,7 @@ export default function App() {
   const [grabEnd, setGrabEnd] = useState<number | null>(null);
   const [workEnd, setWorkEnd] = useState<number | null>(null);
   const [now, setNow] = useState(Date.now());
+  const [notified, setNotified] = useState<Record<string, boolean>>({ drop: true, grab: true, work: true });
 
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
@@ -234,13 +235,42 @@ export default function App() {
       const v = localStorage.getItem(`cartoteca:${user.uid}:${key}`);
       return v ? parseInt(v, 10) : null;
     };
-    setDropEnd(loadT('drop'));
-    setGrabEnd(loadT('grab'));
-    setWorkEnd(loadT('work'));
+    const dEnd = loadT('drop');
+    const gEnd = loadT('grab');
+    const wEnd = loadT('work');
+    setDropEnd(dEnd);
+    setGrabEnd(gEnd);
+    setWorkEnd(wEnd);
+
+    const n = Date.now();
+    setNotified({
+      drop: !dEnd || n >= dEnd,
+      grab: !gEnd || n >= gEnd,
+      work: !wEnd || n >= wEnd,
+    });
 
     const iv = setInterval(() => setNow(Date.now()), 1000);
     return () => clearInterval(iv);
   }, [user]);
+
+  useEffect(() => {
+    const checkAlarm = (type: string, end: number | null) => {
+      if (end && now >= end && !notified[type]) {
+        if (Notification.permission === 'granted') {
+          new Notification(`Karuta: ${type.toUpperCase()} is Ready!`, { icon: '/favicon.ico' });
+        }
+        try {
+          const audio = new Audio('https://www.myinstants.com/media/sounds/discord-notification.mp3');
+          audio.volume = 0.5;
+          audio.play().catch(() => {});
+        } catch (e) {}
+        setNotified(p => ({ ...p, [type]: true }));
+      }
+    };
+    checkAlarm('drop', dropEnd);
+    checkAlarm('grab', grabEnd);
+    checkAlarm('work', workEnd);
+  }, [now, dropEnd, grabEnd, workEnd, notified]);
 
   const startTimer = (type: 'drop' | 'grab' | 'work', minutes: number) => {
     if (!user) return;
@@ -249,6 +279,7 @@ export default function App() {
     if (type === 'drop') setDropEnd(target);
     if (type === 'grab') setGrabEnd(target);
     if (type === 'work') setWorkEnd(target);
+    setNotified(p => ({ ...p, [type]: false }));
     if (Notification.permission === 'default') Notification.requestPermission();
   };
 
