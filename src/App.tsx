@@ -112,6 +112,11 @@ export default function App() {
 
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
+  const [bulkImportFeedback, setBulkImportFeedback] = useState({ text: '', isError: false, isSuccess: false });
+
+  // Custom Tags Modal
+  const [isTagsModalOpen, setIsTagsModalOpen] = useState(false);
+  
   const [viewMode, setViewMode] = useState<'list' | 'album'>(
     (localStorage.getItem('cartoteca:viewMode') as 'list' | 'album') || 'album'
   );
@@ -469,11 +474,16 @@ export default function App() {
 
       let pName = 'Unknown Character';
       let pSeries = '';
-      if (unassigned.length >= 2) {
-        pSeries = unassigned.pop() || '';
-        pName = unassigned.join(' ').trim();
-      } else if (unassigned.length === 1) {
-        pName = unassigned[0];
+      
+      // Filter out purely decorative strings like ★★☆☆
+      const validUnassigned = unassigned.filter(u => !u.match(/^[★☆]+$/));
+
+      if (validUnassigned.length >= 2) {
+        // First is Series, Second is Name (Based on standard Karuta format: Series · Name)
+        pSeries = validUnassigned[0];
+        pName = validUnassigned.slice(1).join(' ').trim();
+      } else if (validUnassigned.length === 1) {
+        pName = validUnassigned[0];
       }
 
       if (pCode && pName && pName !== 'Unknown Character') {
@@ -506,11 +516,11 @@ export default function App() {
     }
 
     if (newCards.length === 0) {
-      alert("Tidak ada kartu valid yang terdeteksi dari teks yang Anda masukkan.");
+      setBulkImportFeedback({ text: "❌ Tidak ada kartu valid yang terdeteksi dari teks yang Anda masukkan.", isError: true, isSuccess: false });
       return;
     }
 
-    if (!confirm(`Berhasil mendeteksi ${newCards.length} kartu! Tambahkan ke koleksi?`)) return;
+    setBulkImportFeedback({ text: `Memproses ${newCards.length} kartu... Mohon tunggu.`, isError: false, isSuccess: false });
 
     const mergedCards = [...cards, ...newCards];
     setCards(mergedCards);
@@ -529,16 +539,19 @@ export default function App() {
           }
         };
         await syncChunks(newCards);
-        alert(`${successCount} kartu berhasil diimpor & sinkron ke Cloud!`);
+        setBulkImportFeedback({ text: `✅ ${successCount} kartu berhasil diimpor & sinkron ke Cloud! Halaman akan dimuat ulang.`, isError: false, isSuccess: true });
       } catch (err: any) {
-        alert("Sebagian kartu mungkin belum tersinkron ke cloud: " + err.message);
+        setBulkImportFeedback({ text: `⚠️ Sebagian kartu belum tersinkron ke cloud: ${err.message}`, isError: true, isSuccess: false });
       }
     } else {
-      alert(`${successCount} kartu berhasil diimpor ke aplikasi!`);
+      setBulkImportFeedback({ text: `✅ ${successCount} kartu berhasil diimpor ke aplikasi!`, isError: false, isSuccess: true });
     }
 
-    setIsBulkImportModalOpen(false);
-    setBulkText('');
+    setTimeout(() => {
+      setIsBulkImportModalOpen(false);
+      setBulkText('');
+      setBulkImportFeedback({ text: '', isError: false, isSuccess: false });
+    }, 2500);
   }
 
   function handleParseText() {
@@ -2309,7 +2322,18 @@ export default function App() {
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
               />
-              <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }}>
+              
+              {bulkImportFeedback.text && (
+                <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                  background: bulkImportFeedback.isError ? '#b85c5c20' : bulkImportFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
+                  color: bulkImportFeedback.isError ? '#ff8c8c' : bulkImportFeedback.isSuccess ? '#5ea396' : '#d8923e',
+                  border: `1px solid ${bulkImportFeedback.isError ? '#b85c5c50' : bulkImportFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                }}>
+                  {bulkImportFeedback.text}
+                </div>
+              )}
+
+              <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }} disabled={!!bulkImportFeedback.text && !bulkImportFeedback.isError}>
                 🚀 Proses & Simpan Semua Kartu
               </button>
             </div>
