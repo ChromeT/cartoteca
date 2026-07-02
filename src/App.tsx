@@ -169,7 +169,7 @@ export default function App() {
   const isFirebaseConfigured = () => {
     try {
       // Check if db config is initialized and has a valid project ID
-      return db && (db as any)._databaseId && (db as any)._databaseId.projectId !== "YOUR_PROJECT_ID";
+      return db && db.app && db.app.options.projectId && db.app.options.projectId !== "YOUR_PROJECT_ID";
     } catch {
       return false;
     }
@@ -514,7 +514,7 @@ export default function App() {
 
     const mergedCards = [...cards, ...newCards];
     setCards(mergedCards);
-    syncLocal('cartoteca:cards', mergedCards);
+    syncLocal('cards', mergedCards);
 
     if (isFirebaseConfigured() && user) {
       try {
@@ -819,7 +819,7 @@ export default function App() {
         updatedCards = [...cards, newCard];
       }
       setCards(updatedCards);
-      syncLocal('cartoteca:cards', updatedCards);
+      syncLocal('cards', updatedCards);
     }
 
     setIsCardModalOpen(false);
@@ -834,7 +834,7 @@ export default function App() {
     } else {
       const updated = cards.filter(c => c.id !== id);
       setCards(updated);
-      syncLocal('cartoteca:cards', updated);
+      syncLocal('cards', updated);
     }
     
     // Remove from selected set
@@ -889,7 +889,7 @@ export default function App() {
         updatedWish = [...wishlist, newWish];
       }
       setWishlist(updatedWish);
-      syncLocal('cartoteca:wishlist', updatedWish);
+      syncLocal('wishlist', updatedWish);
     }
 
     setIsWishModalOpen(false);
@@ -903,7 +903,7 @@ export default function App() {
     } else {
       const updated = wishlist.filter(w => w.id !== id);
       setWishlist(updated);
-      syncLocal('cartoteca:wishlist', updated);
+      syncLocal('wishlist', updated);
     }
   }
 
@@ -955,7 +955,7 @@ export default function App() {
       await setDoc(tagDocRef, newTag);
     } else {
       setCustomTags(list);
-      syncLocal('cartoteca:tags', list);
+      syncLocal('tags', list);
     }
 
     setTagNameInput('');
@@ -968,7 +968,7 @@ export default function App() {
     // Remove from custom tags config list
     const updatedTags = customTags.filter(t => t.name.toLowerCase() !== name.toLowerCase());
     setCustomTags(updatedTags);
-    syncLocal('cartoteca:tags', updatedTags);
+    syncLocal('tags', updatedTags);
 
     // Strip tags from all cards
     const updatedCards = cards.map(c => {
@@ -979,7 +979,7 @@ export default function App() {
       return c;
     });
     setCards(updatedCards);
-    syncLocal('cartoteca:cards', updatedCards);
+    syncLocal('cards', updatedCards);
 
     if (isFirebaseConfigured() && user) {
       const tagDocRef = doc(db, 'users', user.uid, 'tags', name.toLowerCase());
@@ -1031,7 +1031,7 @@ export default function App() {
     } else {
       const updated = cards.filter(c => !selectedCards.has(c.id));
       setCards(updated);
-      syncLocal('cartoteca:cards', updated);
+      syncLocal('cards', updated);
     }
     setSelectedCards(new Set());
   }
@@ -1067,7 +1067,7 @@ export default function App() {
         return c;
       });
       setCards(updated);
-      syncLocal('cartoteca:cards', updated);
+      syncLocal('cards', updated);
     }
 
     setIsBatchTagModalOpen(false);
@@ -1154,10 +1154,10 @@ export default function App() {
       setCustomTags(importedTags);
       setInventory(importedInventory);
 
-      syncLocal('cartoteca:cards', importedCards);
-      syncLocal('cartoteca:wishlist', importedWishlist);
-      syncLocal('cartoteca:tags', importedTags);
-      localStorage.setItem(`cartoteca:${user?.uid}:inventory`, JSON.stringify(importedInventory));
+      syncLocal('cards', importedCards);
+      syncLocal('wishlist', importedWishlist);
+      syncLocal('tags', importedTags);
+      syncLocal('inv', importedInventory);
 
       if (isFirebaseConfigured() && user) {
         try {
