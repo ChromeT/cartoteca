@@ -9,6 +9,7 @@ import {
   updateDoc, 
   deleteDoc, 
   doc, 
+  setDoc,
   writeBatch 
 } from 'firebase/firestore';
 
@@ -48,12 +49,21 @@ interface CustomTag {
   desc: string;
 }
 
+interface Inventory {
+  tickets: number;
+  gold: number;
+  gems: number;
+  dusts: number;
+  bits: number;
+}
+
 export default function App() {
   // --- STATE ---
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
+  const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 });
   const [activeTab, setActiveTab] = useState<string>('collection');
   
   // Filters & Search
@@ -75,6 +85,7 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isBatchTagModalOpen, setIsBatchTagModalOpen] = useState(false);
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
+  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
   // Form Fields - Card
   const [cardFormId, setCardFormId] = useState('');
@@ -174,10 +185,20 @@ export default function App() {
         }
       });
 
+      // Real-time inventory sync
+      const unsubInv = onSnapshot(doc(db, 'users', user.uid, 'inventory', 'main'), (docSnap) => {
+        if (docSnap.exists()) {
+          setInventory(docSnap.data() as Inventory);
+        } else {
+          setInventory({ tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 });
+        }
+      });
+
       return () => {
         unsubCards();
         unsubWish();
         unsubTags();
+        unsubInv();
       };
     } else {
       console.log('Using LocalStorage fallback.');
@@ -194,6 +215,9 @@ export default function App() {
       } else {
         setCustomTags(getDefaultTags());
       }
+      
+      const savedInv = localStorage.getItem(`cartoteca:${uid}:inv`);
+      if (savedInv) setInventory(JSON.parse(savedInv));
     }
   }, []);
 
@@ -208,8 +232,17 @@ export default function App() {
 
   // LocalStorage save sync helper
   const syncLocal = (key: string, data: any) => {
-    if (!isFirebaseConfigured()) {
-      localStorage.setItem(key, JSON.stringify(data));
+    if (!isFirebaseConfigured() && user) {
+      localStorage.setItem(`cartoteca:${user.uid}:${key}`, JSON.stringify(data));
+    }
+  };
+
+  const handleUpdateInventory = async (newInv: Inventory) => {
+    setInventory(newInv);
+    if (isFirebaseConfigured() && user) {
+      await setDoc(doc(db, 'users', user.uid, 'inventory', 'main'), newInv, { merge: true });
+    } else {
+      syncLocal('inv', newInv);
     }
   };
 
@@ -949,6 +982,21 @@ export default function App() {
               <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#9c8f76' }}>
                 👤 {displayName}
               </span>
+              <button
+                onClick={() => setIsInventoryModalOpen(true)}
+                title="Inventory"
+                style={{
+                  background: 'transparent', border: '1px solid #3a3327',
+                  borderRadius: '6px', padding: '4px 10px',
+                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                  fontWeight: 600, color: '#e8dbce', cursor: 'pointer',
+                  transition: 'all 0.15s'
+                }}
+                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#3a3327'; }}
+                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
+              >
+                🎒 Inventory
+              </button>
               <button
                 onClick={() => setIsProfileModalOpen(true)}
                 title="Profil"
@@ -1697,6 +1745,79 @@ export default function App() {
                   </div>
                 </div>
               </div>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: INVENTORY TRACKER */}
+      {isInventoryModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '360px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: '0', color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                🎒 Inventory
+              </h3>
+              <button onClick={() => setIsInventoryModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* Tickets */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🎟️ Tickets</span>
+                <input 
+                  type="number" 
+                  value={inventory.tickets}
+                  onChange={e => handleUpdateInventory({ ...inventory, tickets: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Gold */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🪙 Gold</span>
+                <input 
+                  type="number" 
+                  value={inventory.gold}
+                  onChange={e => handleUpdateInventory({ ...inventory, gold: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Gems */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>💠 Gems</span>
+                <input 
+                  type="number" 
+                  value={inventory.gems}
+                  onChange={e => handleUpdateInventory({ ...inventory, gems: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Dusts */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🧪 Dusts</span>
+                <input 
+                  type="number" 
+                  value={inventory.dusts}
+                  onChange={e => handleUpdateInventory({ ...inventory, dusts: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Bits */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🔵 Bits</span>
+                <input 
+                  type="number" 
+                  value={inventory.bits}
+                  onChange={e => handleUpdateInventory({ ...inventory, bits: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
             </div>
           </div>
         </div>
