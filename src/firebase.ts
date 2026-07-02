@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { getFirestore } from "firebase/firestore";
+import { initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 
 // TODO: Ganti dengan kredensial Firebase Project milik Anda sendiri
@@ -18,7 +18,10 @@ const firebaseConfig = {
 const app = initializeApp(firebaseConfig);
 
 // Initialize Services
-export const db = getFirestore(app);
+// Gunakan long-polling untuk mengatasi masalah blocking WebChannel (misal: di Firefox ETP / uBlock)
+export const db = initializeFirestore(app, {
+  experimentalForceLongPolling: true
+});
 export const auth = getAuth(app);
 
 export default app;
