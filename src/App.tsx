@@ -1491,7 +1491,6 @@ export default function App() {
                 Keluar
               </button>
             </div>
-          </div>
         </header>
 
         {/* NAVIGATION TABS */}
