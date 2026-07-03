@@ -2751,11 +2751,11 @@ export default function App() {
             <div className="form-group" style={{ marginBottom: '12px' }}>
               <label>Pilih Jenis Command</label>
               <select value={commandType} onChange={(e) => setCommandType(e.target.value)} className="form-control">
-                <option value="mt">Multi Tag (k!mt)</option>
-                <option value="mut">Multi Untag (k!mut)</option>
-                <option value="mb">Multi Burn (k!mb)</option>
-                <option value="ta">Trade Add (k!ta)</option>
-                <option value="wi">Worker Info (k!wi)</option>
+                <option value="mt">Multi Tag (k tag)</option>
+                <option value="mut">Multi Untag (k untag)</option>
+                <option value="mb">Multi Burn (k mb)</option>
+                <option value="ta">Trade Add (k ta)</option>
+                <option value="wi">Worker Info (k wi)</option>
               </select>
             </div>
 
@@ -2776,15 +2776,15 @@ export default function App() {
               const selectedCodes = Array.from(selectedCards).map(id => cards.find(c => c.id === id)?.code).filter(Boolean);
               let cmdStr = '';
               if (commandType === 'mt') {
-                cmdStr = `k!mt ${commandArg} ${selectedCodes.join(' ')}`.trim();
+                cmdStr = `k tag ${commandArg} ${selectedCodes.join(' ')}`.trim();
               } else if (commandType === 'mut') {
-                cmdStr = `k!mut ${commandArg} ${selectedCodes.join(' ')}`.trim();
+                cmdStr = `k untag ${commandArg} ${selectedCodes.join(' ')}`.trim();
               } else if (commandType === 'mb') {
-                cmdStr = `k!mb ${selectedCodes.join(' ')}`;
+                cmdStr = `k mb ${selectedCodes.join(' ')}`;
               } else if (commandType === 'ta') {
-                cmdStr = `k!ta ${selectedCodes.join(' ')}`;
+                cmdStr = `k ta ${selectedCodes.join(' ')}`;
               } else if (commandType === 'wi') {
-                cmdStr = `k!wi ${selectedCodes.join(' ')}`;
+                cmdStr = `k wi ${selectedCodes.join(' ')}`;
               }
               
               return (
