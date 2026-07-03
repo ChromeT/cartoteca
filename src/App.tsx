@@ -199,6 +199,8 @@ export default function App() {
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isBatchTagModalOpen, setIsBatchTagModalOpen] = useState(false);
   const [isCommandModalOpen, setIsCommandModalOpen] = useState(false);
+  const [isBurnResolveModalOpen, setIsBurnResolveModalOpen] = useState(false);
+  const [burnDiscordText, setBurnDiscordText] = useState('');
   const [commandType, setCommandType] = useState('mt');
   const [commandArg, setCommandArg] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
@@ -1848,6 +1850,7 @@ export default function App() {
                   <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
                   <div className="batch-actions">
                     <button className="btn btn-sm" onClick={() => setIsCommandModalOpen(true)}>Buat Command</button>
+                    <button className="btn btn-sm" style={{ background: 'var(--cherry)', color: 'white' }} onClick={() => setIsBurnResolveModalOpen(true)}>Proses Burn</button>
                     <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Tambah Tag</button>
                     <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Hapus Terpilih</button>
                     <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Batal</button>
@@ -2805,6 +2808,99 @@ export default function App() {
                 </div>
               );
             })()}
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BURN RESOLVER */}
+      {isBurnResolveModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '400px' }}>
+            <div className="modal-header">
+              <h3>Proses Burn</h3>
+              <button className="close-modal-btn" onClick={() => setIsBurnResolveModalOpen(false)}>&times;</button>
+            </div>
+            <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: 0 }}>
+              Tempel pesan respons dari bot Karuta setelah Anda melakukan <code>k!mb</code> untuk mendapatkan material secara otomatis dan menghapus {selectedCards.size} kartu dari koleksi Cartoteca Anda.
+            </p>
+            <div className="form-group">
+              <textarea 
+                className="form-control"
+                placeholder="Misal: 🔥 You burned 5 cards and received 100 Gold and 15 Dust."
+                rows={4}
+                value={burnDiscordText}
+                onChange={(e) => setBurnDiscordText(e.target.value)}
+              />
+            </div>
+            
+            {(() => {
+              if (!burnDiscordText.trim()) return null;
+              let gold = 0, dusts = 0, tickets = 0, bits = 0;
+              const gMatch = burnDiscordText.match(/(\d+)\s+Gold/i);
+              if (gMatch) gold = parseInt(gMatch[1]);
+              const dMatch = burnDiscordText.match(/(\d+)\s+Dust/i);
+              if (dMatch) dusts = parseInt(dMatch[1]);
+              const tMatch = burnDiscordText.match(/(\d+)\s+Ticket/i);
+              if (tMatch) tickets = parseInt(tMatch[1]);
+              const bMatch = burnDiscordText.match(/(\d+)\s+Bit/i);
+              if (bMatch) bits = parseInt(bMatch[1]);
+              
+              if (gold === 0 && dusts === 0 && tickets === 0 && bits === 0) {
+                return <p style={{ fontSize: '12px', color: 'var(--cherry)' }}>Tidak ada hadiah terdeteksi di teks.</p>;
+              }
+
+              return (
+                <div style={{ background: 'var(--paper-dark)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)', marginBottom: '12px' }}>
+                  <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Hasil Deteksi:</p>
+                  <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--jade-soft)' }}>
+                    {gold > 0 && <li>+{gold} Gold</li>}
+                    {dusts > 0 && <li>+{dusts} Dust</li>}
+                    {tickets > 0 && <li>+{tickets} Ticket</li>}
+                    {bits > 0 && <li>+{bits} Bit</li>}
+                  </ul>
+                  <p style={{ fontSize: '12px', color: 'var(--cherry)', margin: '8px 0 0 0', fontWeight: 'bold' }}>
+                    Peringatan: {selectedCards.size} kartu terpilih akan dihapus dari Cartoteca.
+                  </p>
+                </div>
+              );
+            })()}
+
+            <div className="modal-actions" style={{ marginTop: '16px' }}>
+              <button className="btn secondary" onClick={() => setIsBurnResolveModalOpen(false)}>Batal</button>
+              <button 
+                className="btn" 
+                style={{ background: 'var(--cherry)' }}
+                disabled={!burnDiscordText.trim()}
+                onClick={() => {
+                  let gold = 0, dusts = 0, tickets = 0, bits = 0;
+                  const gMatch = burnDiscordText.match(/(\d+)\s+Gold/i);
+                  if (gMatch) gold = parseInt(gMatch[1]);
+                  const dMatch = burnDiscordText.match(/(\d+)\s+Dust/i);
+                  if (dMatch) dusts = parseInt(dMatch[1]);
+                  const tMatch = burnDiscordText.match(/(\d+)\s+Ticket/i);
+                  if (tMatch) tickets = parseInt(tMatch[1]);
+                  const bMatch = burnDiscordText.match(/(\d+)\s+Bit/i);
+                  if (bMatch) bits = parseInt(bMatch[1]);
+
+                  handleUpdateInventory({
+                    ...inventory,
+                    gold: inventory.gold + gold,
+                    dusts: inventory.dusts + dusts,
+                    tickets: inventory.tickets + tickets,
+                    bits: inventory.bits + bits
+                  });
+                  
+                  const newCards = cards.filter(c => !selectedCards.has(c.id));
+                  setCards(newCards);
+                  localStorage.setItem('cartoteca_cards', JSON.stringify(newCards));
+                  setSelectedCards(new Set());
+                  setBurnDiscordText('');
+                  setIsBurnResolveModalOpen(false);
+                }}
+              >
+                Selesaikan & Hapus Kartu
+              </button>
+            </div>
           </div>
         </div>
       )}
