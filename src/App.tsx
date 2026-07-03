@@ -1960,21 +1960,21 @@ export default function App() {
                           <div className="nc-bottom">
                             <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
                             <div className="nc-series">{c.series || 'Unknown'}</div>
-                            <div className="nc-meta" style={{ display: 'flex', justifyContent: 'space-between' }}>
-                              <div>
-                                <span>◈{c.edition || '?'}</span>
-                                <span style={{ margin: '0 4px' }}>|</span>
-                                <span>{c.condition}</span>
+                            <div className="nc-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
+                              <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', whiteSpace: 'nowrap' }}>
+                                <span style={{ flexShrink: 0 }}>◈{c.edition || '?'}</span>
+                                <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
+                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{c.condition}</span>
                                 {c.effort !== null && (
                                   <>
-                                    <span style={{ margin: '0 4px' }}>|</span>
-                                    <span>{c.effort} eff</span>
+                                    <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
+                                    <span style={{ flexShrink: 0 }}>{c.effort}&nbsp;eff</span>
                                   </>
                                 )}
                                 {c.wish !== null && (
                                   <>
-                                    <span style={{ margin: '0 4px' }}>|</span>
-                                    <span>♡ {c.wish.toLocaleString()}</span>
+                                    <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
+                                    <span style={{ flexShrink: 0 }}>♡&nbsp;{c.wish.toLocaleString()}</span>
                                   </>
                                 )}
                               </div>
