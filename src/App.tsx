@@ -198,6 +198,9 @@ export default function App() {
   const [isWishModalOpen, setIsWishModalOpen] = useState(false);
   const [isBackupModalOpen, setIsBackupModalOpen] = useState(false);
   const [isBatchTagModalOpen, setIsBatchTagModalOpen] = useState(false);
+  const [isCommandModalOpen, setIsCommandModalOpen] = useState(false);
+  const [commandType, setCommandType] = useState('mt');
+  const [commandArg, setCommandArg] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
@@ -1844,6 +1847,7 @@ export default function App() {
                 <div className="batch-panel">
                   <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
                   <div className="batch-actions">
+                    <button className="btn btn-sm" onClick={() => setIsCommandModalOpen(true)}>Buat Command</button>
                     <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Tambah Tag</button>
                     <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Hapus Terpilih</button>
                     <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Batal</button>
@@ -2728,6 +2732,79 @@ export default function App() {
               <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Batal</button>
               <button className="btn" onClick={handleBatchSaveTags}>Terapkan</button>
             </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: COMMAND COMPANION */}
+      {isCommandModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '450px' }}>
+            <div className="modal-header">
+              <h3>Command Companion</h3>
+              <button className="close-modal-btn" onClick={() => setIsCommandModalOpen(false)}>&times;</button>
+            </div>
+            
+            <div className="form-group" style={{ marginBottom: '12px' }}>
+              <label>Pilih Jenis Command</label>
+              <select value={commandType} onChange={(e) => setCommandType(e.target.value)} className="form-control">
+                <option value="mt">Multi Tag (k!mt)</option>
+                <option value="mut">Multi Untag (k!mut)</option>
+                <option value="mb">Multi Burn (k!mb)</option>
+                <option value="ta">Trade Add (k!ta)</option>
+                <option value="wi">Worker Info (k!wi)</option>
+              </select>
+            </div>
+
+            {(commandType === 'mt' || commandType === 'mut') && (
+              <div className="form-group" style={{ marginBottom: '12px' }}>
+                <label>Nama Tag</label>
+                <input 
+                  type="text" 
+                  value={commandArg} 
+                  onChange={(e) => setCommandArg(e.target.value)} 
+                  className="form-control" 
+                  placeholder="Misal: Worker"
+                />
+              </div>
+            )}
+
+            {(() => {
+              const selectedCodes = Array.from(selectedCards).map(id => cards.find(c => c.id === id)?.code).filter(Boolean);
+              let cmdStr = '';
+              if (commandType === 'mt') {
+                cmdStr = `k!mt ${commandArg} ${selectedCodes.join(' ')}`.trim();
+              } else if (commandType === 'mut') {
+                cmdStr = `k!mut ${commandArg} ${selectedCodes.join(' ')}`.trim();
+              } else if (commandType === 'mb') {
+                cmdStr = `k!mb ${selectedCodes.join(' ')}`;
+              } else if (commandType === 'ta') {
+                cmdStr = `k!ta ${selectedCodes.join(' ')}`;
+              } else if (commandType === 'wi') {
+                cmdStr = `k!wi ${selectedCodes.join(' ')}`;
+              }
+              
+              return (
+                <div style={{ background: 'var(--paper-dark)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
+                  <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Hasil Command:</p>
+                  <code style={{ display: 'block', wordBreak: 'break-all', fontSize: '13px', color: 'var(--jade-soft)', fontFamily: 'monospace' }}>
+                    {cmdStr}
+                  </code>
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
+                    <button 
+                      className="btn btn-sm" 
+                      onClick={(e) => {
+                        navigator.clipboard.writeText(cmdStr);
+                        e.currentTarget.innerText = '📋 Tersalin!';
+                        setTimeout(() => { e.currentTarget.innerText = 'Salin ke Clipboard'; }, 1000);
+                      }}
+                    >
+                      Salin ke Clipboard
+                    </button>
+                  </div>
+                </div>
+              );
+            })()}
           </div>
         </div>
       )}
