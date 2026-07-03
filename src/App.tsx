@@ -1850,7 +1850,7 @@ export default function App() {
                   <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
                   <div className="batch-actions">
                     <button className="btn btn-sm" onClick={() => setIsCommandModalOpen(true)}>Buat Command</button>
-                    <button className="btn btn-sm" style={{ background: 'var(--cherry)', color: 'white' }} onClick={() => setIsBurnResolveModalOpen(true)}>Proses Burn</button>
+                    <button className="btn btn-sm" style={{ background: '#c14e4e', color: 'white', borderColor: '#a34141' }} onClick={() => setIsBurnResolveModalOpen(true)}>Proses Burn</button>
                     <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Tambah Tag</button>
                     <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Hapus Terpilih</button>
                     <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Batal</button>
@@ -2748,7 +2748,7 @@ export default function App() {
               <button className="close-modal-btn" onClick={() => setIsCommandModalOpen(false)}>&times;</button>
             </div>
             
-            <div className="form-group" style={{ marginBottom: '12px' }}>
+            <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label>Pilih Jenis Command</label>
               <select value={commandType} onChange={(e) => setCommandType(e.target.value)} className="form-control">
                 <option value="mt">Multi Tag (ktag)</option>
@@ -2760,7 +2760,7 @@ export default function App() {
             </div>
 
             {(commandType === 'mt' || commandType === 'mut' || commandType === 'mb') && (
-              <div className="form-group" style={{ marginBottom: '12px' }}>
+              <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label>Nama Tag</label>
                 <input 
                   type="text" 
@@ -2846,7 +2846,7 @@ export default function App() {
               if (bMatch) bits = parseInt(bMatch[1]);
               
               if (gold === 0 && dusts === 0 && tickets === 0 && bits === 0) {
-                return <p style={{ fontSize: '12px', color: 'var(--cherry)' }}>Tidak ada hadiah terdeteksi di teks.</p>;
+                return <p style={{ fontSize: '12px', color: '#c14e4e' }}>Tidak ada hadiah terdeteksi di teks.</p>;
               }
 
               return (
@@ -2858,7 +2858,7 @@ export default function App() {
                     {tickets > 0 && <li>+{tickets} Ticket</li>}
                     {bits > 0 && <li>+{bits} Bit</li>}
                   </ul>
-                  <p style={{ fontSize: '12px', color: 'var(--cherry)', margin: '8px 0 0 0', fontWeight: 'bold' }}>
+                  <p style={{ fontSize: '12px', color: '#c14e4e', margin: '8px 0 0 0', fontWeight: 'bold' }}>
                     Peringatan: {selectedCards.size} kartu terpilih akan dihapus dari Cartoteca.
                   </p>
                 </div>
@@ -2869,7 +2869,11 @@ export default function App() {
               <button className="btn secondary" onClick={() => setIsBurnResolveModalOpen(false)}>Batal</button>
               <button 
                 className="btn" 
-                style={{ background: 'var(--cherry)' }}
+                style={{ 
+                  background: burnDiscordText.trim() ? '#c14e4e' : 'transparent',
+                  color: burnDiscordText.trim() ? 'white' : 'var(--ink-soft)',
+                  borderColor: burnDiscordText.trim() ? '#a34141' : 'var(--paper-line)'
+                }}
                 disabled={!burnDiscordText.trim()}
                 onClick={() => {
                   let gold = 0, dusts = 0, tickets = 0, bits = 0;
