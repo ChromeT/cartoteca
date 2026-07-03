@@ -1365,12 +1365,7 @@ export default function App() {
   }
 
   function handleSleeveContainerClick(id: string, e: React.MouseEvent) {
-    if (e.ctrlKey || e.metaKey || e.shiftKey) {
-      toggleSleeveSelect(id, e);
-    } else {
-      const found = cards.find(c => c.id === id);
-      if (found) openCardModal(found);
-    }
+    toggleSleeveSelect(id, e);
   }
 
   async function handleBatchDelete() {
@@ -1911,6 +1906,16 @@ export default function App() {
                             }}
                           >
                             ×
+                          </button>
+                          <button 
+                            className="nc-edit-btn"
+                            title="Edit Kartu"
+                            onClick={(e) => { 
+                              e.stopPropagation(); 
+                              openCardModal(c); 
+                            }}
+                          >
+                            ✏️
                           </button>
 
                           <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
