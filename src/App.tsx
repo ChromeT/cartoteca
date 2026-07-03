@@ -610,7 +610,7 @@ export default function App() {
       return;
     }
 
-    const cleanText = discordText.replace(/[\*_`~|▫▪●○]/g, '').trim();
+    const cleanText = discordText.replace(/[\*_`~▫▪●○]/g, '').trim();
 
     // Try multi-line parsing
     const lines = cleanText.split('\n');
@@ -714,8 +714,13 @@ export default function App() {
           unassigned.push(s);
         });
 
-        if (unassigned.length > 0) parsedName = unassigned[0];
-        if (unassigned.length > 1) parsedSeries = unassigned[1];
+        const validUnassigned = unassigned.filter(u => !u.match(/^[★☆]+$/));
+        if (validUnassigned.length >= 2) {
+          parsedSeries = validUnassigned[0];
+          parsedName = validUnassigned.slice(1).join(' ').trim();
+        } else if (validUnassigned.length === 1) {
+          parsedName = validUnassigned[0];
+        }
       } else {
         // Fallback simple word parse
         const words = cleanText.split(/\s+/);
