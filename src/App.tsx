@@ -1311,6 +1311,7 @@ export default function App() {
       dye: '',
       tags: '',
       notes: item.notes,
+      imageUrl: '',
       createdAt: Date.now()
     });
   }
