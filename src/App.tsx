@@ -1895,7 +1895,23 @@ export default function App() {
                           >
                             ×
                           </button>
-                          <div className="nc-code">{c.code}</div>
+                          <div 
+                            className="nc-code" 
+                            title="Salin Kode"
+                            style={{ cursor: 'pointer' }}
+                            onClick={(e) => {
+                              e.stopPropagation();
+                              if (c.code) {
+                                navigator.clipboard.writeText(c.code);
+                                const el = e.currentTarget;
+                                const oldText = el.innerHTML;
+                                el.innerHTML = '📋 Copied!';
+                                setTimeout(() => { el.innerHTML = oldText; }, 800);
+                              }
+                            }}
+                          >
+                            📋 {c.code}
+                          </div>
                           <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
                           
                           <ConditionWatermark condition={c.condition} />
@@ -1933,7 +1949,23 @@ export default function App() {
                         <p className="card-series" title={c.series}>{c.series || 'Series belum diisi'}</p>
 
                         <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          {c.code ? <span className="card-code">{c.code}</span> : <span />}
+                          {c.code ? (
+                            <span 
+                              className="card-code" 
+                              title="Salin Kode"
+                              style={{ cursor: 'pointer' }}
+                              onClick={(e) => {
+                                e.stopPropagation();
+                                navigator.clipboard.writeText(c.code!);
+                                const el = e.currentTarget;
+                                const oldText = el.innerHTML;
+                                el.innerHTML = '📋 Copied!';
+                                setTimeout(() => { el.innerHTML = oldText; }, 800);
+                              }}
+                            >
+                              📋 {c.code}
+                            </span>
+                          ) : <span />}
                           <div style={{ display: 'flex', gap: '4px' }}>
                             {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
                             {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
