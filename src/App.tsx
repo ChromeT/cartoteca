@@ -609,6 +609,8 @@ export default function App() {
         const edM = s.match(/◈\s*(\d+)/) || s.match(/ed(?:isi)?\s*(\d+)/i);
         if (edM) { pEdition = parseInt(edM[1]); return; }
 
+        if (s.match(/^[★☆]+$/)) return; // Ignore star ratings if they get separated
+
         const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i);
         if (effM) { pEffort = parseInt(effM[1]); return; }
 
@@ -948,7 +950,7 @@ export default function App() {
     let parsedCode = '';
 
     lines.forEach(line => {
-      const charFallbackM = line.match(/Character\s*·?\s*(.+?)\s*\(\s*([a-zA-Z0-9]+)\s*\)/i);
+      const charFallbackM = line.match(/Character\s*[·:]?\s*(.+?)(?:\s*\(\s*([a-zA-Z0-9]+)\s*\))?/i);
       const effM = line.match(/(?:Effort|Eff)\s*[·:]\s*(\d+)/i);
 
       const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Purity/i);
@@ -961,7 +963,7 @@ export default function App() {
       const dropM = line.match(/(?:Dropper)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Dropper/i);
       const vanM = line.match(/(?:Vanity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Vanity/i);
 
-      if (charFallbackM) { parsedName = charFallbackM[1].trim(); parsedCode = charFallbackM[2].toLowerCase(); hasMatch = true; }
+      if (charFallbackM) { parsedName = charFallbackM[1].trim(); if (charFallbackM[2]) parsedCode = charFallbackM[2].toLowerCase(); hasMatch = true; }
       if (effM) { parsedEffort = parseInt(effM[1]); hasMatch = true; }
       
       if (purM) { parsedPurity = purM[1].toUpperCase(); hasMatch = true; }
@@ -2842,21 +2844,22 @@ export default function App() {
             
             {(() => {
               if (!burnDiscordText.trim()) return null;
-                  let gold = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
-                  const gMatch = burnDiscordText.match(/([\d,]+)\s+Gold/i);
-                  if (gMatch) gold = parseInt(gMatch[1].replace(/,/g, ''));
-                  const d1Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
-                  if (d1Match) dust1 = parseInt(d1Match[1].replace(/,/g, ''));
-                  const d2Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
-                  if (d2Match) dust2 = parseInt(d2Match[1].replace(/,/g, ''));
-                  const d3Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★★☆\)/i);
-                  if (d3Match) dust3 = parseInt(d3Match[1].replace(/,/g, ''));
-                  const d4Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★★★\)/i);
-                  if (d4Match) dust4 = parseInt(d4Match[1].replace(/,/g, ''));
-                  const tMatch = burnDiscordText.match(/([\d,]+)\s+Ticket/i);
-                  if (tMatch) tickets = parseInt(tMatch[1].replace(/,/g, ''));
-                  const bMatch = burnDiscordText.match(/([\d,]+)\s+Bit/i);
-                  if (bMatch) bits = parseInt(bMatch[1].replace(/,/g, ''));
+              let cleanText = burnDiscordText.replace(/[\*_`~▫▪●○]/g, '');
+              let gold = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
+              const gMatch = cleanText.match(/([\d,]+)\s+Gold/i);
+              if (gMatch) gold = parseInt(gMatch[1].replace(/,/g, ''));
+              const d1Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
+              if (d1Match) dust1 = parseInt(d1Match[1].replace(/,/g, ''));
+              const d2Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
+              if (d2Match) dust2 = parseInt(d2Match[1].replace(/,/g, ''));
+              const d3Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★★☆\)/i);
+              if (d3Match) dust3 = parseInt(d3Match[1].replace(/,/g, ''));
+              const d4Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★★★\)/i);
+              if (d4Match) dust4 = parseInt(d4Match[1].replace(/,/g, ''));
+              const tMatch = cleanText.match(/([\d,]+)\s+Ticket/i);
+              if (tMatch) tickets = parseInt(tMatch[1].replace(/,/g, ''));
+              const bMatch = cleanText.match(/([\d,]+)\s+Bit/i);
+              if (bMatch) bits = parseInt(bMatch[1].replace(/,/g, ''));
               
               if (gold === 0 && dust1 === 0 && dust2 === 0 && dust3 === 0 && dust4 === 0 && tickets === 0 && bits === 0) {
                 return <p style={{ fontSize: '12px', color: '#c14e4e' }}>Tidak ada hadiah terdeteksi di teks.</p>;
@@ -2892,20 +2895,21 @@ export default function App() {
                 }}
                 disabled={!burnDiscordText.trim()}
                 onClick={() => {
+                  let cleanText = burnDiscordText.replace(/[\*_`~▫▪●○]/g, '');
                   let gold = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
-                  const gMatch = burnDiscordText.match(/([\d,]+)\s+Gold/i);
+                  const gMatch = cleanText.match(/([\d,]+)\s+Gold/i);
                   if (gMatch) gold = parseInt(gMatch[1].replace(/,/g, ''));
-                  const d1Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
+                  const d1Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
                   if (d1Match) dust1 = parseInt(d1Match[1].replace(/,/g, ''));
-                  const d2Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
+                  const d2Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
                   if (d2Match) dust2 = parseInt(d2Match[1].replace(/,/g, ''));
-                  const d3Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★★☆\)/i);
+                  const d3Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★★☆\)/i);
                   if (d3Match) dust3 = parseInt(d3Match[1].replace(/,/g, ''));
-                  const d4Match = burnDiscordText.match(/([\d,]+)\s+Dust\s*\(★★★★\)/i);
+                  const d4Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★★★\)/i);
                   if (d4Match) dust4 = parseInt(d4Match[1].replace(/,/g, ''));
-                  const tMatch = burnDiscordText.match(/([\d,]+)\s+Ticket/i);
+                  const tMatch = cleanText.match(/([\d,]+)\s+Ticket/i);
                   if (tMatch) tickets = parseInt(tMatch[1].replace(/,/g, ''));
-                  const bMatch = burnDiscordText.match(/([\d,]+)\s+Bit/i);
+                  const bMatch = cleanText.match(/([\d,]+)\s+Bit/i);
                   if (bMatch) bits = parseInt(bMatch[1].replace(/,/g, ''));
 
                   handleUpdateInventory({
