@@ -4,6 +4,7 @@
   --paper-card: #fdfaf4;
   --paper-card-dark: #f5efe2;
   --paper-line: #3a3327;
+  --paper-line-soft: rgba(58, 51, 39, 0.5);
   --ink: #ede3ce;
   --ink-soft: #9c8f76;
   --stamp: #d8923e;
@@ -12,10 +13,15 @@
   --gold-glow: rgba(224, 184, 76, 0.4);
   --jade: #5ea396;
   --jade-soft: #457b71;
-  --shadow-sm: 0 2px 4px rgba(0, 0, 0, 0.1);
-  --shadow-md: 0 4px 12px rgba(0, 0, 0, 0.15);
-  --shadow-lg: 0 10px 25px rgba(0, 0, 0, 0.3);
-  --border-radius: 8px;
+  --shadow-sm: 0 4px 6px -1px rgba(0, 0, 0, 0.2), 0 2px 4px -1px rgba(0, 0, 0, 0.1);
+  --shadow-md: 0 10px 15px -3px rgba(0, 0, 0, 0.3), 0 4px 6px -2px rgba(0, 0, 0, 0.15);
+  --shadow-lg: 0 20px 25px -5px rgba(0, 0, 0, 0.4), 0 10px 10px -5px rgba(0, 0, 0, 0.2);
+  --shadow-inner: inset 0 2px 4px 0 rgba(0, 0, 0, 0.2);
+  --glass-bg: rgba(23, 20, 15, 0.75);
+  --glass-border: rgba(255, 255, 255, 0.08);
+  --border-radius: 10px;
+  --border-radius-lg: 16px;
+  --transition-snappy: all 0.3s cubic-bezier(0.2, 0.8, 0.2, 1);
   --font-serif: 'Spectral', Georgia, serif;
   --font-sans: 'IBM Plex Sans', sans-serif;
   --font-mono: 'IBM Plex Mono', monospace;
@@ -136,14 +142,18 @@ body {
   font-weight: 600;
 }
 
-/* ---------- Tabs Navigation ---------- */
+/* ---------- Tabs Navigation (Segmented Pill) ---------- */
 .tabs {
   display: flex;
-  gap: 8px;
-  border-bottom: 2px solid var(--paper-line);
+  gap: 4px;
+  background: rgba(15, 13, 10, 0.6);
+  border: 1px solid var(--paper-line);
+  padding: 6px;
+  border-radius: var(--border-radius-lg);
   margin-bottom: 24px;
   overflow-x: auto;
   scrollbar-width: none;
+  box-shadow: inset 0 2px 6px rgba(0,0,0,0.3);
 }
 
 .tabs::-webkit-scrollbar {
@@ -152,27 +162,32 @@ body {
 
 .tab-btn {
   font-family: var(--font-serif);
-  font-size: 16px;
+  font-size: 15px;
   font-weight: 700;
-  background: none;
-  border: none;
-  padding: 12px 20px;
+  background: transparent;
+  border: 1px solid transparent;
+  border-radius: var(--border-radius);
+  padding: 8px 24px;
   cursor: pointer;
   color: var(--ink-soft);
-  border-bottom: 3px solid transparent;
-  margin-bottom: -2px;
-  transition: all 0.2s ease;
+  transition: var(--transition-snappy);
   white-space: nowrap;
+  flex: 1;
+  text-align: center;
 }
 
-.tab-btn:hover {
+.tab-btn:hover:not(.active) {
   color: var(--ink);
-  background: rgba(237, 227, 206, 0.03);
+  background: rgba(255, 255, 255, 0.03);
 }
 
 .tab-btn.active {
-  color: var(--stamp);
-  border-bottom-color: var(--stamp);
+  color: var(--paper-dark);
+  background: var(--stamp);
+  background-image: linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%);
+  border-color: var(--stamp-dark);
+  box-shadow: 0 2px 8px rgba(216, 146, 62, 0.3), inset 0 1px 0 rgba(255,255,255,0.2);
+  transform: scale(1.02);
 }
 
 /* ---------- Content Area ---------- */
@@ -223,30 +238,46 @@ body {
   border: 1px solid var(--ink);
   padding: 10px 18px;
   cursor: pointer;
-  background: var(--ink);
+  background: linear-gradient(180deg, var(--ink) 0%, #e0d5ba 100%);
   color: var(--paper);
-  transition: all 0.15s ease;
+  transition: var(--transition-snappy);
   display: inline-flex;
   align-items: center;
   justify-content: center;
   gap: 6px;
-  box-shadow: var(--shadow-sm);
+  box-shadow: var(--shadow-sm), inset 0 1px 0 rgba(255,255,255,0.4);
+  text-shadow: 0 1px 1px rgba(255,255,255,0.3);
 }
 
 .btn:hover {
-  background: #e4d7bc;
-  transform: translateY(-1px);
+  background: linear-gradient(180deg, #fff7e6 0%, var(--ink) 100%);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-md), inset 0 1px 0 rgba(255,255,255,0.6);
+}
+
+.btn:active {
+  transform: translateY(0);
+  box-shadow: var(--shadow-inner);
 }
 
 .btn.secondary {
-  background: transparent;
+  background: rgba(23, 20, 15, 0.4);
   color: var(--ink);
   border-color: var(--paper-line);
+  box-shadow: none;
+  text-shadow: none;
 }
 
 .btn.secondary:hover {
-  background: rgba(237, 227, 206, 0.05);
+  background: rgba(255, 255, 255, 0.05);
   border-color: var(--ink-soft);
+  transform: translateY(-2px);
+  box-shadow: var(--shadow-sm);
+}
+
+.btn.secondary:active {
+  transform: translateY(0);
+  background: rgba(0, 0, 0, 0.2);
 }
 
 .btn.btn-sm {
@@ -258,24 +289,29 @@ body {
 input[type=text], input[type=number], input[type=color], select, textarea {
   font-family: var(--font-sans);
   font-size: 13.5px;
-  border: 1px solid #d4c8b0;
+  border: 1px solid var(--paper-line);
   border-radius: var(--border-radius);
   padding: 10px 14px;
-  background: var(--paper-card);
-  color: var(--paper);
-  box-shadow: inset 0 1px 3px rgba(0,0,0,0.05);
-  transition: border-color 0.2s, box-shadow 0.2s;
+  background: rgba(0, 0, 0, 0.2);
+  color: var(--ink);
+  box-shadow: var(--shadow-inner);
+  transition: var(--transition-snappy);
+}
+
+input[type=text]:hover, input[type=number]:hover, select:hover, textarea:hover {
+  border-color: var(--ink-soft);
 }
 
 input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   border-color: var(--jade);
-  box-shadow: 0 0 0 3px rgba(94, 163, 150, 0.15);
-  background: #ffffff;
+  box-shadow: var(--shadow-inner), 0 0 0 3px rgba(94, 163, 150, 0.25);
+  background: rgba(0, 0, 0, 0.4);
+  outline: none;
 }
 
 .toolbar select {
   cursor: pointer;
-  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%233a3327' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
+  background-image: url("data:image/svg+xml;charset=UTF-8,%3Csvg xmlns='http://www.w3.org/2000/svg' viewBox='0 0 24 24' fill='none' stroke='%23ede3ce' stroke-width='2' stroke-linecap='round' stroke-linejoin='round'%3E%3Cpolyline points='6 9 12 15 18 9'%3E%3C/polyline%3E%3C/svg%3E");
   background-repeat: no-repeat;
   background-position: right 10px center;
   background-size: 14px;
@@ -564,18 +600,20 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   bottom: 24px;
   left: 50%;
   transform: translateX(-50%);
-  background: var(--paper-card);
-  border: 2px solid var(--stamp);
-  border-radius: var(--border-radius);
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  border: 1px solid var(--glass-border);
+  border-radius: var(--border-radius-lg);
   padding: 12px 24px;
   display: flex;
   align-items: center;
   justify-content: space-between;
   gap: 24px;
   z-index: 40;
-  box-shadow: 0 10px 30px rgba(0,0,0,0.4);
-  color: var(--paper-dark);
-  animation: slideUp 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.1);
+  color: var(--ink);
+  animation: slideUp 0.4s var(--transition-snappy);
   max-width: 90%;
 }
 
@@ -641,14 +679,15 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 .modal-overlay {
   position: fixed;
   inset: 0;
-  background: rgba(15, 13, 10, 0.82);
-  backdrop-filter: blur(4px);
+  background: rgba(10, 8, 5, 0.75);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
   display: none;
   align-items: center;
   justify-content: center;
   z-index: 100;
   padding: 20px;
-  animation: fadeIn 0.2s ease-out;
+  animation: fadeIn 0.3s var(--transition-snappy);
 }
 
 .modal-overlay.open {
@@ -656,28 +695,28 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 }
 
 .modal {
-  background: var(--paper);
-  border-radius: 14px;
+  background: linear-gradient(145deg, var(--paper) 0%, var(--paper-dark) 100%);
+  border-radius: var(--border-radius-lg);
   max-width: 520px;
   width: 100%;
   padding: 24px 28px;
-  box-shadow: var(--shadow-lg), 0 0 0 1px var(--paper-line);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.05);
   max-height: 90vh;
   overflow-y: auto;
-  border: 1px solid var(--paper-line);
+  border: 1px solid var(--paper-line-soft);
   color: var(--ink);
   position: relative;
-  animation: scaleUp 0.3s cubic-bezier(0.165, 0.84, 0.44, 1);
+  animation: scaleUp 0.4s var(--transition-snappy);
 }
 
 @keyframes fadeIn {
-  from { opacity: 0; }
-  to { opacity: 1; }
+  from { opacity: 0; backdrop-filter: blur(0px); }
+  to { opacity: 1; backdrop-filter: blur(12px) saturate(1.2); }
 }
 
 @keyframes scaleUp {
-  from { transform: scale(0.95); opacity: 0; }
-  to { transform: scale(1); opacity: 1; }
+  from { transform: scale(0.96) translateY(10px); opacity: 0; }
+  to { transform: scale(1) translateY(0); opacity: 1; }
 }
 
 .modal::-webkit-scrollbar {
