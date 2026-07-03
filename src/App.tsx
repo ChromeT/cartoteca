@@ -100,6 +100,31 @@ export default function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
+  // Custom Confirm Modal State
+  const [confirmState, setConfirmState] = useState<{
+    isOpen: boolean;
+    message: string;
+    onConfirm: () => void;
+    onCancel: () => void;
+  }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
+
+  const customConfirm = (message: string): Promise<boolean> => {
+    return new Promise((resolve) => {
+      setConfirmState({
+        isOpen: true,
+        message,
+        onConfirm: () => {
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+          resolve(true);
+        },
+        onCancel: () => {
+          setConfirmState(prev => ({ ...prev, isOpen: false }));
+          resolve(false);
+        }
+      });
+    });
+  };
+
   // Timers State
   const [dropEnd, setDropEnd] = useState<number | null>(null);
   const [grabEnd, setGrabEnd] = useState<number | null>(null);
@@ -867,7 +892,7 @@ export default function App() {
   }
 
   async function handleDeleteCard(id: string) {
-    if (!confirm('Yakin ingin menghapus kartu ini?')) return;
+    if (!(await customConfirm('Yakin ingin menghapus kartu ini?'))) return;
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
@@ -940,7 +965,7 @@ export default function App() {
   }
 
   async function handleDeleteWish(id: string) {
-    if (!confirm('Hapus dari wishlist?')) return;
+    if (!(await customConfirm('Hapus dari wishlist?'))) return;
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user.uid, 'wishlist', id));
@@ -1006,7 +1031,7 @@ export default function App() {
   }
 
   async function handleDeleteCustomTag(name: string) {
-    if (!confirm(`Hapus tag "${name}"? Tag ini juga akan dilepas dari kartu.`)) return;
+    if (!(await customConfirm(`Hapus tag "${name}"? Tag ini juga akan dilepas dari kartu.`))) return;
 
     // Remove from custom tags config list
     const updatedTags = customTags.filter(t => t.name.toLowerCase() !== name.toLowerCase());
@@ -1063,7 +1088,7 @@ export default function App() {
   }
 
   async function handleBatchDelete() {
-    if (!confirm(`Hapus ${selectedCards.size} kartu terpilih?`)) return;
+    if (!(await customConfirm(`Hapus ${selectedCards.size} kartu terpilih?`))) return;
 
     if (isFirebaseConfigured() && user) {
       const batch = writeBatch(db);
@@ -1184,7 +1209,7 @@ export default function App() {
       return;
     }
 
-    if (confirm('Perhatian: Fitur ini akan menimpa dan menggabungkan data Anda saat ini dengan isi file backup. Proses di cloud (jika aktif) mungkin memakan waktu. Lanjutkan?')) {
+    if (await customConfirm('Perhatian: Fitur ini akan menimpa dan menggabungkan data Anda saat ini dengan isi file backup. Proses di cloud (jika aktif) mungkin memakan waktu. Lanjutkan?')) {
       const importedCards = backupFileContent.cards || [];
       const importedWishlist = backupFileContent.wishlist || [];
       const importedTags = backupFileContent.customTags || [];
@@ -2498,6 +2523,22 @@ export default function App() {
                 />
               </div>
 
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* CUSTOM CONFIRM MODAL */}
+      {confirmState.isOpen && (
+        <div className="modal-overlay open" style={{ zIndex: 9999 }}>
+          <div className="modal" style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
+            <h3 style={{ margin: '0 0 16px', fontFamily: 'var(--font-serif)', fontSize: '22px', color: 'var(--ink)' }}>Konfirmasi</h3>
+            <p style={{ margin: '0 0 24px', fontSize: '14.5px', color: 'var(--ink-soft)', lineHeight: 1.5 }}>
+              {confirmState.message}
+            </p>
+            <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <button className="btn secondary" onClick={confirmState.onCancel}>Batal</button>
+              <button className="btn" style={{ background: '#b93c3c', color: '#fff', borderColor: '#8c2d2d', textShadow: 'none' }} onClick={confirmState.onConfirm}>Ya, Lanjutkan</button>
             </div>
           </div>
         </div>
