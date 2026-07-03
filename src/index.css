@@ -1259,6 +1259,33 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   transition: opacity 0.2s;
 }
 
+.nc-delete-btn {
+  position: absolute;
+  top: 8px;
+  right: 8px;
+  width: 24px;
+  height: 24px;
+  border-radius: 4px;
+  background: rgba(211, 93, 93, 0.9);
+  color: #fff;
+  border: none;
+  font-size: 16px;
+  font-weight: bold;
+  cursor: pointer;
+  z-index: 10;
+  display: none;
+  align-items: center;
+  justify-content: center;
+}
+
+.native-card:hover .nc-delete-btn {
+  display: flex;
+}
+
+.native-card:hover .nc-print {
+  opacity: 0;
+}
+
 .nc-print {
   position: absolute;
   top: 8px;
@@ -1271,6 +1298,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   padding: 2px 6px;
   border-radius: 4px;
   z-index: 2;
+  transition: opacity 0.2s;
 }
 
 .nc-badge {

@@ -956,8 +956,8 @@ export default function App() {
     setSelectedCards(new Set()); // Reset selections
   }
 
-  async function handleDeleteCard(id: string) {
-    if (!(await customConfirm('Yakin ingin menghapus kartu ini?'))) return;
+  async function handleDeleteCard(id: string): Promise<boolean> {
+    if (!(await customConfirm('Yakin ingin menghapus kartu ini?'))) return false;
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
@@ -970,6 +970,7 @@ export default function App() {
     const updatedSelected = new Set(selectedCards);
     updatedSelected.delete(id);
     setSelectedCards(updatedSelected);
+    return true;
   }
 
   // --- CRUD WISHLIST OPERATIONS ---
@@ -1667,6 +1668,16 @@ export default function App() {
                             style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
                             onClick={(e) => toggleSleeveSelect(c.id, e)}
                           />
+                          <button 
+                            className="nc-delete-btn"
+                            title="Hapus Kartu"
+                            onClick={async (e) => { 
+                              e.stopPropagation(); 
+                              await handleDeleteCard(c.id); 
+                            }}
+                          >
+                            ×
+                          </button>
                           <div className="nc-code">{c.code}</div>
                           <div className="nc-print">#{c.print !== null ? c.print : '—'}</div>
                           
@@ -2266,9 +2277,23 @@ export default function App() {
               <textarea placeholder="Tulis catatan, detail trade, dll..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
             </div>
 
-            <div className="modal-actions">
-              <button className="btn secondary" onClick={() => setIsCardModalOpen(false)}>Batal</button>
-              <button className="btn" onClick={handleSaveCard}>Simpan Kartu</button>
+            <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
+              {cardFormId ? (
+                <button 
+                  className="btn secondary" 
+                  style={{ color: '#d35d5d', borderColor: '#d35d5d' }} 
+                  onClick={async () => {
+                    const deleted = await handleDeleteCard(cardFormId);
+                    if (deleted) setIsCardModalOpen(false);
+                  }}
+                >
+                  Hapus
+                </button>
+              ) : <div />}
+              <div style={{ display: 'flex', gap: '8px' }}>
+                <button className="btn secondary" onClick={() => setIsCardModalOpen(false)}>Batal</button>
+                <button className="btn" onClick={handleSaveCard}>Simpan Kartu</button>
+              </div>
             </div>
           </div>
         </div>
