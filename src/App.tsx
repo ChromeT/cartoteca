@@ -78,6 +78,26 @@ export default function App() {
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dusts: 0, bits: 0 });
   const [activeTab, setActiveTab] = useState<string>('collection');
+  const [tabIndicatorStyle, setTabIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({ left: 0, width: 0, opacity: 0 });
+  const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  useEffect(() => {
+    const updateIndicator = () => {
+      const activeEl = tabRefs.current[activeTab];
+      if (activeEl) {
+        setTabIndicatorStyle({
+          left: activeEl.offsetLeft,
+          width: activeEl.offsetWidth,
+          opacity: 1
+        });
+      }
+    };
+    updateIndicator();
+    // A small delay ensures font/layout shifts are settled
+    setTimeout(updateIndicator, 50);
+    window.addEventListener('resize', updateIndicator);
+    return () => window.removeEventListener('resize', updateIndicator);
+  }, [activeTab, user]);
   
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
@@ -1474,12 +1494,28 @@ export default function App() {
         </header>
 
         {/* NAVIGATION TABS */}
-        <nav className="tabs">
-          <button className={`tab-btn ${activeTab === 'collection' ? 'active' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Koleksi</button>
-          <button className={`tab-btn ${activeTab === 'wishlist' ? 'active' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
-          <button className={`tab-btn ${activeTab === 'workers' ? 'active' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Pekerja</button>
-          <button className={`tab-btn ${activeTab === 'stats' ? 'active' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
-          <button className={`tab-btn ${activeTab === 'tags-manager' ? 'active' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>
+        <nav className="tabs" style={{ position: 'relative' }}>
+          <div className="tab-indicator" style={{
+            position: 'absolute',
+            top: '6px',
+            bottom: '6px',
+            left: `${tabIndicatorStyle.left}px`,
+            width: `${tabIndicatorStyle.width}px`,
+            opacity: tabIndicatorStyle.opacity,
+            background: 'var(--stamp)',
+            backgroundImage: 'linear-gradient(180deg, rgba(255,255,255,0.15) 0%, rgba(255,255,255,0) 100%)',
+            borderRadius: 'var(--border-radius)',
+            border: '1px solid var(--stamp-dark)',
+            boxShadow: '0 2px 8px rgba(216, 146, 62, 0.3), inset 0 1px 0 rgba(255,255,255,0.2)',
+            transition: 'var(--transition-snappy)',
+            zIndex: 1,
+            pointerEvents: 'none'
+          }}></div>
+          <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Koleksi</button>
+          <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
+          <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Pekerja</button>
+          <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
+          <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>
         </nav>
 
         {/* MAIN BODY AREA */}
