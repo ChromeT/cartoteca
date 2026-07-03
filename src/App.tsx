@@ -604,6 +604,13 @@ export default function App() {
     }, 2500);
   }
 
+  const updateFStat = (key: keyof NonNullable<Card['stats']>, value: string) => {
+    setFStats(prev => ({
+      ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '' }),
+      [key]: value
+    }));
+  };
+
   function handleParseText() {
     if (!discordText.trim()) {
       setParserFeedback({ text: '❌ Teks kosong. Silakan paste teks info Discord.', isError: true, isSuccess: false });
@@ -625,6 +632,13 @@ export default function App() {
     let parsedEffort: number | null = null;
     let parsedWish: number | null = null;
 
+    let parsedPurity = '';
+    let parsedWellness = '';
+    let parsedToughness = '';
+    let parsedQuickness = '';
+    let parsedStyle = '';
+    let parsedAppeal = '';
+
     lines.forEach(line => {
       const charM = line.match(/(?:Character|Karakter)\s*:\s*(.+)/i);
       const seriesM = line.match(/(?:Series|Anime|Show)\s*:\s*(.+)/i);
@@ -634,6 +648,13 @@ export default function App() {
       const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*(\w+)/i);
       const effM = line.match(/(?:Effort|Eff)\s*:\s*(\d+)/i);
       const wishM = line.match(/(?:Wishlists|Wishlist|Wish)\s*:\s*([\d,.]+)/i);
+
+      const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i);
+      const wellM = line.match(/(?:Wellness)\s*:\s*([a-zA-Z0-9]+)/i);
+      const toughM = line.match(/(?:Toughness)\s*:\s*([a-zA-Z0-9]+)/i);
+      const quickM = line.match(/(?:Quickness)\s*:\s*([a-zA-Z0-9]+)/i);
+      const styleM = line.match(/(?:Style)\s*:\s*([a-zA-Z0-9]+)/i);
+      const appealM = line.match(/(?:Appeal)\s*:\s*([a-zA-Z0-9]+)/i);
 
       if (charM) { parsedName = charM[1].trim(); hasLabelMatch = true; }
       if (seriesM) { parsedSeries = seriesM[1].trim(); hasLabelMatch = true; }
@@ -650,6 +671,13 @@ export default function App() {
         parsedWish = parseInt(wishM[1].replace(/[,.]/g, ''));
         hasLabelMatch = true;
       }
+
+      if (purM) { parsedPurity = purM[1].toUpperCase(); hasLabelMatch = true; }
+      if (wellM) { parsedWellness = wellM[1].toUpperCase(); hasLabelMatch = true; }
+      if (toughM) { parsedToughness = toughM[1].toUpperCase(); hasLabelMatch = true; }
+      if (quickM) { parsedQuickness = quickM[1].toUpperCase(); hasLabelMatch = true; }
+      if (styleM) { parsedStyle = styleM[1].toUpperCase(); hasLabelMatch = true; }
+      if (appealM) { parsedAppeal = appealM[1].toUpperCase(); hasLabelMatch = true; }
     });
 
     if (!hasLabelMatch) {
@@ -741,6 +769,18 @@ export default function App() {
       setFCondition(parsedCondition);
       if (parsedEffort !== null) setFEffort(parsedEffort);
       if (parsedWish !== null) setFWish(parsedWish);
+
+      if (parsedPurity || parsedWellness || parsedToughness || parsedQuickness || parsedStyle || parsedAppeal) {
+        setFStats(prev => ({
+          ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '' }),
+          ...(parsedPurity && { purity: parsedPurity }),
+          ...(parsedWellness && { wellness: parsedWellness }),
+          ...(parsedToughness && { toughness: parsedToughness }),
+          ...(parsedQuickness && { quickness: parsedQuickness }),
+          ...(parsedStyle && { style: parsedStyle }),
+          ...(parsedAppeal && { appeal: parsedAppeal })
+        }));
+      }
 
       setParserFeedback({ text: '✨ Pengisian otomatis berhasil!', isError: false, isSuccess: true });
     } else {
@@ -2154,6 +2194,39 @@ export default function App() {
                   <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer' }}>
                     <input type="checkbox" checked={fIsTrade} onChange={(e) => setFIsTrade(e.target.checked)} style={{ width: 'auto' }} /> Trade / Sale
                   </label>
+                </div>
+              </div>
+            </div>
+
+            {/* WORKER STATS (EFFORT MODIFIERS) */}
+            <div className="worker-stats-section" style={{ background: 'var(--paper-dark)', padding: '16px', borderRadius: 'var(--border-radius)', border: '1px solid var(--paper-line)', marginBottom: '16px' }}>
+              <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--stamp)', textTransform: 'uppercase', marginBottom: '12px' }}>Worker Stats (Effort Modifiers)</div>
+              <div className="field-row-3">
+                <div className="field">
+                  <label>Purity</label>
+                  <input type="text" placeholder="mis. A" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Wellness</label>
+                  <input type="text" placeholder="mis. S" value={fStats?.wellness || ''} onChange={(e) => updateFStat('wellness', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Toughness</label>
+                  <input type="text" placeholder="mis. C" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
+                </div>
+              </div>
+              <div className="field-row-3">
+                <div className="field">
+                  <label>Quickness</label>
+                  <input type="text" placeholder="mis. D" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Style</label>
+                  <input type="text" placeholder="mis. A" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Appeal</label>
+                  <input type="text" placeholder="mis. S" value={fStats?.appeal || ''} onChange={(e) => updateFStat('appeal', e.target.value)} />
                 </div>
               </div>
             </div>
