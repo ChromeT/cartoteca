@@ -266,6 +266,8 @@ export default function App() {
   // Parser text area
   const [discordText, setDiscordText] = useState('');
   const [parserFeedback, setParserFeedback] = useState({ text: 'Siap memproses teks', isError: false, isSuccess: false });
+  const [effortDiscordText, setEffortDiscordText] = useState('');
+  const [effortParserFeedback, setEffortParserFeedback] = useState({ text: 'Siap memproses teks', isError: false, isSuccess: false });
 
   // Form Fields - Wishlist
   const [wishFormId, setWishFormId] = useState('');
@@ -874,9 +876,85 @@ export default function App() {
         }));
       }
 
-      setParserFeedback({ text: '✨ Pengisian otomatis berhasil!', isError: false, isSuccess: true });
+      setParserFeedback({ text: '✅ Info kartu berhasil diparse!', isError: false, isSuccess: true });
     } else {
-      setParserFeedback({ text: '❌ Gagal menganalisis teks. Isi manual.', isError: true, isSuccess: false });
+      setParserFeedback({ text: '❌ Tidak dapat menemukan nama karakter atau kode kartu. Pastikan format teks benar.', isError: true, isSuccess: false });
+    }
+  }
+
+  function handleParseEffortText() {
+    if (!effortDiscordText.trim()) {
+      setEffortParserFeedback({ text: '❌ Teks kosong.', isError: true, isSuccess: false });
+      return;
+    }
+
+    const cleanText = effortDiscordText.replace(/[\*_`~▫▪●○]/g, '').trim();
+    const lines = cleanText.split('\n');
+    let hasMatch = false;
+
+    let parsedPurity = '';
+    let parsedWellness = '';
+    let parsedToughness = '';
+    let parsedQuickness = '';
+    let parsedStyle = '';
+    let parsedAppeal = '';
+    let parsedGrabber = '';
+    let parsedDropper = '';
+    let parsedVanity = '';
+    let parsedEffort: number | null = null;
+    let parsedName = '';
+    let parsedCode = '';
+
+    lines.forEach(line => {
+      const charFallbackM = line.match(/Character\s*·?\s*(.+?)\s*\(\s*([a-zA-Z0-9]+)\s*\)/i);
+      const effM = line.match(/(?:Effort|Eff)\s*[·:]\s*(\d+)/i);
+
+      const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Purity/i);
+      const wellM = line.match(/(?:Wellness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Wellness/i);
+      const toughM = line.match(/(?:Toughness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Toughness/i);
+      const quickM = line.match(/(?:Quickness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Quickness/i);
+      const styleM = line.match(/(?:Style)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Style/i);
+      const appealM = line.match(/(?:Appeal)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Appeal/i);
+      const grabM = line.match(/(?:Grabber)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Grabber/i);
+      const dropM = line.match(/(?:Dropper)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Dropper/i);
+      const vanM = line.match(/(?:Vanity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Vanity/i);
+
+      if (charFallbackM) { parsedName = charFallbackM[1].trim(); parsedCode = charFallbackM[2].toLowerCase(); hasMatch = true; }
+      if (effM) { parsedEffort = parseInt(effM[1]); hasMatch = true; }
+      
+      if (purM) { parsedPurity = purM[1].toUpperCase(); hasMatch = true; }
+      if (wellM) { parsedWellness = wellM[1].toUpperCase(); hasMatch = true; }
+      if (toughM) { parsedToughness = toughM[1].toUpperCase(); hasMatch = true; }
+      if (quickM) { parsedQuickness = quickM[1].toUpperCase(); hasMatch = true; }
+      if (styleM) { parsedStyle = styleM[1].toUpperCase(); hasMatch = true; }
+      if (appealM) { parsedAppeal = appealM[1].toUpperCase(); hasMatch = true; }
+      if (grabM) { parsedGrabber = grabM[1].toUpperCase(); hasMatch = true; }
+      if (dropM) { parsedDropper = dropM[1].toUpperCase(); hasMatch = true; }
+      if (vanM) { parsedVanity = vanM[1].toUpperCase(); hasMatch = true; }
+    });
+
+    if (hasMatch) {
+      if (parsedName && !fName) setFName(parsedName);
+      if (parsedCode && !fCode) setFCode(parsedCode);
+      if (parsedEffort !== null) setFEffort(parsedEffort);
+
+      if (parsedPurity || parsedWellness || parsedToughness || parsedQuickness || parsedStyle || parsedAppeal || parsedGrabber || parsedDropper || parsedVanity) {
+        setFStats(prev => ({
+          ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '', grabber: '', dropper: '', vanity: '' }),
+          ...(parsedPurity && { purity: parsedPurity }),
+          ...(parsedWellness && { wellness: parsedWellness }),
+          ...(parsedToughness && { toughness: parsedToughness }),
+          ...(parsedQuickness && { quickness: parsedQuickness }),
+          ...(parsedStyle && { style: parsedStyle }),
+          ...(parsedAppeal && { appeal: parsedAppeal }),
+          ...(parsedGrabber && { grabber: parsedGrabber }),
+          ...(parsedDropper && { dropper: parsedDropper }),
+          ...(parsedVanity && { vanity: parsedVanity })
+        }));
+      }
+      setEffortParserFeedback({ text: '✅ Status worker berhasil diparse!', isError: false, isSuccess: true });
+    } else {
+      setEffortParserFeedback({ text: '❌ Tidak dapat menemukan status worker di teks.', isError: true, isSuccess: false });
     }
   }
 
@@ -2194,21 +2272,42 @@ export default function App() {
             {/* Parser Section */}
             <div className="parser-section">
               <details>
-                <summary>✨ <b>Auto-fill via Discord Text</b> (Paste info Keqing / k!wi)</summary>
-                <div className="parser-body">
-                  <textarea 
-                    placeholder="Tempel teks Discord di sini... (k!c atau k!wi)" 
-                    rows={3}
-                    value={discordText}
-                    onChange={(e) => setDiscordText(e.target.value)}
-                  />
-                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                    <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
-                      <button className="btn btn-sm secondary" onClick={handleParseKiwi}>Parse k!wi (Dari Clipboard)</button>
-                      <button className="btn btn-sm" onClick={handleParseText}>Parse k!c / Keqing</button>
+                <summary>✨ <b>Auto-fill via Discord Text</b></summary>
+                <div className="parser-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  
+                  {/* Card Info (k!c) */}
+                  <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d8923e', marginBottom: '8px' }}>1. Paste Info Kartu (k!c)</div>
+                    <textarea 
+                      placeholder="Tempel teks info kartu di sini..." 
+                      rows={2}
+                      value={discordText}
+                      onChange={(e) => setDiscordText(e.target.value)}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                      <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
+                      <button className="btn btn-sm" onClick={handleParseText}>Baca Info Kartu</button>
                     </div>
                   </div>
+
+                  {/* Worker/Effort Info (k!w) */}
+                  <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#5ea396', marginBottom: '8px' }}>2. Paste Info Worker/Effort (k!w / k!wi)</div>
+                    <textarea 
+                      placeholder="Tempel teks detail worker di sini..." 
+                      rows={2}
+                      value={effortDiscordText}
+                      onChange={(e) => setEffortDiscordText(e.target.value)}
+                    />
+                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
+                      <span className={`parser-status ${effortParserFeedback.isError ? 'error' : effortParserFeedback.isSuccess ? 'success' : ''}`}>{effortParserFeedback.text}</span>
+                      <div style={{ display: 'flex', gap: '8px' }}>
+                        <button className="btn btn-sm secondary" onClick={handleParseKiwi}>Dari Clipboard</button>
+                        <button className="btn btn-sm" onClick={handleParseEffortText}>Baca Info Worker</button>
+                      </div>
+                    </div>
+                  </div>
+                  
                 </div>
               </details>
             </div>
