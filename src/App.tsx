@@ -780,8 +780,8 @@ export default function App() {
       const printM = line.match(/(?:Print|Nomor)\s*:\s*#?(\d+)/i);
       const edM = line.match(/(?:Edition|Edisi|Ed)\s*:\s*◈?(\d+)/i);
       const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*(\w+)/i);
-      const effM = line.match(/(?:Effort|Eff)\s*[·:]\s*(\d+)/i);
-      const wishM = line.match(/(?:Wishlists|Wishlist|Wish)\s*:\s*([\d,.]+)/i);
+      const effM = line.match(/(?:Effort|Eff)\s*[·:-]?\s*(\d+)/i);
+      const wishM = line.match(/(?:Wishlisted|Wishlists|Wishlist|Wish)\s*[:·-]?\s*([\d,.]+)/i);
 
       // Support both Keqing `Purity: A` and Karuta `1 (S) Purity` formats
       const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Purity/i);
@@ -868,9 +868,9 @@ export default function App() {
             return;
           }
 
-          const wishM = s.match(/(\d+)\s*(?:wishlist|wish)/i);
+          const wishM = s.match(/(\d+)\s*(?:wishlisted|wishlist|wish)/i) || s.match(/(?:wishlisted|wishlist|wish)\s*[:·-]?\s*([\d,.]+)/i);
           if (wishM) {
-            parsedWish = parseInt(wishM[1]);
+            parsedWish = parseInt((wishM[1] || wishM[2]).replace(/[,.]/g, ''));
             return;
           }
 
@@ -1953,6 +1953,18 @@ export default function App() {
                                 <span>◈{c.edition || '?'}</span>
                                 <span style={{ margin: '0 4px' }}>|</span>
                                 <span>{c.condition}</span>
+                                {c.effort !== null && (
+                                  <>
+                                    <span style={{ margin: '0 4px' }}>|</span>
+                                    <span>{c.effort} eff</span>
+                                  </>
+                                )}
+                                {c.wish !== null && (
+                                  <>
+                                    <span style={{ margin: '0 4px' }}>|</span>
+                                    <span>♡ {c.wish.toLocaleString()}</span>
+                                  </>
+                                )}
                               </div>
                               <div 
                                 className="nc-code" 
@@ -2021,14 +2033,14 @@ export default function App() {
                           {c.edition !== null && <span className="chip edition">◈{c.edition}</span>}
                           <span className="chip">{c.condition}</span>
                           {c.effort !== null && <span className="chip effort">{c.effort} eff</span>}
+                          {c.wish !== null && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
                           {itemTags.map(tag => (
                             <span key={tag} className="custom-tag-chip" style={{ backgroundColor: getTagColor(tag) }}>{tag}</span>
                           ))}
                         </div>
 
-                        {(c.wish || c.price || c.frame || c.dye || c.notes) && (
+                        {(c.price || c.frame || c.dye || c.notes) && (
                           <div className="card-details-row">
-                            {c.wish && <div><span>Wishlists:</span> <b>{c.wish.toLocaleString()}</b></div>}
                             {c.price && <div><span>Est. Harga:</span> <b>{c.price} Tickets</b></div>}
                             {c.frame && <div><span>Frame:</span> <b>{c.frame}</b></div>}
                             {c.dye && <div><span>Dye:</span> <b>{c.dye}</b></div>}
