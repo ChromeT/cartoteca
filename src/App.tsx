@@ -2759,7 +2759,7 @@ export default function App() {
               </select>
             </div>
 
-            {(commandType === 'mt' || commandType === 'mut') && (
+            {(commandType === 'mt' || commandType === 'mut' || commandType === 'mb') && (
               <div className="form-group" style={{ marginBottom: '12px' }}>
                 <label>Nama Tag</label>
                 <input 
@@ -2780,7 +2780,7 @@ export default function App() {
               } else if (commandType === 'mut') {
                 cmdStr = `kuntag ${commandArg} ${selectedCodes.join(' ')}`.trim();
               } else if (commandType === 'mb') {
-                cmdStr = `kmb ${selectedCodes.join(' ')}`;
+                cmdStr = `kmb t:${commandArg.trim() || 'burn'}`;
               } else if (commandType === 'ta') {
                 cmdStr = `kta ${selectedCodes.join(' ')}`;
               } else if (commandType === 'wi') {
