@@ -901,6 +901,22 @@ export default function App() {
     }
   }
 
+  const checkWorkerIndicator = (stats: any, effort: number | null) => {
+    if (effort !== null && effort >= 200) return true;
+    if (!stats) return false;
+    
+    let highGrades = 0;
+    const keyStats = [stats.purity, stats.wellness, stats.toughness, stats.quickness];
+    keyStats.forEach(grade => {
+      if (grade === 'S' || grade === 'A') highGrades++;
+    });
+    
+    if (stats.purity === 'S') return true;
+    if (highGrades >= 2) return true;
+    
+    return false;
+  };
+
   function handleParseEffortText() {
     if (!effortDiscordText.trim()) {
       setEffortParserFeedback({ text: '❌ Teks kosong.', isError: true, isSuccess: false });
@@ -958,18 +974,17 @@ export default function App() {
       if (parsedEffort !== null) setFEffort(parsedEffort);
 
       if (parsedPurity || parsedWellness || parsedToughness || parsedQuickness || parsedStyle || parsedAppeal || parsedGrabber || parsedDropper || parsedVanity) {
+        const statsObj = {
+          purity: parsedPurity, wellness: parsedWellness, toughness: parsedToughness, quickness: parsedQuickness,
+          style: parsedStyle, appeal: parsedAppeal, grabber: parsedGrabber, dropper: parsedDropper, vanity: parsedVanity
+        };
         setFStats(prev => ({
           ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '', grabber: '', dropper: '', vanity: '' }),
-          ...(parsedPurity && { purity: parsedPurity }),
-          ...(parsedWellness && { wellness: parsedWellness }),
-          ...(parsedToughness && { toughness: parsedToughness }),
-          ...(parsedQuickness && { quickness: parsedQuickness }),
-          ...(parsedStyle && { style: parsedStyle }),
-          ...(parsedAppeal && { appeal: parsedAppeal }),
-          ...(parsedGrabber && { grabber: parsedGrabber }),
-          ...(parsedDropper && { dropper: parsedDropper }),
-          ...(parsedVanity && { vanity: parsedVanity })
+          ...statsObj
         }));
+        setFIsWorker(checkWorkerIndicator(statsObj, parsedEffort));
+      } else if (parsedEffort !== null) {
+        setFIsWorker(checkWorkerIndicator(null, parsedEffort));
       }
       setEffortParserFeedback({ text: '✅ Status worker berhasil diparse!', isError: false, isSuccess: true });
     } else {
@@ -1003,6 +1018,7 @@ export default function App() {
       }
       
       setFStats(parsedStats);
+      setFIsWorker(checkWorkerIndicator(parsedStats, null));
       alert("Berhasil ekstrak status pekerja k!wi!");
     } catch (e) {
       alert("Gagal membaca clipboard. Mohon izinkan akses di browser atau paste manual lalu gunakan fitur lain.");
