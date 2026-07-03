@@ -1895,23 +1895,7 @@ export default function App() {
                           >
                             ×
                           </button>
-                          <div 
-                            className="nc-code" 
-                            title="Salin Kode"
-                            style={{ cursor: 'pointer' }}
-                            onClick={(e) => {
-                              e.stopPropagation();
-                              if (c.code) {
-                                navigator.clipboard.writeText(c.code);
-                                const el = e.currentTarget;
-                                const oldText = el.innerHTML;
-                                el.innerHTML = '📋 Copied!';
-                                setTimeout(() => { el.innerHTML = oldText; }, 800);
-                              }
-                            }}
-                          >
-                            📋 {c.code}
-                          </div>
+
                           <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
                           
                           <ConditionWatermark condition={c.condition} />
@@ -1922,10 +1906,29 @@ export default function App() {
                           <div className="nc-bottom">
                             <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
                             <div className="nc-series">{c.series || 'Unknown'}</div>
-                            <div className="nc-meta">
-                              <span>◈{c.edition || '?'}</span>
-                              <span style={{ margin: '0 4px' }}>|</span>
-                              <span>{c.condition}</span>
+                            <div className="nc-meta" style={{ display: 'flex', justifyContent: 'space-between' }}>
+                              <div>
+                                <span>◈{c.edition || '?'}</span>
+                                <span style={{ margin: '0 4px' }}>|</span>
+                                <span>{c.condition}</span>
+                              </div>
+                              <div 
+                                className="nc-code" 
+                                title="Salin Kode"
+                                style={{ cursor: 'pointer' }}
+                                onClick={(e) => {
+                                  e.stopPropagation();
+                                  if (c.code) {
+                                    navigator.clipboard.writeText(c.code);
+                                    const el = e.currentTarget;
+                                    const oldText = el.innerHTML;
+                                    el.innerHTML = '📋 Copied!';
+                                    setTimeout(() => { el.innerHTML = oldText; }, 800);
+                                  }
+                                }}
+                              >
+                                📋 {c.code}
+                              </div>
                             </div>
                           </div>
                         </div>
