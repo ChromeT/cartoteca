@@ -972,7 +972,10 @@ export default function App() {
         purity: getStat('Purity'),
         style: getStat('Style'),
         wellness: getStat('Wellness'),
-        appeal: getStat('Appeal')
+        appeal: getStat('Appeal'),
+        grabber: getStat('Grabber'),
+        dropper: getStat('Dropper'),
+        vanity: getStat('Vanity')
       };
       
       if (Object.values(parsedStats).every(v => v === 'E') && !text.toLowerCase().includes('toughness')) {
