@@ -75,6 +75,8 @@ interface Inventory {
   dust3: number;
   dust4: number;
   bits: number;
+  tradeLicense: number;
+  workPermit: number;
 }
 
 const ConditionWatermark = ({ condition }: { condition: string }) => {
@@ -156,7 +158,7 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
-  const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
+  const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
   const [activeTab, setActiveTab] = useState<string>('collection');
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({ left: 0, width: 0, opacity: 0 });
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -367,7 +369,7 @@ export default function App() {
             setInventory(invSnap.data() as Inventory);
             syncLocal('inv', invSnap.data());
           } else {
-            setInventory({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
+            setInventory({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
           }
         } catch (error: any) {
           console.error("Firebase read error:", error);
@@ -1494,7 +1496,7 @@ export default function App() {
       const importedCards = backupFileContent.cards || [];
       const importedWishlist = backupFileContent.wishlist || [];
       const importedTags = backupFileContent.customTags || [];
-      const importedInventory = backupFileContent.inventory || { tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 };
+      const importedInventory = backupFileContent.inventory || { tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 };
       if (importedInventory.dusts !== undefined) {
         importedInventory.dust1 = (importedInventory.dust1 || 0) + importedInventory.dusts;
         delete importedInventory.dusts;
@@ -2878,11 +2880,11 @@ export default function App() {
                   <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Hasil Deteksi:</p>
                   <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--jade-soft)' }}>
                     {gold > 0 && <li>+{gold} Gold</li>}
-                    {dust0 > 0 && <li>+{dust0} Dust (☆☆☆☆)</li>}
-                    {dust1 > 0 && <li>+{dust1} Dust (★☆☆☆)</li>}
-                    {dust2 > 0 && <li>+{dust2} Dust (★★☆☆)</li>}
-                    {dust3 > 0 && <li>+{dust3} Dust (★★★☆)</li>}
-                    {dust4 > 0 && <li>+{dust4} Dust (★★★★)</li>}
+                    {dust0 > 0 && <li>+{dust0} Damaged Dust (☆☆☆☆)</li>}
+                    {dust1 > 0 && <li>+{dust1} Poor Dust (★☆☆☆)</li>}
+                    {dust2 > 0 && <li>+{dust2} Good Dust (★★☆☆)</li>}
+                    {dust3 > 0 && <li>+{dust3} Excellent Dust (★★★☆)</li>}
+                    {dust4 > 0 && <li>+{dust4} Mint Dust (★★★★)</li>}
                     {tickets > 0 && <li>+{tickets} Ticket</li>}
                     {bits > 0 && <li>+{bits} Bit</li>}
                   </ul>
@@ -3135,7 +3137,8 @@ export default function App() {
                 <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🎟️ Tickets</span>
                 <input 
                   type="number" 
-                  value={inventory.tickets}
+                  value={inventory.tickets === 0 ? '' : inventory.tickets}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, tickets: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
@@ -3146,7 +3149,8 @@ export default function App() {
                 <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🪙 Gold</span>
                 <input 
                   type="number" 
-                  value={inventory.gold}
+                  value={inventory.gold === 0 ? '' : inventory.gold}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, gold: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
@@ -3157,54 +3161,84 @@ export default function App() {
                 <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>💠 Gems</span>
                 <input 
                   type="number" 
-                  value={inventory.gems}
+                  value={inventory.gems === 0 ? '' : inventory.gems}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, gems: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Trade License */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>📜 Trade License</span>
+                <input 
+                  type="number" 
+                  value={inventory.tradeLicense === 0 ? '' : (inventory.tradeLicense || '')}
+                  placeholder="0"
+                  onChange={e => handleUpdateInventory({ ...inventory, tradeLicense: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
+
+              {/* Work Permit */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>📜 Work Permit</span>
+                <input 
+                  type="number" 
+                  value={inventory.workPermit === 0 ? '' : (inventory.workPermit || '')}
+                  placeholder="0"
+                  onChange={e => handleUpdateInventory({ ...inventory, workPermit: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
               </div>
 
               {/* Dusts */}
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (☆☆☆☆)</span>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Damaged Dust (☆☆☆☆)</span>
                 <input 
                   type="number" 
-                  value={inventory.dust0 || 0}
+                  value={inventory.dust0 === 0 ? '' : (inventory.dust0 || '')}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, dust0: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (★☆☆☆)</span>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Poor Dust (★☆☆☆)</span>
                 <input 
                   type="number" 
-                  value={inventory.dust1 || 0}
+                  value={inventory.dust1 === 0 ? '' : (inventory.dust1 || '')}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, dust1: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (★★☆☆)</span>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Good Dust (★★☆☆)</span>
                 <input 
                   type="number" 
-                  value={inventory.dust2 || 0}
+                  value={inventory.dust2 === 0 ? '' : (inventory.dust2 || '')}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, dust2: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (★★★☆)</span>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Excellent Dust (★★★☆)</span>
                 <input 
                   type="number" 
-                  value={inventory.dust3 || 0}
+                  value={inventory.dust3 === 0 ? '' : (inventory.dust3 || '')}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, dust3: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
               </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (★★★★)</span>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Mint Dust (★★★★)</span>
                 <input 
                   type="number" 
-                  value={inventory.dust4 || 0}
+                  value={inventory.dust4 === 0 ? '' : (inventory.dust4 || '')}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, dust4: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
@@ -3215,7 +3249,8 @@ export default function App() {
                 <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🔵 Bits</span>
                 <input 
                   type="number" 
-                  value={inventory.bits}
+                  value={inventory.bits === 0 ? '' : inventory.bits}
+                  placeholder="0"
                   onChange={e => handleUpdateInventory({ ...inventory, bits: Number(e.target.value) })}
                   style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
                 />
