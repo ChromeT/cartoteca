@@ -1,6 +1,7 @@
 import { initializeApp } from "firebase/app";
 import { initializeFirestore } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
+import { getStorage } from "firebase/storage";
 
 // TODO: Ganti dengan kredensial Firebase Project milik Anda sendiri
 // Konfigurasi ini bisa didapatkan dari Console Firebase -> Project Settings -> General -> Web Apps
@@ -23,5 +24,6 @@ export const db = initializeFirestore(app, {
   experimentalForceLongPolling: true
 });
 export const auth = getAuth(app);
+export const storage = getStorage(app);
 
 export default app;

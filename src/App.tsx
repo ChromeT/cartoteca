@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db, auth } from './firebase';
+import { db, auth, storage } from './firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import LoginPage from './LoginPage';
 import { 
@@ -12,6 +12,7 @@ import {
   writeBatch,
   onSnapshot
 } from 'firebase/firestore';
+import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
 
 // --- TYPES ---
 interface Card {
@@ -31,6 +32,7 @@ interface Card {
   dye: string;
   tags: string; // Comma separated tag names
   notes: string;
+  imageUrl?: string;
   createdAt: number;
   stats?: {
     toughness: string;
@@ -275,6 +277,9 @@ export default function App() {
   const [fFrame, setFFrame] = useState('');
   const [fDye, setFDye] = useState('');
   const [fNotes, setFNotes] = useState('');
+  const [fImageUrl, setFImageUrl] = useState('');
+  const [isUploadingImage, setIsUploadingImage] = useState(false);
+  const imageInputRef = useRef<HTMLInputElement>(null);
   const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
   const [fStats, setFStats] = useState<Card['stats'] | undefined>(undefined);
 
@@ -1089,6 +1094,7 @@ export default function App() {
       setFFrame(card.frame);
       setFDye(card.dye);
       setFNotes(card.notes);
+      setFImageUrl(card.imageUrl || '');
       setFStats(card.stats);
       
       const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
@@ -1109,6 +1115,7 @@ export default function App() {
       setFFrame('');
       setFDye('');
       setFNotes('');
+      setFImageUrl('');
       setFStats(undefined);
       setCardSelectedTags([]);
     }
@@ -1150,6 +1157,7 @@ export default function App() {
       dye: fDye.trim(),
       tags: cardSelectedTags.join(', '),
       notes: fNotes.trim(),
+      imageUrl: fImageUrl,
       stats: fStats,
       priceHistory: currentPriceHistory,
       createdAt: oldCard ? oldCard.createdAt : Date.now()
@@ -1912,6 +1920,9 @@ export default function App() {
                           className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''}`}
                           onClick={(e) => handleSleeveContainerClick(c.id, e)}
                         >
+                          {c.imageUrl && (
+                            <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} />
+                          )}
                           <div 
                             className="select-indicator" 
                             style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
@@ -2634,6 +2645,76 @@ export default function App() {
             <div className="field">
               <label>Catatan Tambahan</label>
               <textarea placeholder="Tulis catatan, detail trade, dll..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label>Gambar Kartu (Album View)</label>
+              {fImageUrl && (
+                <div style={{ marginBottom: '8px', position: 'relative', width: '120px', height: '180px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--paper-line)' }}>
+                  <img src={fImageUrl} alt="Card" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
+                  <button 
+                    className="icon-btn delete" 
+                    title="Hapus Gambar"
+                    style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.7)', padding: '2px 6px', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
+                    onClick={() => setFImageUrl('')}
+                  >
+                    ×
+                  </button>
+                </div>
+              )}
+              <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+                <input 
+                  type="file" 
+                  accept="image/*" 
+                  ref={imageInputRef}
+                  style={{ display: 'none' }}
+                  onChange={async (e) => {
+                    const file = e.target.files?.[0];
+                    if (!file) return;
+                    if (!user) {
+                      alert("Anda harus login untuk mengunggah gambar!");
+                      return;
+                    }
+                    if (file.size > 5 * 1024 * 1024) {
+                      alert("Ukuran gambar terlalu besar! Maksimal 5MB.");
+                      return;
+                    }
+                    setIsUploadingImage(true);
+                    try {
+                      const ext = file.name.split('.').pop() || 'png';
+                      const fileName = `card_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`;
+                      const storageRef = ref(storage, `users/${user.uid}/cards/${fileName}`);
+                      const uploadTask = uploadBytesResumable(storageRef, file);
+                      
+                      uploadTask.on('state_changed', 
+                        () => {
+                           // upload progress indicator if needed
+                        },
+                        (error) => {
+                          alert("Gagal mengunggah gambar: " + error.message);
+                          setIsUploadingImage(false);
+                        },
+                        async () => {
+                          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                          setFImageUrl(downloadURL);
+                          setIsUploadingImage(false);
+                        }
+                      );
+                    } catch (err: any) {
+                      alert("Error: " + err.message);
+                      setIsUploadingImage(false);
+                    }
+                  }}
+                />
+                <button 
+                  className="btn secondary" 
+                  disabled={isUploadingImage}
+                  onClick={() => imageInputRef.current?.click()}
+                >
+                  {isUploadingImage ? 'Mengunggah...' : '📷 Pilih Gambar'}
+                </button>
+                <small style={{ color: 'var(--ink-soft)' }}>Maks. 5MB</small>
+              </div>
             </div>
 
             <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
