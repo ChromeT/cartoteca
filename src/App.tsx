@@ -3048,9 +3048,18 @@ export default function App() {
                     bits: inventory.bits + bits
                   });
                   
+                  // Delete burned cards from Firebase
+                  if (isFirebaseConfigured() && user) {
+                    const batch = writeBatch(db);
+                    selectedCards.forEach(cardId => {
+                      batch.delete(doc(db, 'users', user.uid, 'cards', cardId));
+                    });
+                    batch.commit().catch(err => console.error("Burn delete error:", err));
+                  }
+                  
                   const newCards = cards.filter(c => !selectedCards.has(c.id));
                   setCards(newCards);
-                  localStorage.setItem('cartoteca_cards', JSON.stringify(newCards));
+                  syncLocal('cards', newCards);
                   setSelectedCards(new Set());
                   setBurnDiscordText('');
                   setIsBurnResolveModalOpen(false);
