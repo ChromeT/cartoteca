@@ -2582,13 +2582,7 @@ export default function App() {
       )}
 
       {/* FLOATING TIMERS */}
-      <div style={{
-        position: 'fixed', bottom: '24px', right: '24px',
-        display: 'flex', gap: '8px', zIndex: 100,
-        background: '#1c1912', padding: '8px',
-        borderRadius: '10px', border: '1px solid #3a3327',
-        boxShadow: '0 8px 24px rgba(0,0,0,0.5)'
-      }}>
+      <div className="floating-timers">
         {renderTimer('Drop', dropEnd, () => startTimer('drop', 30))}
         {renderTimer('Grab', grabEnd, () => startTimer('grab', 10))}
         {renderTimer('Work', workEnd, () => startTimer('work', 30))}

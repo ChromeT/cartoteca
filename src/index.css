@@ -620,6 +620,24 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   to { transform: translate(-50%, 0); opacity: 1; }
 }
 
+/* ---------- Floating Timers ---------- */
+.floating-timers {
+  position: fixed;
+  bottom: 24px;
+  right: 24px;
+  display: flex;
+  gap: 8px;
+  z-index: 100;
+  background: var(--glass-bg);
+  backdrop-filter: blur(12px) saturate(1.2);
+  -webkit-backdrop-filter: blur(12px) saturate(1.2);
+  padding: 8px;
+  border-radius: var(--border-radius-lg);
+  border: 1px solid var(--glass-border);
+  box-shadow: var(--shadow-lg), inset 0 1px 0 rgba(255,255,255,0.1);
+  transition: var(--transition-snappy);
+}
+
 .batch-info b {
   color: var(--stamp);
   font-family: var(--font-mono);
@@ -1350,5 +1368,10 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
     grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
     gap: 12px;
     padding: 12px;
+  }
+  
+  .floating-timers {
+    bottom: 96px;
+    right: 16px;
   }
 }
