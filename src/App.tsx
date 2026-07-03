@@ -444,9 +444,23 @@ export default function App() {
           new Notification(`Karuta: ${type.toUpperCase()} is Ready!`, { icon: '/favicon.ico' });
         }
         try {
-          const audio = new Audio('https://www.myinstants.com/media/sounds/discord-notification.mp3');
-          audio.volume = 0.5;
-          audio.play().catch(() => {});
+          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
+          if (AudioContext) {
+            const ctx = new AudioContext();
+            for (let i = 0; i < 4; i++) {
+              const osc = ctx.createOscillator();
+              const gain = ctx.createGain();
+              osc.connect(gain);
+              gain.connect(ctx.destination);
+              osc.type = 'square';
+              osc.frequency.setValueAtTime(800, ctx.currentTime + i * 0.25);
+              gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.25);
+              gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + i * 0.25 + 0.05);
+              gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.25 + 0.15);
+              osc.start(ctx.currentTime + i * 0.25);
+              osc.stop(ctx.currentTime + i * 0.25 + 0.15);
+            }
+          }
         } catch (e) {}
         setNotified(p => ({ ...p, [type]: true }));
       }
