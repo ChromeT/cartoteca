@@ -635,13 +635,13 @@ export default function App() {
         const edM = s.match(/◈\s*(\d+)/) || s.match(/ed(?:isi)?\s*(\d+)/i);
         if (edM) { pEdition = parseInt(edM[1]); return; }
 
-        if (s.match(/^[★☆]+$/)) return; // Ignore star ratings if they get separated
+        const cond = mapConditionString(s);
+        if (cond) { pCondition = cond; return; }
+
+        if (s.match(/^[★☆]+$/)) return; // Ignore star ratings if they get separated and not matched above
 
         const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i);
         if (effM) { pEffort = parseInt(effM[1]); return; }
-
-        const cond = mapConditionString(s);
-        if (cond) { pCondition = cond; return; }
 
         const wishM = s.match(/(\d+)\s*(?:wishlist|wish)/i);
         if (wishM) { pWish = parseInt(wishM[1]); return; }
@@ -784,7 +784,7 @@ export default function App() {
       const codeM = line.match(/(?:Code|Kode)\s*:\s*([a-zA-Z0-9]{5,6})/i);
       const printM = line.match(/(?:Print|Nomor)\s*:\s*#?(\d+)/i);
       const edM = line.match(/(?:Edition|Edisi|Ed)\s*:\s*◈?(\d+)/i);
-      const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*(\w+)/i);
+      const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*[·•]?\s*([a-zA-Z★☆]+)/i);
       const effM = line.match(/(?:Effort|Eff)\s*[·:-]?\s*(\d+)/i);
       const wishM = line.match(/(?:Wishlisted|Wishlists|Wishlist|Wish)\s*[:·-]?\s*([\d,.]+)/i);
 
@@ -1061,7 +1061,7 @@ export default function App() {
   };
 
   function mapConditionString(str: string): string | null {
-    const s = str.trim().toLowerCase();
+    const s = str.replace(/[·•]/g, '').trim().toLowerCase();
     if (['mint', 'mt', '★★★★'].includes(s)) return 'Mint';
     if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) return 'Great';
     if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) return 'Good';
