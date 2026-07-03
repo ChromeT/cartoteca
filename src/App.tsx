@@ -902,7 +902,7 @@ export default function App() {
   }
 
   const checkWorkerIndicator = (stats: any, effort: number | null) => {
-    if (effort !== null && effort >= 200) return true;
+    if (effort !== null && effort > 250) return true;
     if (!stats) return false;
     
     let highGrades = 0;
@@ -911,8 +911,7 @@ export default function App() {
       if (grade === 'S' || grade === 'A') highGrades++;
     });
     
-    if (stats.purity === 'S') return true;
-    if (highGrades >= 2) return true;
+    if (stats.purity === 'S' && highGrades >= 3) return true;
     
     return false;
   };
