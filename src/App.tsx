@@ -10,8 +10,6 @@ import {
   doc, 
   setDoc,
   writeBatch,
-  getDocs,
-  getDoc,
   onSnapshot
 } from 'firebase/firestore';
 
