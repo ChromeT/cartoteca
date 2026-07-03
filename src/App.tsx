@@ -1424,8 +1424,9 @@ export default function App() {
             <div className="mini-stat"><b>{totalCards}</b><span>Kartu</span></div>
             <div className="mini-stat"><b>{new Set(cards.map(c => c.series).filter(Boolean)).size}</b><span>Series</span></div>
             <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
+            <div className="mini-stat"><b>{avgEffort}</b><span>Avg Eff</span></div>
           </div>
-          <div className="user-menu" style={{ display: 'flex', alignItems: 'center', gap: '8px', flexWrap: 'wrap' }}>
+          <div className="user-menu" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#9c8f76' }}>
               👤 {displayName}
             </span>
