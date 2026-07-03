@@ -1040,6 +1040,8 @@ export default function App() {
   function openCardModal(card: Card | null = null) {
     setDiscordText('');
     setParserFeedback({ text: 'Siap memproses teks', isError: false, isSuccess: false });
+    setEffortDiscordText('');
+    setEffortParserFeedback({ text: 'Tempel teks stat (keqing/k!wi)', isError: false, isSuccess: false });
 
     if (card) {
       setCardFormId(card.id);
