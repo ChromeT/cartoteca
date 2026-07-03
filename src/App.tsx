@@ -69,6 +69,7 @@ interface Inventory {
   tickets: number;
   gold: number;
   gems: number;
+  dust0: number;
   dust1: number;
   dust2: number;
   dust3: number;
@@ -155,7 +156,7 @@ export default function App() {
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
-  const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
+  const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
   const [activeTab, setActiveTab] = useState<string>('collection');
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({ left: 0, width: 0, opacity: 0 });
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -366,7 +367,7 @@ export default function App() {
             setInventory(invSnap.data() as Inventory);
             syncLocal('inv', invSnap.data());
           } else {
-            setInventory({ tickets: 0, gold: 0, gems: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
+            setInventory({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 });
           }
         } catch (error: any) {
           console.error("Firebase read error:", error);
@@ -1498,7 +1499,7 @@ export default function App() {
       const importedCards = backupFileContent.cards || [];
       const importedWishlist = backupFileContent.wishlist || [];
       const importedTags = backupFileContent.customTags || [];
-      const importedInventory = backupFileContent.inventory || { tickets: 0, gold: 0, gems: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 };
+      const importedInventory = backupFileContent.inventory || { tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0 };
       if (importedInventory.dusts !== undefined) {
         importedInventory.dust1 = (importedInventory.dust1 || 0) + importedInventory.dusts;
         delete importedInventory.dusts;
@@ -2845,9 +2846,11 @@ export default function App() {
             {(() => {
               if (!burnDiscordText.trim()) return null;
               let cleanText = burnDiscordText.replace(/[\*_`~▫▪●○]/g, '');
-              let gold = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
+              let gold = 0, dust0 = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
               const gMatch = cleanText.match(/([\d,]+)\s+Gold/i);
               if (gMatch) gold = parseInt(gMatch[1].replace(/,/g, ''));
+              const d0Match = cleanText.match(/([\d,]+)\s+Dust\s*\(☆☆☆☆\)/i);
+              if (d0Match) dust0 = parseInt(d0Match[1].replace(/,/g, ''));
               const d1Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
               if (d1Match) dust1 = parseInt(d1Match[1].replace(/,/g, ''));
               const d2Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
@@ -2861,7 +2864,7 @@ export default function App() {
               const bMatch = cleanText.match(/([\d,]+)\s+Bit/i);
               if (bMatch) bits = parseInt(bMatch[1].replace(/,/g, ''));
               
-              if (gold === 0 && dust1 === 0 && dust2 === 0 && dust3 === 0 && dust4 === 0 && tickets === 0 && bits === 0) {
+              if (gold === 0 && dust0 === 0 && dust1 === 0 && dust2 === 0 && dust3 === 0 && dust4 === 0 && tickets === 0 && bits === 0) {
                 return <p style={{ fontSize: '12px', color: '#c14e4e' }}>Tidak ada hadiah terdeteksi di teks.</p>;
               }
 
@@ -2870,6 +2873,7 @@ export default function App() {
                   <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Hasil Deteksi:</p>
                   <ul style={{ margin: 0, paddingLeft: '20px', fontSize: '13px', color: 'var(--jade-soft)' }}>
                     {gold > 0 && <li>+{gold} Gold</li>}
+                    {dust0 > 0 && <li>+{dust0} Dust (☆☆☆☆)</li>}
                     {dust1 > 0 && <li>+{dust1} Dust (★☆☆☆)</li>}
                     {dust2 > 0 && <li>+{dust2} Dust (★★☆☆)</li>}
                     {dust3 > 0 && <li>+{dust3} Dust (★★★☆)</li>}
@@ -2896,9 +2900,11 @@ export default function App() {
                 disabled={!burnDiscordText.trim()}
                 onClick={() => {
                   let cleanText = burnDiscordText.replace(/[\*_`~▫▪●○]/g, '');
-                  let gold = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
+                  let gold = 0, dust0 = 0, dust1 = 0, dust2 = 0, dust3 = 0, dust4 = 0, tickets = 0, bits = 0;
                   const gMatch = cleanText.match(/([\d,]+)\s+Gold/i);
                   if (gMatch) gold = parseInt(gMatch[1].replace(/,/g, ''));
+                  const d0Match = cleanText.match(/([\d,]+)\s+Dust\s*\(☆☆☆☆\)/i);
+                  if (d0Match) dust0 = parseInt(d0Match[1].replace(/,/g, ''));
                   const d1Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★☆☆☆\)/i);
                   if (d1Match) dust1 = parseInt(d1Match[1].replace(/,/g, ''));
                   const d2Match = cleanText.match(/([\d,]+)\s+Dust\s*\(★★☆☆\)/i);
@@ -2915,6 +2921,7 @@ export default function App() {
                   handleUpdateInventory({
                     ...inventory,
                     gold: inventory.gold + gold,
+                    dust0: (inventory.dust0 || 0) + dust0,
                     dust1: (inventory.dust1 || 0) + dust1,
                     dust2: (inventory.dust2 || 0) + dust2,
                     dust3: (inventory.dust3 || 0) + dust3,
@@ -3152,6 +3159,15 @@ export default function App() {
               </div>
 
               {/* Dusts */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (☆☆☆☆)</span>
+                <input 
+                  type="number" 
+                  value={inventory.dust0 || 0}
+                  onChange={e => handleUpdateInventory({ ...inventory, dust0: Number(e.target.value) })}
+                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
+                />
+              </div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                 <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Dust (★☆☆☆)</span>
                 <input 
