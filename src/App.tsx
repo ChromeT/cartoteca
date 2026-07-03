@@ -11,7 +11,8 @@ import {
   setDoc,
   writeBatch,
   getDocs,
-  getDoc
+  getDoc,
+  onSnapshot
 } from 'firebase/firestore';
 
 // --- TYPES ---
@@ -334,26 +335,36 @@ export default function App() {
     if (!user) return;
 
     if (isFirebaseConfigured()) {
-      console.log('Firebase configured. Loading data for user:', user.uid);
+      console.log('Firebase configured. Setting up real-time listeners for user:', user.uid);
 
-      const loadData = async () => {
-        try {
-          // Cards
-          const cardsSnap = await getDocs(collection(db, 'users', user.uid, 'cards'));
+      let unsubCards: (() => void) | undefined;
+      let unsubWishlist: (() => void) | undefined;
+      let unsubTags: (() => void) | undefined;
+      let unsubInventory: (() => void) | undefined;
+
+      try {
+        // Cards
+        unsubCards = onSnapshot(collection(db, 'users', user.uid, 'cards'), (cardsSnap) => {
           const cList: Card[] = [];
           cardsSnap.forEach((d) => cList.push({ id: d.id, ...d.data() } as Card));
           setCards(cList);
           syncLocal('cards', cList);
+        }, (error) => {
+          console.error("Cards listener error:", error);
+        });
 
-          // Wishlist
-          const wishSnap = await getDocs(collection(db, 'users', user.uid, 'wishlist'));
+        // Wishlist
+        unsubWishlist = onSnapshot(collection(db, 'users', user.uid, 'wishlist'), (wishSnap) => {
           const wList: WishlistItem[] = [];
           wishSnap.forEach((d) => wList.push({ id: d.id, ...d.data() } as WishlistItem));
           setWishlist(wList);
           syncLocal('wishlist', wList);
+        }, (error) => {
+          console.error("Wishlist listener error:", error);
+        });
 
-          // Tags
-          const tagsSnap = await getDocs(collection(db, 'users', user.uid, 'tags'));
+        // Tags
+        unsubTags = onSnapshot(collection(db, 'users', user.uid, 'tags'), (tagsSnap) => {
           const tList: CustomTag[] = [];
           tagsSnap.forEach((d) => tList.push(d.data() as CustomTag));
           if (tList.length > 0) {
@@ -362,27 +373,36 @@ export default function App() {
           } else {
             setCustomTags(getDefaultTags());
           }
+        }, (error) => {
+          console.error("Tags listener error:", error);
+        });
 
-          // Inventory
-          const invSnap = await getDoc(doc(db, 'users', user.uid, 'inventory', 'main'));
+        // Inventory
+        unsubInventory = onSnapshot(doc(db, 'users', user.uid, 'inventory', 'main'), (invSnap) => {
           if (invSnap.exists()) {
             setInventory(invSnap.data() as Inventory);
             syncLocal('inv', invSnap.data());
           } else {
             setInventory({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
           }
-        } catch (error: any) {
-          console.error("Firebase read error:", error);
-          alert("Peringatan: Gagal memuat data dari Cloud (" + error.message + "). Memuat data dari cache lokal.");
-          // Fallback if network blocked
-          const savedCards = localStorage.getItem(`cartoteca:${user.uid}:cards`);
-          if (savedCards) setCards(JSON.parse(savedCards));
-        }
+        }, (error) => {
+          console.error("Inventory listener error:", error);
+        });
+
+      } catch (error: any) {
+        console.error("Firebase setup error:", error);
+        alert("Peringatan: Gagal memuat data dari Cloud (" + error.message + "). Memuat data dari cache lokal.");
+        // Fallback if network blocked
+        const savedCards = localStorage.getItem(`cartoteca:${user.uid}:cards`);
+        if (savedCards) setCards(JSON.parse(savedCards));
+      }
+
+      return () => {
+        if (unsubCards) unsubCards();
+        if (unsubWishlist) unsubWishlist();
+        if (unsubTags) unsubTags();
+        if (unsubInventory) unsubInventory();
       };
-
-      loadData();
-
-      return () => {};
     } else {
       console.log('Using LocalStorage fallback.');
       const uid = user.uid;
