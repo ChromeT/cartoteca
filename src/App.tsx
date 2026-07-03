@@ -40,6 +40,9 @@ interface Card {
     style: string;
     wellness: string;
     appeal: string;
+    grabber: string;
+    dropper: string;
+    vanity: string;
   };
   priceHistory?: {
     date: number;
@@ -606,7 +609,7 @@ export default function App() {
 
   const updateFStat = (key: keyof NonNullable<Card['stats']>, value: string) => {
     setFStats(prev => ({
-      ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '' }),
+      ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '', grabber: '', dropper: '', vanity: '' }),
       [key]: value
     }));
   };
@@ -638,26 +641,36 @@ export default function App() {
     let parsedQuickness = '';
     let parsedStyle = '';
     let parsedAppeal = '';
+    let parsedGrabber = '';
+    let parsedDropper = '';
+    let parsedVanity = '';
 
     lines.forEach(line => {
-      const charM = line.match(/(?:Character|Karakter)\s*:\s*(.+)/i);
-      const seriesM = line.match(/(?:Series|Anime|Show)\s*:\s*(.+)/i);
+      const charM = line.match(/(?:Character|Karakter)\s*·?\s*(.+?)(?:\s*\([a-zA-Z0-9]+\))?$|Character\s*:\s*(.+)/i);
+      const seriesM = line.match(/(?:Series|Anime|Show)\s*·?\s*(.+?)(?:\s*\([a-zA-Z0-9]+\))?$|Series\s*:\s*(.+)/i);
+      const charFallbackM = line.match(/Character\s*·?\s*(.+?)\s*\(\s*([a-zA-Z0-9]+)\s*\)/i);
+      if (charFallbackM && !parsedCode) parsedCode = charFallbackM[2].toLowerCase();
+
       const codeM = line.match(/(?:Code|Kode)\s*:\s*([a-zA-Z0-9]{5,6})/i);
       const printM = line.match(/(?:Print|Nomor)\s*:\s*#?(\d+)/i);
       const edM = line.match(/(?:Edition|Edisi|Ed)\s*:\s*◈?(\d+)/i);
       const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*(\w+)/i);
-      const effM = line.match(/(?:Effort|Eff)\s*:\s*(\d+)/i);
+      const effM = line.match(/(?:Effort|Eff)\s*[·:]\s*(\d+)/i);
       const wishM = line.match(/(?:Wishlists|Wishlist|Wish)\s*:\s*([\d,.]+)/i);
 
-      const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i);
-      const wellM = line.match(/(?:Wellness)\s*:\s*([a-zA-Z0-9]+)/i);
-      const toughM = line.match(/(?:Toughness)\s*:\s*([a-zA-Z0-9]+)/i);
-      const quickM = line.match(/(?:Quickness)\s*:\s*([a-zA-Z0-9]+)/i);
-      const styleM = line.match(/(?:Style)\s*:\s*([a-zA-Z0-9]+)/i);
-      const appealM = line.match(/(?:Appeal)\s*:\s*([a-zA-Z0-9]+)/i);
+      // Support both Keqing `Purity: A` and Karuta `1 (S) Purity` formats
+      const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Purity/i);
+      const wellM = line.match(/(?:Wellness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Wellness/i);
+      const toughM = line.match(/(?:Toughness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Toughness/i);
+      const quickM = line.match(/(?:Quickness)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Quickness/i);
+      const styleM = line.match(/(?:Style)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Style/i);
+      const appealM = line.match(/(?:Appeal)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Appeal/i);
+      const grabM = line.match(/(?:Grabber)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Grabber/i);
+      const dropM = line.match(/(?:Dropper)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Dropper/i);
+      const vanM = line.match(/(?:Vanity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Vanity/i);
 
-      if (charM) { parsedName = charM[1].trim(); hasLabelMatch = true; }
-      if (seriesM) { parsedSeries = seriesM[1].trim(); hasLabelMatch = true; }
+      if (charM) { parsedName = (charFallbackM ? charFallbackM[1] : (charM[1] || charM[2])).trim(); hasLabelMatch = true; }
+      if (seriesM) { parsedSeries = (seriesM[1] || seriesM[2]).trim(); hasLabelMatch = true; }
       if (codeM) { parsedCode = codeM[1].toLowerCase().trim(); hasLabelMatch = true; }
       if (printM) { parsedPrint = parseInt(printM[1]); hasLabelMatch = true; }
       if (edM) { parsedEdition = parseInt(edM[1]); hasLabelMatch = true; }
@@ -678,6 +691,9 @@ export default function App() {
       if (quickM) { parsedQuickness = quickM[1].toUpperCase(); hasLabelMatch = true; }
       if (styleM) { parsedStyle = styleM[1].toUpperCase(); hasLabelMatch = true; }
       if (appealM) { parsedAppeal = appealM[1].toUpperCase(); hasLabelMatch = true; }
+      if (grabM) { parsedGrabber = grabM[1].toUpperCase(); hasLabelMatch = true; }
+      if (dropM) { parsedDropper = dropM[1].toUpperCase(); hasLabelMatch = true; }
+      if (vanM) { parsedVanity = vanM[1].toUpperCase(); hasLabelMatch = true; }
     });
 
     if (!hasLabelMatch) {
@@ -770,15 +786,18 @@ export default function App() {
       if (parsedEffort !== null) setFEffort(parsedEffort);
       if (parsedWish !== null) setFWish(parsedWish);
 
-      if (parsedPurity || parsedWellness || parsedToughness || parsedQuickness || parsedStyle || parsedAppeal) {
+      if (parsedPurity || parsedWellness || parsedToughness || parsedQuickness || parsedStyle || parsedAppeal || parsedGrabber || parsedDropper || parsedVanity) {
         setFStats(prev => ({
-          ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '' }),
+          ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '', grabber: '', dropper: '', vanity: '' }),
           ...(parsedPurity && { purity: parsedPurity }),
           ...(parsedWellness && { wellness: parsedWellness }),
           ...(parsedToughness && { toughness: parsedToughness }),
           ...(parsedQuickness && { quickness: parsedQuickness }),
           ...(parsedStyle && { style: parsedStyle }),
-          ...(parsedAppeal && { appeal: parsedAppeal })
+          ...(parsedAppeal && { appeal: parsedAppeal }),
+          ...(parsedGrabber && { grabber: parsedGrabber }),
+          ...(parsedDropper && { dropper: parsedDropper }),
+          ...(parsedVanity && { vanity: parsedVanity })
         }));
       }
 
@@ -2215,7 +2234,7 @@ export default function App() {
               <div className="field-row-3">
                 <div className="field">
                   <label>Purity</label>
-                  <input type="text" placeholder="mis. A" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
+                  <input type="text" placeholder="mis. S" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Wellness</label>
@@ -2223,17 +2242,31 @@ export default function App() {
                 </div>
                 <div className="field">
                   <label>Toughness</label>
-                  <input type="text" placeholder="mis. C" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
+                  <input type="text" placeholder="mis. F" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
                 </div>
               </div>
               <div className="field-row-3">
                 <div className="field">
                   <label>Quickness</label>
-                  <input type="text" placeholder="mis. D" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
+                  <input type="text" placeholder="mis. B" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Style</label>
-                  <input type="text" placeholder="mis. A" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
+                  <input type="text" placeholder="mis. F" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Grabber</label>
+                  <input type="text" placeholder="mis. S" value={fStats?.grabber || ''} onChange={(e) => updateFStat('grabber', e.target.value)} />
+                </div>
+              </div>
+              <div className="field-row-3">
+                <div className="field">
+                  <label>Dropper</label>
+                  <input type="text" placeholder="mis. S" value={fStats?.dropper || ''} onChange={(e) => updateFStat('dropper', e.target.value)} />
+                </div>
+                <div className="field">
+                  <label>Vanity</label>
+                  <input type="text" placeholder="mis. D" value={fStats?.vanity || ''} onChange={(e) => updateFStat('vanity', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Appeal</label>
