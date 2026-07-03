@@ -626,9 +626,9 @@ export default function App() {
       const validUnassigned = unassigned.filter(u => !u.match(/^[★☆]+$/));
 
       if (validUnassigned.length >= 2) {
-        // First is Character, Second is Series (Based on standard Karuta k!c format: Character · Series)
-        pName = validUnassigned[0];
-        pSeries = validUnassigned.slice(1).join(' ').trim();
+        // First is Series, Second is Character (Based on standard Karuta k!c format: Series · Character)
+        pSeries = validUnassigned[0];
+        pName = validUnassigned.slice(1).join(' ').trim();
       } else if (validUnassigned.length === 1) {
         pName = validUnassigned[0];
       }
