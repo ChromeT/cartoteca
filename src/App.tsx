@@ -833,28 +833,34 @@ export default function App() {
       delete data.priceHistory;
     }
 
+    let finalId = cardFormId;
     if (isFirebaseConfigured() && user) {
       try {
         if (cardFormId) {
           await updateDoc(doc(db, 'users', user.uid, 'cards', cardFormId), data);
         } else {
-          await addDoc(collection(db, 'users', user.uid, 'cards'), data);
+          const docRef = await addDoc(collection(db, 'users', user.uid, 'cards'), data);
+          finalId = docRef.id;
         }
       } catch (error: any) {
         alert("Gagal menyimpan ke database Firebase: " + error.message);
         return; // Hentikan proses jika gagal
       }
-    } else {
-      let updatedCards = [];
-      if (cardFormId) {
-        updatedCards = cards.map(c => c.id === cardFormId ? { ...data, id: cardFormId } : c);
-      } else {
-        const newCard = { ...data, id: 'card-' + Date.now() };
-        updatedCards = [...cards, newCard];
-      }
-      setCards(updatedCards);
-      syncLocal('cards', updatedCards);
     }
+
+    let updatedCards = [];
+    if (finalId) {
+      updatedCards = cards.map(c => c.id === finalId ? { ...data, id: finalId } : c);
+      // If finalId is from addDoc but it wasn't in cards yet, push it
+      if (!cards.some(c => c.id === finalId)) {
+        updatedCards.push({ ...data, id: finalId });
+      }
+    } else {
+      const newCard = { ...data, id: 'card-' + Date.now() };
+      updatedCards = [...cards, newCard];
+    }
+    setCards(updatedCards);
+    syncLocal('cards', updatedCards);
 
     setIsCardModalOpen(false);
     setSelectedCards(new Set()); // Reset selections
@@ -865,11 +871,10 @@ export default function App() {
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
-    } else {
-      const updated = cards.filter(c => c.id !== id);
-      setCards(updated);
-      syncLocal('cards', updated);
     }
+    const updated = cards.filter(c => c.id !== id);
+    setCards(updated);
+    syncLocal('cards', updated);
     
     // Remove from selected set
     const updatedSelected = new Set(selectedCards);
@@ -908,23 +913,28 @@ export default function App() {
       notes: wNotes.trim()
     };
 
+    let finalId = wishFormId;
     if (isFirebaseConfigured() && user) {
       if (wishFormId) {
         await updateDoc(doc(db, 'users', user.uid, 'wishlist', wishFormId), data);
       } else {
-        await addDoc(collection(db, 'users', user.uid, 'wishlist'), data);
+        const docRef = await addDoc(collection(db, 'users', user.uid, 'wishlist'), data);
+        finalId = docRef.id;
+      }
+    }
+
+    let updatedWish = [];
+    if (finalId) {
+      updatedWish = wishlist.map(w => w.id === finalId ? { ...data, id: finalId } : w);
+      if (!wishlist.some(w => w.id === finalId)) {
+        updatedWish.push({ ...data, id: finalId });
       }
     } else {
-      let updatedWish = [];
-      if (wishFormId) {
-        updatedWish = wishlist.map(w => w.id === wishFormId ? { ...data, id: wishFormId } : w);
-      } else {
-        const newWish = { ...data, id: 'wish-' + Date.now() };
-        updatedWish = [...wishlist, newWish];
-      }
-      setWishlist(updatedWish);
-      syncLocal('wishlist', updatedWish);
+      const newWish = { ...data, id: 'wish-' + Date.now() };
+      updatedWish = [...wishlist, newWish];
     }
+    setWishlist(updatedWish);
+    syncLocal('wishlist', updatedWish);
 
     setIsWishModalOpen(false);
   }
@@ -934,11 +944,10 @@ export default function App() {
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user.uid, 'wishlist', id));
-    } else {
-      const updated = wishlist.filter(w => w.id !== id);
-      setWishlist(updated);
-      syncLocal('wishlist', updated);
     }
+    const updated = wishlist.filter(w => w.id !== id);
+    setWishlist(updated);
+    syncLocal('wishlist', updated);
   }
 
   function handleClaimWish(item: WishlistItem) {
@@ -1062,11 +1071,10 @@ export default function App() {
         batch.delete(doc(db, 'users', user.uid, 'cards', id));
       });
       await batch.commit();
-    } else {
-      const updated = cards.filter(c => !selectedCards.has(c.id));
-      setCards(updated);
-      syncLocal('cards', updated);
     }
+    const updated = cards.filter(c => !selectedCards.has(c.id));
+    setCards(updated);
+    syncLocal('cards', updated);
     setSelectedCards(new Set());
   }
 
@@ -1087,22 +1095,22 @@ export default function App() {
         }
       });
       await batch.commit();
-    } else {
-      const updated = cards.map(c => {
-        if (selectedCards.has(c.id)) {
-          const currentTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
-          batchSelectedTags.forEach(tag => {
-            if (!currentTags.includes(tag.toLowerCase())) {
-              currentTags.push(tag.toLowerCase());
-            }
-          });
-          return { ...c, tags: currentTags.join(', ') };
-        }
-        return c;
-      });
-      setCards(updated);
-      syncLocal('cards', updated);
     }
+    
+    const updated = cards.map(c => {
+      if (selectedCards.has(c.id)) {
+        const currentTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
+        batchSelectedTags.forEach(tag => {
+          if (!currentTags.includes(tag.toLowerCase())) {
+            currentTags.push(tag.toLowerCase());
+          }
+        });
+        return { ...c, tags: currentTags.join(', ') };
+      }
+      return c;
+    });
+    setCards(updated);
+    syncLocal('cards', updated);
 
     setIsBatchTagModalOpen(false);
     setSelectedCards(new Set());
