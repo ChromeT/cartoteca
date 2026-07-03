@@ -975,7 +975,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 .bar-row .label {
   width: 120px;
   flex-shrink: 0;
-  color: var(--paper-dark);
+  color: var(--ink);
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
@@ -1002,7 +1002,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   width: 32px;
   text-align: right;
   font-family: var(--font-mono);
-  color: var(--paper-dark);
+  color: var(--gold);
 }
 
 /* Wishlist Priorities */

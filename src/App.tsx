@@ -180,6 +180,11 @@ export default function App() {
   const [selectedCondition, setSelectedCondition] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
   const [sortOption, setSortOption] = useState('recent');
+  const [currentPage, setCurrentPage] = useState(1);
+
+  useEffect(() => {
+    setCurrentPage(1);
+  }, [searchQuery, selectedCondition, selectedTag, sortOption, activeTab]);
   
   // Wishlist Search & Sort
   const [wishSearchQuery, setWishSearchQuery] = useState('');
@@ -1825,7 +1830,15 @@ export default function App() {
                 </div>
               ) : (
                 <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
-                  {getFilteredCards().map(c => {
+                  {(() => {
+                    const filtered = getFilteredCards();
+                    const CARDS_PER_PAGE = 200;
+                    const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
+                    const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE);
+                    
+                    return (
+                      <>
+                        {paginated.map(c => {
                     const isSelected = selectedCards.has(c.id);
                     const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
                     
@@ -1879,11 +1892,6 @@ export default function App() {
                         className={`sleeve ${c.condition.toLowerCase() === 'mint' ? 'mint' : ''} ${c.condition.toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
                         onClick={(e) => handleSleeveContainerClick(c.id, e)}
                       >
-                        <div 
-                          className="select-indicator" 
-                          style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
-                          onClick={(e) => toggleSleeveSelect(c.id, e)}
-                        />
 
                         <div className="stampbadge">
                           <b>{c.print !== null ? `#${c.print}` : '—'}</b>
@@ -1920,13 +1928,34 @@ export default function App() {
                           </div>
                         )}
 
-                        <div className="card-actions">
-                          <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
-                          <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Hapus</button>
+                        <div className="card-actions" style={{ justifyContent: 'space-between' }}>
+                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => { e.stopPropagation(); toggleSleeveSelect(c.id, e as any); }}>
+                            <input 
+                              type="checkbox" 
+                              checked={isSelected}
+                              readOnly
+                              style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--stamp)', margin: 0 }}
+                            />
+                            <span style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', fontWeight: 600 }}>Pilih</span>
+                          </div>
+                          <div style={{ display: 'flex', gap: '8px' }}>
+                            <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
+                            <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Hapus</button>
+                          </div>
                         </div>
                       </div>
                     );
-                  })}
+                        })}
+                        {totalPages > 1 && (
+                          <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)' }}>
+                            <button className="btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>&larr; Sebelumnya</button>
+                            <span style={{ color: 'var(--ink-soft)', fontSize: '14px', fontWeight: 600 }}>Halaman {currentPage} dari {totalPages}</span>
+                            <button className="btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Selanjutnya &rarr;</button>
+                          </div>
+                        )}
+                      </>
+                    );
+                  })()}
                 </div>
               )}
             </div>
