@@ -1360,6 +1360,7 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 }
 .nc-badge.worker { top: 32px; }
 .nc-badge.trade { top: 60px; }
+.nc-badge.injured { top: 88px; background: rgba(193, 78, 78, 0.9); }
 
 .nc-bottom {
   position: absolute;

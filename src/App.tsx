@@ -33,6 +33,7 @@ interface Card {
   tags: string; // Comma separated tag names
   notes: string;
   imageUrl?: string;
+  isInjured?: boolean;
   createdAt: number;
   stats?: {
     toughness: string;
@@ -174,6 +175,7 @@ export default function App() {
     const saved = localStorage.getItem('cartoteca:activeMode');
     return (saved === 'collection' || saved === 'gameplay') ? saved : 'collection';
   });
+  const [workerSlotIds, setWorkerSlotIds] = useState<(string | null)[]>([null, null, null, null, null]);
   const [activeTab, setActiveTab] = useState<string>(() => {
     const savedTab = localStorage.getItem('cartoteca:activeTab');
     const savedMode = localStorage.getItem('cartoteca:activeMode') || 'collection';
@@ -289,7 +291,6 @@ export default function App() {
   };
 
   // Worker Optimizer State
-  const [workerSlotIds, setWorkerSlotIds] = useState<(string | null)[]>([null, null, null]);
   const [nodeMultiplier, setNodeMultiplier] = useState<number>(1.15);
 
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
@@ -317,6 +318,7 @@ export default function App() {
   const [fPrice, setFPrice] = useState<number | ''>('');
   const [fIsWorker, setFIsWorker] = useState(false);
   const [fIsTrade, setFIsTrade] = useState(false);
+  const [fIsInjured, setFIsInjured] = useState(false);
   const [fFrame, setFFrame] = useState('');
   const [fDye, setFDye] = useState('');
   const [fNotes, setFNotes] = useState('');
@@ -496,7 +498,19 @@ export default function App() {
     if (!user) return;
 
     const w = localStorage.getItem(`cartoteca:${user!.uid}:workers`);
-    if (w) setWorkerSlotIds(JSON.parse(w));
+    if (w) {
+      try {
+        const parsed = JSON.parse(w);
+        if (Array.isArray(parsed)) {
+          while (parsed.length < 5) {
+            parsed.push(null);
+          }
+          setWorkerSlotIds(parsed.slice(0, 5));
+        }
+      } catch (e) {
+        console.error(e);
+      }
+    }
     const m = localStorage.getItem(`cartoteca:${user!.uid}:nodemult`);
     if (m) setNodeMultiplier(parseFloat(m));
   }, [user]);
@@ -1316,6 +1330,7 @@ export default function App() {
       setFPrice(card.price !== null ? card.price : '');
       setFIsWorker(card.isWorker);
       setFIsTrade(card.isTrade);
+      setFIsInjured(!!card.isInjured);
       setFFrame(card.frame);
       setFDye(card.dye);
       setFNotes(card.notes);
@@ -1337,6 +1352,7 @@ export default function App() {
       setFPrice('');
       setFIsWorker(false);
       setFIsTrade(false);
+      setFIsInjured(false);
       setFFrame('');
       setFDye('');
       setFNotes('');
@@ -1378,6 +1394,7 @@ export default function App() {
       price: parsedNewPrice,
       isWorker: fIsWorker,
       isTrade: fIsTrade,
+      isInjured: fIsInjured,
       frame: fFrame.trim(),
       dye: fDye.trim(),
       tags: cardSelectedTags.join(', '),
@@ -2425,6 +2442,7 @@ export default function App() {
                           
                           {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
                           {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
+                          {c.isInjured && <div className="nc-badge injured" title="Cedera">🩹</div>}
                           
                           <div className="nc-bottom">
                             <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
@@ -2495,6 +2513,7 @@ export default function App() {
                           <div style={{ display: 'flex', gap: '4px' }}>
                             {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
                             {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
+                            {c.isInjured && <span className="chip injured-tag" title="Cedera" style={{ background: '#c14e4e', color: '#fff' }}>🩹 C</span>}
                           </div>
                         </div>
 
@@ -2823,18 +2842,20 @@ export default function App() {
               <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
                 <h3 style={{ marginBottom: '16px' }}>💼 Kalkulator Pekerja (Node Optimizer)</h3>
                 <p style={{ color: 'var(--ink-soft)', fontSize: '13px', marginBottom: '20px' }}>
-                  Pilih 3 kartu pekerja terbaik Anda, masukkan estimasi Node Multiplier, dan lihat potensi Bits yang dihasilkan.
+                  Pilih 5 kartu pekerja terbaik Anda (Slot A - E), masukkan estimasi Node Multiplier, dan lihat potensi Bits yang dihasilkan.
                 </p>
                 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', overflowX: 'auto' }}>
-                  {[0, 1, 2].map(slotIdx => {
+                  {[0, 1, 2, 3, 4].map(slotIdx => {
                     const card = cards.find(c => c.id === workerSlotIds[slotIdx]);
                     return (
-                      <div key={slotIdx} style={{ flex: 1, minWidth: '150px', padding: '16px', background: '#1c1912', border: '1px dashed #3a3327', borderRadius: '8px', textAlign: 'center' }}>
-                        <h4 style={{ color: '#9c8f76', marginBottom: '12px' }}>Pekerja {slotIdx + 1}</h4>
+                      <div key={slotIdx} style={{ flex: 1, minWidth: '150px', padding: '16px', background: '#1c1912', border: '1px dashed #3a3327', borderRadius: '8px', textAlign: 'center', position: 'relative' }}>
+                        <h4 style={{ color: '#9c8f76', marginBottom: '12px' }}>Slot {String.fromCharCode(65 + slotIdx)}</h4>
                         {card ? (
                           <>
-                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#e8dbce', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{card.name}</div>
+                            <div style={{ fontSize: '14px', fontWeight: 600, color: '#e8dbce', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
+                              {card.name} {card.isInjured && <span title="Cedera" style={{ cursor: 'help' }}>🩹</span>}
+                            </div>
                             <div style={{ fontSize: '12px', color: '#d8923e', marginBottom: '12px', fontFamily: 'monospace' }}>Effort: {card.effort || 0}</div>
                             {card.stats && (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '12px' }}>
@@ -2868,11 +2889,38 @@ export default function App() {
                       style={{ width: '80px', padding: '8px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', borderRadius: '4px', opacity: isReadOnly ? 0.6 : 1 }}
                     />
                   </div>
-                  <div style={{ textAlign: 'right' }}>
-                    <div style={{ fontSize: '12px', color: '#9c8f76', marginBottom: '4px' }}>Estimasi Bit per Drop:</div>
+                  <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'flex-end', gap: '4px' }}>
+                    <div style={{ fontSize: '12px', color: '#9c8f76' }}>
+                      Total Effort (Contribution): <span style={{ fontWeight: 'bold', color: '#e8dbce', fontFamily: 'monospace' }}>{workerSlotIds.map(id => cards.find(c => c.id === id)?.effort || 0).reduce((a, b) => a + b, 0)}</span> / 800
+                      {workerSlotIds.map(id => cards.find(c => c.id === id)?.effort || 0).reduce((a, b) => a + b, 0) >= 800 ? (
+                        <span style={{ color: '#5ea396', marginLeft: '6px', fontWeight: 'bold' }}>✅ Good Board</span>
+                      ) : (
+                        <span style={{ color: '#c4964a', marginLeft: '6px' }}>{"⚠️ Target >= 800"}</span>
+                      )}
+                    </div>
+                    <div style={{ fontSize: '12px', color: '#9c8f76' }}>Estimasi Bit per Drop:</div>
                     <div style={{ fontSize: '24px', fontWeight: 700, color: '#5ea396', fontFamily: 'monospace' }}>
                       {Math.round(workerSlotIds.map(id => cards.find(c => c.id === id)?.effort || 0).reduce((a, b) => a + b, 0) * nodeMultiplier)} 🔵
                     </div>
+                  </div>
+                </div>
+              </div>
+
+              {/* Guidelines / Tips from SKILL.md */}
+              <div className="stat-card" style={{ gridColumn: '1 / -1', background: '#17140f', border: '1px solid #3a3327' }}>
+                <h4 style={{ color: '#d8923e', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>💡 Panduan Job Board Karuta</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', fontSize: '12px', color: '#9c8f76' }}>
+                  <div>
+                    <b style={{ color: '#e8dbce' }}>🩹 Wellness & Injuries</b>
+                    <p style={{ margin: '4px 0 0 0' }}>Kartu berisiko cedera saat bekerja (7.5% per kartu). Cedera mematikan nilai Wellness stat menjadi 0, sehingga menurunkan effort secara drastis. Sembuhkan dengan mencentang manual status Cedera 🩹 atau memakaikan Bandage.</p>
+                  </div>
+                  <div>
+                    <b style={{ color: '#e8dbce' }}>📜 Work Permit</b>
+                    <p style={{ margin: '4px 0 0 0' }}>Diperlukan untuk bekerja menggunakan perintah k!work. Biaya pembuatan Work Permit adalah 2,000 Gold dengan masa aktif selama 30 hari.</p>
+                  </div>
+                  <div>
+                    <b style={{ color: '#e8dbce' }}>🗺️ Node & Pajak</b>
+                    <p style={{ margin: '4px 0 0 0' }}>Selalu cari Node dengan pajak (Tax) terkecil untuk memaksimalkan hasil. Node Gold selalu memiliki pajak tetap sebesar 50% tanpa kepemilikan clan.</p>
                   </div>
                 </div>
               </div>
@@ -2891,7 +2939,7 @@ export default function App() {
                           if (!isUsed) {
                             const emptyIdx = workerSlotIds.findIndex(id => id === null);
                             if (emptyIdx !== -1) handleSetWorker(emptyIdx, c.id);
-                            else handleSetWorker(2, c.id); // overwrite 3rd slot if full
+                            else handleSetWorker(4, c.id); // overwrite 5th slot if full
                           }
                         }}
                         style={{ 
@@ -2899,7 +2947,9 @@ export default function App() {
                           borderRadius: '8px', cursor: isReadOnly ? 'default' : (isUsed ? 'not-allowed' : 'pointer'), opacity: isUsed ? 0.5 : 1, transition: '0.2s'
                         }}
                       >
-                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8dbce', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
+                        <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8dbce', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '4px' }}>
+                          {c.name} {c.isInjured && <span title="Cedera" style={{ color: '#ff8c8c' }}>🩹</span>}
+                        </div>
                         <div style={{ fontSize: '14px', color: '#d8923e', fontWeight: 'bold', fontFamily: 'monospace' }}>{c.effort || 0} E</div>
                       </div>
                     );
@@ -3249,6 +3299,9 @@ export default function App() {
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer' }}>
                     <input type="checkbox" checked={fIsTrade} onChange={(e) => setFIsTrade(e.target.checked)} style={{ width: 'auto' }} /> Trade / Sale
+                  </label>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer', color: fIsInjured ? '#ff8c8c' : 'inherit' }}>
+                    <input type="checkbox" checked={fIsInjured} onChange={(e) => setFIsInjured(e.target.checked)} style={{ width: 'auto' }} /> Cedera 🩹
                   </label>
                 </div>
               </div>
