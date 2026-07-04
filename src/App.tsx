@@ -1311,6 +1311,39 @@ export default function App() {
     }
   }
 
+  async function handleUntagAll(name: string) {
+    if (!(await customConfirm(`Lepas tag "${name}" dari semua kartu? (Tag ini sendiri tidak akan dihapus dari daftar)`))) return;
+
+    // Strip tags from all cards
+    const updatedCards = cards.map(c => {
+      if (c.tags) {
+        const arr = c.tags.split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== name.toLowerCase());
+        c.tags = arr.join(', ');
+      }
+      return c;
+    });
+    setCards(updatedCards);
+    syncLocal('cards', updatedCards);
+
+    if (isFirebaseConfigured() && user) {
+      const batch = writeBatch(db);
+      const updatedCardsForFirestore = cards.filter(c =>
+        c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).includes(name.toLowerCase())
+      );
+      updatedCardsForFirestore.forEach(c => {
+        const arr = c.tags!.split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== name.toLowerCase());
+        batch.update(doc(db, 'users', user!.uid, 'cards', c.id), { tags: arr.join(', ') });
+      });
+      await batch.commit();
+    }
+  }
+
+  function handleViewTagCollection(name: string) {
+    setSearchQuery(name.toLowerCase());
+    setActiveTab('collection');
+    window.scrollTo({ top: 0, behavior: 'smooth' });
+  }
+
   // --- SELECTION & BATCH ACTIONS ---
   function toggleSleeveSelect(id: string, e: React.MouseEvent) {
     e.stopPropagation();
@@ -2296,8 +2329,12 @@ export default function App() {
                               <td>{t.desc || '—'}</td>
                               <td><b>{cardCount}</b> kartu</td>
                               <td>
-                                <button className="icon-btn" onClick={() => { setTagNameInput(t.name); setTagColorInput(t.color); setTagDescInput(t.desc); }}>✏️ Edit</button>
-                                <button className="icon-btn delete" onClick={() => handleDeleteCustomTag(t.name)}>🗑️ Hapus</button>
+                                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                                  <button className="icon-btn" onClick={() => handleViewTagCollection(t.name)}>🔍 Lihat Koleksi</button>
+                                  <button className="icon-btn" onClick={() => { setTagNameInput(t.name); setTagColorInput(t.color); setTagDescInput(t.desc); }}>✏️ Edit</button>
+                                  <button className="icon-btn" style={{ color: '#d8923e' }} onClick={() => handleUntagAll(t.name)}>❌ Untag Semua</button>
+                                  <button className="icon-btn delete" onClick={() => handleDeleteCustomTag(t.name)}>🗑️ Hapus</button>
+                                </div>
                               </td>
                             </tr>
                           );
