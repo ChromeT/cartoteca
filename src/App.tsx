@@ -163,6 +163,7 @@ export default function App() {
   const isReadOnly = publicProfileId !== null && (user ? publicProfileId !== user!.uid : true);
   const targetUid = publicProfileId || user?.uid;
   const [lightboxImageUrl, setLightboxImageUrl] = useState<string | null>(null);
+  const [publicDisplayName, setPublicDisplayName] = useState<string | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
@@ -334,6 +335,12 @@ export default function App() {
       setCards([]);
       setWishlist([]);
       setCustomTags([]);
+
+      if (firebaseUser) {
+        const username = firebaseUser.email?.replace('@cartoteca.app', '') || 'Pengguna';
+        setDoc(doc(db, 'users', firebaseUser.uid), { displayName: username }, { merge: true })
+          .catch(err => console.error("Gagal sinkronisasi nama profil ke Firestore:", err));
+      }
     });
     return () => unsubAuth();
   }, []);
@@ -345,12 +352,24 @@ export default function App() {
     if (isFirebaseConfigured()) {
       console.log('Firebase configured. Setting up real-time listeners for target:', targetUid);
 
+      let unsubProfile: (() => void) | undefined;
       let unsubCards: (() => void) | undefined;
       let unsubWishlist: (() => void) | undefined;
       let unsubTags: (() => void) | undefined;
       let unsubInventory: (() => void) | undefined;
 
       try {
+        // Profile Info
+        unsubProfile = onSnapshot(doc(db, 'users', targetUid), (profileSnap) => {
+          if (profileSnap.exists()) {
+            setPublicDisplayName(profileSnap.data().displayName || null);
+          } else {
+            setPublicDisplayName(null);
+          }
+        }, (error) => {
+          console.error("Profile listener error:", error);
+        });
+
         // Cards
         unsubCards = onSnapshot(collection(db, 'users', targetUid as string, 'cards'), (cardsSnap) => {
           const cList: Card[] = [];
@@ -406,6 +425,7 @@ export default function App() {
       }
 
       return () => {
+        if (unsubProfile) unsubProfile();
         if (unsubCards) unsubCards();
         if (unsubWishlist) unsubWishlist();
         if (unsubTags) unsubTags();
@@ -413,6 +433,7 @@ export default function App() {
       };
     } else {
       console.log('Using LocalStorage fallback.');
+      setPublicDisplayName(null);
       const uid = targetUid;
       const savedCards = localStorage.getItem(`cartoteca:${uid}:cards`);
       if (savedCards) setCards(JSON.parse(savedCards));
@@ -1702,9 +1723,9 @@ export default function App() {
     return <LoginPage />;
   }
 
-  // Extract username from email or display public ID
+  // Extract username from email or display public name
   const displayName = publicProfileId && isReadOnly
-    ? `Profil Publik: ${publicProfileId.substring(0, 8)}`
+    ? (publicDisplayName ? `Profil Publik: ${publicDisplayName}` : `Profil Publik: ${publicProfileId.substring(0, 8)}`)
     : (user?.email?.replace('@cartoteca.app', '') || 'Pengguna');
 
   return (
