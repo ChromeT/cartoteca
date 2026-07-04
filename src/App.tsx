@@ -2129,7 +2129,7 @@ export default function App() {
                   {(userKUI['Cards dropped'] || userKUI['Cards grabbed'] || userKUI['Cards burned']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#d8923e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎴 Cards</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[['Cards dropped', '📥 Dropped'], ['Cards grabbed', '🤲 Grabbed'], ['Cards burned', '🔥 Burned'],
                           ['Cards given', '🎁 Given'], ['Successful card upgrades', '⬆️ Upgrades OK'], ['Failed card upgrades', '❌ Upgrades Fail']].map(([k, label]) =>
                           userKUI[k] ? (
@@ -2147,7 +2147,7 @@ export default function App() {
                   {(userKUI['Fights won'] || userKUI['Total fights won'] || userKUI['Fights lost'] || userKUI['Trades completed']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#5ea396', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚔️ Fights & Trades</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Fights won'] || userKUI['Total fights won'], '🏆 Fights Won'],
                           [userKUI['Fights lost'] || userKUI['Total fights lost'], '💀 Fights Lost'],
@@ -2168,7 +2168,7 @@ export default function App() {
                   {(userKUI['Job works completed'] || userKUI['Job worker injuries'] || userKUI['Total times worked'] || userKUI['Total bandages applied']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#c4964a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚒️ Jobs</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Job works completed'] || userKUI['Total times worked'], '💼 Works Done'],
                           [userKUI['Job worker injuries'] || userKUI['Total worker injuries'], '🩹 Injuries'],
@@ -2188,7 +2188,7 @@ export default function App() {
                   {(userKUI['Votes'] || userKUI['Number of votes'] || userKUI['Affection Points gained'] || userKUI['Tickets spent']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#b07cc6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>💎 Support & Affection</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Votes'] || userKUI['Number of votes'], '🗳️ Votes'],
                           [userKUI['Affection Points gained'], '❤️ AP Gained'],
@@ -2209,7 +2209,7 @@ export default function App() {
                   {(userKUI['Wishlist items'] || userKUI['Tags created'] || userKUI['Albums created'] || userKUI['Album pages added'] || userKUI['Cards added to albums'] || userKUI['Koibito affection']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#c4a673', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>📚 Collection (KUI)</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Wishlist items'], '✨ Wishlist Items'],
                           [userKUI['Tags created'], '🏷️ Tags Created'],
@@ -2231,7 +2231,7 @@ export default function App() {
                   {(userKUI['Total morphs rolled'] || userKUI['Total morphs applied'] || userKUI['Morph attempts'] || userKUI['Total dyes applied'] || userKUI['Dye refills'] || userKUI['Total trims applied']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎮 Gameplay Details (KUI)</div>
-                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                      <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Total morphs rolled'], '🌀 Morphs Rolled'],
                           [userKUI['Total morphs applied'], '🎨 Morphs Applied'],
@@ -2966,7 +2966,7 @@ export default function App() {
                   return (
                     <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        \ud83d\udccb Sync dari k!inv
+                        📋 Sync dari k!inv
                       </div>
                       <p style={{ fontSize: '12px', color: '#9c8f76', margin: '0 0 10px 0' }}>
                         Ketik <code style={{ background: '#252118', padding: '1px 5px', borderRadius: '3px' }}>k!inv</code> di Discord, lalu paste teks balasannya di sini. Semua nilai akan <b style={{ color: '#5ea396' }}>diperbarui otomatis</b>.
@@ -2974,7 +2974,7 @@ export default function App() {
                       <textarea
                         className="form-control"
                         rows={4}
-                        placeholder={"Inventory\nItems carried by @Username\n\n\u2728 701 \u00b7 poor dust \u00b7 Dust (\u2605\u2606\u2606\u2606)\n\ud83e\ude99 1,200 \u00b7 gold \u00b7 Gold\n..."}
+                        placeholder={"Inventory\nItems carried by @Username\n\n✨ 701 · poor dust · Dust (★☆☆☆)\n🪙 1,200 · gold · Gold\n..."}
                         value={invPasteText}
                         onChange={e => setInvPasteText(e.target.value)}
                         style={{ fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' }}
@@ -2995,7 +2995,7 @@ export default function App() {
                         onClick={handleInvParse}
                         disabled={!invPasteText.trim()}
                       >
-                        \ud83d\udd04 Sync Inventory dari k!inv
+                        Sync
                       </button>
                     </div>
                   );

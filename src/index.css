@@ -1573,3 +1573,22 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 .nc-bg-image {
   cursor: zoom-in;
 }
+
+.kui-dashboard-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 16px;
+}
+
+@media (max-width: 768px) {
+  .kui-dashboard-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+}
+
+@media (max-width: 480px) {
+  .kui-dashboard-grid {
+    grid-template-columns: 1fr;
+  }
+}
+
