@@ -1916,7 +1916,7 @@ export default function App() {
                       return (
                         <div 
                           key={c.id}
-                          className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''}`}
+                          className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
                           onClick={(e) => handleSleeveContainerClick(c.id, e)}
                         >
                           {c.imageUrl && (
