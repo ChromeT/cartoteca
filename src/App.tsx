@@ -1961,9 +1961,10 @@ export default function App() {
                 <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
                   {(() => {
                     const filtered = getFilteredCards();
-                    const CARDS_PER_PAGE = 200;
-                    const totalPages = Math.ceil(filtered.length / CARDS_PER_PAGE);
-                    const paginated = filtered.slice((currentPage - 1) * CARDS_PER_PAGE, currentPage * CARDS_PER_PAGE);
+                    const CARDS_PER_PAGE = 9;
+                    const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
+                    const safeCurrentPage = Math.min(currentPage, totalPages);
+                    const paginated = filtered.slice((safeCurrentPage - 1) * CARDS_PER_PAGE, safeCurrentPage * CARDS_PER_PAGE);
                     
                     return (
                       <>
@@ -2128,10 +2129,45 @@ export default function App() {
                     );
                         })}
                         {totalPages > 1 && (
-                          <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '16px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)' }}>
-                            <button className="btn" disabled={currentPage === 1} onClick={() => setCurrentPage(p => p - 1)}>&larr; Sebelumnya</button>
-                            <span style={{ color: 'var(--ink-soft)', fontSize: '14px', fontWeight: 600 }}>Halaman {currentPage} dari {totalPages}</span>
-                            <button className="btn" disabled={currentPage === totalPages} onClick={() => setCurrentPage(p => p + 1)}>Selanjutnya &rarr;</button>
+                          <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)', flexWrap: 'wrap' }}>
+                            <button className="btn" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>&larr;</button>
+                            
+                            {(() => {
+                              const pages = [];
+                              if (totalPages <= 7) {
+                                for (let i = 1; i <= totalPages; i++) pages.push(i);
+                              } else {
+                                if (safeCurrentPage <= 4) {
+                                  pages.push(1, 2, 3, 4, 5, '...', totalPages);
+                                } else if (safeCurrentPage >= totalPages - 3) {
+                                  pages.push(1, '...', totalPages - 4, totalPages - 3, totalPages - 2, totalPages - 1, totalPages);
+                                } else {
+                                  pages.push(1, '...', safeCurrentPage - 1, safeCurrentPage, safeCurrentPage + 1, '...', totalPages);
+                                }
+                              }
+                              return pages.map((p, i) => (
+                                p === '...' ? (
+                                  <span key={`dots-${i}`} style={{ color: 'var(--ink-soft)', padding: '0 4px', fontWeight: 600 }}>...</span>
+                                ) : (
+                                  <button 
+                                    key={`page-${p}`} 
+                                    className="btn"
+                                    style={{ 
+                                      padding: '8px 12px', 
+                                      minWidth: '36px',
+                                      background: safeCurrentPage === p ? '#5ea396' : 'transparent',
+                                      color: safeCurrentPage === p ? '#fff' : 'var(--ink)',
+                                      borderColor: safeCurrentPage === p ? '#5ea396' : 'var(--paper-line)'
+                                    }}
+                                    onClick={() => setCurrentPage(p as number)}
+                                  >
+                                    {p}
+                                  </button>
+                                )
+                              ));
+                            })()}
+
+                            <button className="btn" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>&rarr;</button>
                           </div>
                         )}
                       </>
