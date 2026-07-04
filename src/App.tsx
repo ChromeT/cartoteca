@@ -855,18 +855,50 @@ export default function App() {
   }
 
   // --- KUI PARSER ---
+  // Real k!ui format: "NUMBER · Label" (number is on the LEFT)
+  // Parser must use Label as key, NUMBER as value.
   const handleKUIParse = async () => {
     if (!kuiInputText.trim()) return;
     const lines = kuiInputText.split('\n');
     const newKUI: Record<string, string> = {};
+
+    // Known stat labels from k!ui output sections: Cards, Support, Affection, Jobs
+    const KNOWN_LABELS = new Set([
+      'Cards burned', 'Cards dropped', 'Cards grabbed', 'Cards given',
+      'Cards received from other users', 'Failed card upgrades', 'Successful card upgrades',
+      'Fights lost', 'Fights won', 'Trades completed',
+      'Gems contributed to server chest',
+      'Gold spent', 'Number of votes', 'Votes',
+      'Tickets spent', 'Total attack power spent', 'Total bandages applied',
+      'Total bits spent', 'Total defense power spent', 'Total fights lost', 'Total fights won',
+      'Total frames applied', 'Total morphs applied', 'Total morphs rolled',
+      'Total power gained', 'Total times worked', 'Total worker injuries',
+      'Affection Points gained', 'Affection questions answered',
+      'Job worker injuries', 'Job works completed',
+    ]);
+
     lines.forEach(line => {
-      if (line.includes('·')) {
-        const parts = line.split('·');
-        if (parts.length >= 2) {
-          const key = parts[0].trim();
-          const val = parts.slice(1).join('·').trim();
-          if (key && val) {
-            newKUI[key] = val;
+      // Strip leading emoji/icons (common in discord copy-paste)
+      const cleaned = line.replace(/^[\p{Emoji}\s]+/u, '').trim();
+      if (cleaned.includes('·')) {
+        const dotIdx = cleaned.indexOf('·');
+        const left = cleaned.substring(0, dotIdx).trim();  // NUMBER
+        const right = cleaned.substring(dotIdx + 1).trim(); // Label
+
+        // Format A: NUMBER · Label  (real k!ui format)
+        const numLeft = left.replace(/,/g, '');
+        if (/^\d+$/.test(numLeft) && right) {
+          const label = right;
+          // Accept if known label, or if right side looks like a descriptive text
+          if (KNOWN_LABELS.has(label) || /^[A-Za-z]/.test(label)) {
+            newKUI[label] = numLeft;
+          }
+        }
+        // Format B: Label · NUMBER  (fallback for legacy data)
+        else if (right && /^[\d,]+$/.test(right.replace(/,/g, ''))) {
+          const numRight = right.replace(/,/g, '');
+          if (/^\d+$/.test(numRight) && left) {
+            newKUI[left] = numRight;
           }
         }
       }
@@ -875,7 +907,7 @@ export default function App() {
     if (Object.keys(newKUI).length > 0) {
       setUserKUI(newKUI);
       syncLocal('kui', newKUI);
-      
+
       if (isFirebaseConfigured() && user) {
         const { updateDoc } = await import('firebase/firestore');
         await updateDoc(doc(db, 'users', user.uid), { kuiStats: newKUI });
@@ -887,7 +919,7 @@ export default function App() {
         setKuiFeedback({ text: '', isError: false, isSuccess: false });
       }, 3000);
     } else {
-      setKuiFeedback({ text: '⚠️ Tidak ada data KUI yang valid ditemukan. Gunakan format "Key · Value".', isError: true, isSuccess: false });
+      setKuiFeedback({ text: '⚠️ Tidak ada data KUI yang valid. Salin semua teks dari balasan k!ui Karuta.', isError: true, isSuccess: false });
     }
   };
 
@@ -2056,40 +2088,107 @@ export default function App() {
           
           {/* TAB: KUI DASHBOARD */}
           {activeTab === 'kui-stats' && (
-            <div>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
               {Object.keys(userKUI).length > 0 ? (
-                <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Dropped</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards dropped'] || '-'}</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Grabbed</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards grabbed'] || '-'}</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Burned</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards burned'] || '-'}</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Fights Won</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total fights won'] || '-'}</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Gold Spent</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Gold spent'] || '-'}</div>
-                  </div>
-                  <div style={{ display: 'flex', flexDirection: 'column' }}>
-                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Power Gained</div>
-                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total power gained'] || '-'}</div>
-                  </div>
-                </div>
+                <>
+                  {/* Section: Cards */}
+                  {(userKUI['Cards dropped'] || userKUI['Cards grabbed'] || userKUI['Cards burned']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#d8923e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎴 Cards</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[['Cards dropped', '📥 Dropped'], ['Cards grabbed', '🤲 Grabbed'], ['Cards burned', '🔥 Burned'],
+                          ['Cards given', '🎁 Given'], ['Successful card upgrades', '⬆️ Upgrades OK'], ['Failed card upgrades', '❌ Upgrades Fail']].map(([k, label]) =>
+                          userKUI[k] ? (
+                            <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                              <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                              <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(userKUI[k]).toLocaleString()}</div>
+                            </div>
+                          ) : null
+                        )}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section: Fights & Trades */}
+                  {(userKUI['Fights won'] || userKUI['Total fights won'] || userKUI['Fights lost'] || userKUI['Trades completed']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#5ea396', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚔️ Fights & Trades</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[
+                          [userKUI['Fights won'] || userKUI['Total fights won'], '🏆 Fights Won'],
+                          [userKUI['Fights lost'] || userKUI['Total fights lost'], '💀 Fights Lost'],
+                          [userKUI['Trades completed'], '🔄 Trades'],
+                          [userKUI['Gold spent'], '🪙 Gold Spent'],
+                          [userKUI['Total power gained'], '⚡ Power Gained'],
+                        ].filter(([v]) => v).map(([v, label], i) => (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section: Jobs */}
+                  {(userKUI['Job works completed'] || userKUI['Job worker injuries'] || userKUI['Total times worked'] || userKUI['Total bandages applied']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#c4964a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚒️ Jobs</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[
+                          [userKUI['Job works completed'] || userKUI['Total times worked'], '💼 Works Done'],
+                          [userKUI['Job worker injuries'] || userKUI['Total worker injuries'], '🩹 Injuries'],
+                          [userKUI['Total bandages applied'], '🩹 Bandages Used'],
+                          [userKUI['Total bits spent'], '🔵 Bits Spent'],
+                        ].filter(([v]) => v).map(([v, label], i) => (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section: Support & Affection */}
+                  {(userKUI['Votes'] || userKUI['Number of votes'] || userKUI['Affection Points gained'] || userKUI['Tickets spent']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#b07cc6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>💎 Support & Affection</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[
+                          [userKUI['Votes'] || userKUI['Number of votes'], '🗳️ Votes'],
+                          [userKUI['Affection Points gained'], '❤️ AP Gained'],
+                          [userKUI['Affection questions answered'], '❓ AP Questions'],
+                          [userKUI['Tickets spent'], '🎟️ Tickets Spent'],
+                          [userKUI['Gems contributed to server chest'], '💎 Gems Contributed'],
+                        ].filter(([v]) => v).map(([v, label], i) => (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Insight: grab rate */}
+                  {userKUI['Cards grabbed'] && userKUI['Cards dropped'] && (
+                    <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px', fontSize: '13px', color: '#9c8f76' }}>
+                      💡 <span style={{ color: '#e8dbce' }}>Insight:</span> Dari <b style={{ color: '#d8923e' }}>{Number(userKUI['Cards dropped']).toLocaleString()}</b> drop,
+                      kamu grab <b style={{ color: '#5ea396' }}>{Number(userKUI['Cards grabbed']).toLocaleString()}</b> kartu
+                      (<b style={{ color: '#e8dbce' }}>{Math.round((Number(userKUI['Cards grabbed']) / Number(userKUI['Cards dropped'])) * 100)}%</b> grab rate).
+                      {userKUI['Cards burned'] && (
+                        <> Kamu sudah burn <b style={{ color: '#c14e4e' }}>{Number(userKUI['Cards burned']).toLocaleString()}</b> kartu.
+                        Koleksi binder: <b style={{ color: '#d8923e' }}>{cards.length.toLocaleString()}</b> kartu.</>)}
+                    </div>
+                  )}
+                </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '40px', background: '#17140f', borderRadius: '8px', border: '1px dashed #3a3327' }}>
                   <div style={{ fontSize: '32px', marginBottom: '12px' }}>📊</div>
                   <h3 style={{ color: '#e8dbce', marginBottom: '8px' }}>Belum Ada Data Statistik</h3>
                   <p style={{ color: '#9c8f76', fontSize: '14px' }}>
-                    Buka menu <b>Profil</b> dan paste balasan <code>k!ui</code> dari Karuta untuk memunculkan dashboard statistik Anda di sini.
+                    Buka menu <b>Profil</b> dan paste semua teks dari balasan <code>k!ui</code> Karuta untuk memunculkan dashboard statistik di sini.
                   </p>
                 </div>
               )}
