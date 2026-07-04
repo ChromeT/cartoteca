@@ -2447,7 +2447,7 @@ export default function App() {
         {/* FOOTER */}
         <footer className="footer">
           <div>CARTOTECA • Karuta Companion App</div>
-          <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6 }}>© 2026 ChromeT • Didesain dengan estetika Hanko & Washi</div>
+          <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6 }}>© 2026 ChromeT</div>
         </footer>
 
       </div>
