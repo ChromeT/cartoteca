@@ -1467,3 +1467,53 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   z-index: 0;
   pointer-events: none;
 }
+
+/* ---------- LIGHTBOX ---------- */
+.lightbox-overlay {
+  position: fixed;
+  top: 0;
+  left: 0;
+  right: 0;
+  bottom: 0;
+  background: rgba(0, 0, 0, 0.9);
+  z-index: 10000;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  backdrop-filter: blur(5px);
+}
+
+.lightbox-image {
+  max-width: 90vw;
+  max-height: 90vh;
+  object-fit: contain;
+  border-radius: 8px;
+  box-shadow: 0 0 20px rgba(0,0,0,0.5);
+  animation: lightboxZoomIn 0.2s cubic-bezier(0.175, 0.885, 0.32, 1.275);
+}
+
+.lightbox-close {
+  position: absolute;
+  top: 20px;
+  right: 20px;
+  background: transparent;
+  border: none;
+  color: #fff;
+  font-size: 40px;
+  cursor: pointer;
+  z-index: 10001;
+  transition: transform 0.2s;
+}
+
+.lightbox-close:hover {
+  transform: scale(1.1);
+}
+
+@keyframes lightboxZoomIn {
+  from { transform: scale(0.95); opacity: 0; }
+  to { transform: scale(1); opacity: 1; }
+}
+
+.nc-bg-image {
+  cursor: zoom-in;
+}

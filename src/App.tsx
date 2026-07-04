@@ -155,7 +155,14 @@ const ConditionWatermark = ({ condition }: { condition: string }) => {
 
 export default function App() {
   // --- STATE ---
+  const queryParams = new URLSearchParams(window.location.search);
+  const pUid = queryParams.get('p') || null;
+
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading
+  const [publicProfileId] = useState<string | null>(pUid);
+  const isReadOnly = publicProfileId !== null && (user ? publicProfileId !== user!.uid : true);
+  const targetUid = publicProfileId || user?.uid;
+  const [lightboxImageUrl, setLightboxImageUrl] = useState<string | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
@@ -333,10 +340,10 @@ export default function App() {
 
   // --- DATA LOADING & PERSISTENCE ---
   useEffect(() => {
-    if (!user) return;
+    if (!targetUid) return;
 
     if (isFirebaseConfigured()) {
-      console.log('Firebase configured. Setting up real-time listeners for user:', user.uid);
+      console.log('Firebase configured. Setting up real-time listeners for target:', targetUid);
 
       let unsubCards: (() => void) | undefined;
       let unsubWishlist: (() => void) | undefined;
@@ -345,32 +352,32 @@ export default function App() {
 
       try {
         // Cards
-        unsubCards = onSnapshot(collection(db, 'users', user.uid, 'cards'), (cardsSnap) => {
+        unsubCards = onSnapshot(collection(db, 'users', targetUid as string, 'cards'), (cardsSnap) => {
           const cList: Card[] = [];
           cardsSnap.forEach((d) => cList.push({ id: d.id, ...d.data() } as Card));
           setCards(cList);
-          syncLocal('cards', cList);
+          if (!isReadOnly) syncLocal('cards', cList);
         }, (error) => {
           console.error("Cards listener error:", error);
         });
 
         // Wishlist
-        unsubWishlist = onSnapshot(collection(db, 'users', user.uid, 'wishlist'), (wishSnap) => {
+        unsubWishlist = onSnapshot(collection(db, 'users', targetUid as string, 'wishlist'), (wishSnap) => {
           const wList: WishlistItem[] = [];
           wishSnap.forEach((d) => wList.push({ id: d.id, ...d.data() } as WishlistItem));
           setWishlist(wList);
-          syncLocal('wishlist', wList);
+          if (!isReadOnly) syncLocal('wishlist', wList);
         }, (error) => {
           console.error("Wishlist listener error:", error);
         });
 
         // Tags
-        unsubTags = onSnapshot(collection(db, 'users', user.uid, 'tags'), (tagsSnap) => {
+        unsubTags = onSnapshot(collection(db, 'users', targetUid as string, 'tags'), (tagsSnap) => {
           const tList: CustomTag[] = [];
           tagsSnap.forEach((d) => tList.push(d.data() as CustomTag));
           if (tList.length > 0) {
             setCustomTags(tList);
-            syncLocal('tags', tList);
+            if (!isReadOnly) syncLocal('tags', tList);
           } else {
             setCustomTags(getDefaultTags());
           }
@@ -379,10 +386,10 @@ export default function App() {
         });
 
         // Inventory
-        unsubInventory = onSnapshot(doc(db, 'users', user.uid, 'inventory', 'main'), (invSnap) => {
+        unsubInventory = onSnapshot(doc(db, 'users', targetUid as string, 'inventory', 'main'), (invSnap) => {
           if (invSnap.exists()) {
             setInventory(invSnap.data() as Inventory);
-            syncLocal('inv', invSnap.data());
+            if (!isReadOnly) syncLocal('inv', invSnap.data());
           } else {
             setInventory({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
           }
@@ -394,7 +401,7 @@ export default function App() {
         console.error("Firebase setup error:", error);
         alert("Peringatan: Gagal memuat data dari Cloud (" + error.message + "). Memuat data dari cache lokal.");
         // Fallback if network blocked
-        const savedCards = localStorage.getItem(`cartoteca:${user.uid}:cards`);
+        const savedCards = localStorage.getItem(`cartoteca:${targetUid}:cards`);
         if (savedCards) setCards(JSON.parse(savedCards));
       }
 
@@ -406,7 +413,7 @@ export default function App() {
       };
     } else {
       console.log('Using LocalStorage fallback.');
-      const uid = user.uid;
+      const uid = targetUid;
       const savedCards = localStorage.getItem(`cartoteca:${uid}:cards`);
       if (savedCards) setCards(JSON.parse(savedCards));
 
@@ -423,13 +430,13 @@ export default function App() {
       const savedInv = localStorage.getItem(`cartoteca:${uid}:inv`);
       if (savedInv) setInventory(JSON.parse(savedInv));
     }
-  }, [user]);
+  }, [user, targetUid, isReadOnly]);
 
   // --- TIMERS LOGIC ---
   useEffect(() => {
     if (!user) return;
     const loadT = (key: string) => {
-      const v = localStorage.getItem(`cartoteca:${user.uid}:${key}`);
+      const v = localStorage.getItem(`cartoteca:${user!.uid}:${key}`);
       return v ? parseInt(v, 10) : null;
     };
     const dEnd = loadT('drop');
@@ -446,9 +453,9 @@ export default function App() {
       work: !wEnd || n >= wEnd,
     });
 
-    const w = localStorage.getItem(`cartoteca:${user.uid}:workers`);
+    const w = localStorage.getItem(`cartoteca:${user!.uid}:workers`);
     if (w) setWorkerSlotIds(JSON.parse(w));
-    const m = localStorage.getItem(`cartoteca:${user.uid}:nodemult`);
+    const m = localStorage.getItem(`cartoteca:${user!.uid}:nodemult`);
     if (m) setNodeMultiplier(parseFloat(m));
 
     const iv = setInterval(() => setNow(Date.now()), 1000);
@@ -460,13 +467,13 @@ export default function App() {
     const newSlots = [...workerSlotIds];
     newSlots[index] = cardId;
     setWorkerSlotIds(newSlots);
-    localStorage.setItem(`cartoteca:${user.uid}:workers`, JSON.stringify(newSlots));
+    localStorage.setItem(`cartoteca:${user!.uid}:workers`, JSON.stringify(newSlots));
   };
 
   const handleSetNodeMultiplier = (val: number) => {
     if (!user) return;
     setNodeMultiplier(val);
-    localStorage.setItem(`cartoteca:${user.uid}:nodemult`, val.toString());
+    localStorage.setItem(`cartoteca:${user!.uid}:nodemult`, val.toString());
   };
 
   useEffect(() => {
@@ -505,7 +512,7 @@ export default function App() {
   const startTimer = (type: 'drop' | 'grab' | 'work', minutes: number) => {
     if (!user) return;
     const target = Date.now() + minutes * 60 * 1000;
-    localStorage.setItem(`cartoteca:${user.uid}:${type}`, target.toString());
+    localStorage.setItem(`cartoteca:${user!.uid}:${type}`, target.toString());
     if (type === 'drop') setDropEnd(target);
     if (type === 'grab') setGrabEnd(target);
     if (type === 'work') setWorkEnd(target);
@@ -556,14 +563,14 @@ export default function App() {
   // LocalStorage save sync helper
   const syncLocal = (key: string, data: any) => {
     if (!isFirebaseConfigured() && user) {
-      localStorage.setItem(`cartoteca:${user.uid}:${key}`, JSON.stringify(data));
+      localStorage.setItem(`cartoteca:${user!.uid}:${key}`, JSON.stringify(data));
     }
   };
 
   const handleUpdateInventory = async (newInv: Inventory) => {
     setInventory(newInv);
     if (isFirebaseConfigured() && user) {
-      await setDoc(doc(db, 'users', user.uid, 'inventory', 'main'), newInv, { merge: true });
+      await setDoc(doc(db, 'users', user!.uid, 'inventory', 'main'), newInv, { merge: true });
     } else {
       syncLocal('inv', newInv);
     }
@@ -714,7 +721,7 @@ export default function App() {
             const chunk = items.slice(i, i + 400);
             const batch = writeBatch(db);
             for (const item of chunk) {
-              batch.set(doc(db, 'users', user.uid, 'cards', item.id), item);
+              batch.set(doc(db, 'users', user!.uid, 'cards', item.id), item);
             }
             await batch.commit();
           }
@@ -1173,9 +1180,9 @@ export default function App() {
     if (isFirebaseConfigured() && user) {
       try {
         if (cardFormId) {
-          await updateDoc(doc(db, 'users', user.uid, 'cards', cardFormId), data);
+          await updateDoc(doc(db, 'users', user!.uid, 'cards', cardFormId), data);
         } else {
-          const docRef = await addDoc(collection(db, 'users', user.uid, 'cards'), data);
+          const docRef = await addDoc(collection(db, 'users', targetUid as string, 'cards'), data);
           finalId = docRef.id;
         }
       } catch (error: any) {
@@ -1206,7 +1213,7 @@ export default function App() {
     if (!(await customConfirm('Yakin ingin menghapus kartu ini?'))) return false;
 
     if (isFirebaseConfigured() && user) {
-      await deleteDoc(doc(db, 'users', user.uid, 'cards', id));
+      await deleteDoc(doc(db, 'users', user!.uid, 'cards', id));
     }
     const updated = cards.filter(c => c.id !== id);
     setCards(updated);
@@ -1253,9 +1260,9 @@ export default function App() {
     let finalId = wishFormId;
     if (isFirebaseConfigured() && user) {
       if (wishFormId) {
-        await updateDoc(doc(db, 'users', user.uid, 'wishlist', wishFormId), data);
+        await updateDoc(doc(db, 'users', user!.uid, 'wishlist', wishFormId), data);
       } else {
-        const docRef = await addDoc(collection(db, 'users', user.uid, 'wishlist'), data);
+        const docRef = await addDoc(collection(db, 'users', targetUid as string, 'wishlist'), data);
         finalId = docRef.id;
       }
     }
@@ -1280,7 +1287,7 @@ export default function App() {
     if (!(await customConfirm('Hapus dari wishlist?'))) return;
 
     if (isFirebaseConfigured() && user) {
-      await deleteDoc(doc(db, 'users', user.uid, 'wishlist', id));
+      await deleteDoc(doc(db, 'users', user!.uid, 'wishlist', id));
     }
     const updated = wishlist.filter(w => w.id !== id);
     setWishlist(updated);
@@ -1331,7 +1338,7 @@ export default function App() {
 
     if (isFirebaseConfigured() && user) {
       // Use tag name as doc ID to avoid duplicates
-      const tagDocRef = doc(db, 'users', user.uid, 'tags', name);
+      const tagDocRef = doc(db, 'users', user!.uid, 'tags', name);
       const { setDoc } = await import('firebase/firestore');
       await setDoc(tagDocRef, newTag);
     } else {
@@ -1363,7 +1370,7 @@ export default function App() {
     syncLocal('cards', updatedCards);
 
     if (isFirebaseConfigured() && user) {
-      const tagDocRef = doc(db, 'users', user.uid, 'tags', name.toLowerCase());
+      const tagDocRef = doc(db, 'users', user!.uid, 'tags', name.toLowerCase());
       const { deleteDoc: delDoc } = await import('firebase/firestore');
       await delDoc(tagDocRef);
       // Also update all cards that have this tag
@@ -1373,7 +1380,7 @@ export default function App() {
       );
       updatedCardsForFirestore.forEach(c => {
         const arr = c.tags!.split(',').map(t => t.trim()).filter(t => t.toLowerCase() !== name.toLowerCase());
-        batch.update(doc(db, 'users', user.uid, 'cards', c.id), { tags: arr.join(', ') });
+        batch.update(doc(db, 'users', user!.uid, 'cards', c.id), { tags: arr.join(', ') });
       });
       await batch.commit();
     }
@@ -1401,7 +1408,7 @@ export default function App() {
     if (isFirebaseConfigured() && user) {
       const batch = writeBatch(db);
       selectedCards.forEach(id => {
-        batch.delete(doc(db, 'users', user.uid, 'cards', id));
+        batch.delete(doc(db, 'users', user!.uid, 'cards', id));
       });
       await batch.commit();
     }
@@ -1424,7 +1431,7 @@ export default function App() {
               currentTags.push(tag.toLowerCase());
             }
           });
-          batch.update(doc(db, 'users', user.uid, 'cards', c.id), { tags: currentTags.join(', ') });
+          batch.update(doc(db, 'users', user!.uid, 'cards', c.id), { tags: currentTags.join(', ') });
         }
       });
       await batch.commit();
@@ -1548,7 +1555,7 @@ export default function App() {
               const chunk = items.slice(i, i + 400);
               const batch = writeBatch(db);
               for (const item of chunk) {
-                batch.set(doc(db, 'users', user.uid, path, item.id), item);
+                batch.set(doc(db, 'users', user!.uid, path, item.id), item);
               }
               await batch.commit();
             }
@@ -1559,9 +1566,9 @@ export default function App() {
           
           const tagBatch = writeBatch(db);
           importedTags.forEach((t: any) => {
-            tagBatch.set(doc(db, 'users', user.uid, 'tags', t.name.toLowerCase()), t);
+            tagBatch.set(doc(db, 'users', user!.uid, 'tags', t.name.toLowerCase()), t);
           });
-          tagBatch.set(doc(db, 'users', user.uid, 'inventory', 'main'), importedInventory);
+          tagBatch.set(doc(db, 'users', user!.uid, 'inventory', 'main'), importedInventory);
           await tagBatch.commit();
           
           alert("Sinkronisasi Cloud Selesai! Data berhasil dipulihkan.");
@@ -1683,8 +1690,7 @@ export default function App() {
     customTags.forEach(t => used.add(t.name.toLowerCase()));
     return Array.from(used).sort();
   };
-
-  // Auth gating
+    // Auth gating
   if (user === undefined) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#17140f' }}>
@@ -1692,12 +1698,14 @@ export default function App() {
       </div>
     );
   }
-  if (user === null) {
+  if (user === null && !publicProfileId) {
     return <LoginPage />;
   }
 
-  // Extract username from email (username@cartoteca.app)
-  const displayName = user.email?.replace('@cartoteca.app', '') || 'Pengguna';
+  // Extract username from email or display public ID
+  const displayName = publicProfileId && isReadOnly
+    ? `Profil Publik: ${publicProfileId.substring(0, 8)}`
+    : (user?.email?.replace('@cartoteca.app', '') || 'Pengguna');
 
   return (
     <div id="app">
@@ -1722,67 +1730,86 @@ export default function App() {
             <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#9c8f76' }}>
               👤 {displayName}
             </span>
+            {!isReadOnly && (
+              <>
+                <button
+                  onClick={() => setIsInventoryModalOpen(true)}
+                  title="Inventory"
+                  style={{
+                    background: 'transparent', border: '1px solid #3a3327',
+                    borderRadius: '6px', padding: '4px 10px',
+                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                    fontWeight: 600, color: '#e8dbce', cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#3a3327'; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
+                >
+                  🎒 Inventory
+                </button>
+                <button
+                  onClick={() => setIsBackupModalOpen(true)}
+                  title="Data Backup"
+                  style={{
+                    background: 'transparent', border: '1px solid #3a3327',
+                    borderRadius: '6px', padding: '4px 10px',
+                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                    fontWeight: 600, color: '#5ea396', cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#5ea396'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#5ea396'; }}
+                >
+                  💾 Backup
+                </button>
+                <button
+                  onClick={() => setIsProfileModalOpen(true)}
+                  title="Profil"
+                  style={{
+                    background: 'transparent', border: '1px solid #3a3327',
+                    borderRadius: '6px', padding: '4px 10px',
+                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                    fontWeight: 600, color: '#d8923e', cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
+                >
+                  Profil
+                </button>
+                <button
+                  onClick={() => signOut(auth)}
+                  title="Keluar"
+                  style={{
+                    background: 'transparent', border: '1px solid #3a3327',
+                    borderRadius: '6px', padding: '4px 10px',
+                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                    fontWeight: 600, color: '#9c8f76', cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.borderColor = '#d8923e'; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#9c8f76'; (e.target as HTMLButtonElement).style.borderColor = '#3a3327'; }}
+                >
+                  Keluar
+                </button>
+              </>
+            )}
+            {isReadOnly && (
               <button
-                onClick={() => setIsInventoryModalOpen(true)}
-                title="Inventory"
+                onClick={() => window.location.href = '/'}
+                title="Kembali"
                 style={{
-                  background: 'transparent', border: '1px solid #3a3327',
+                  background: '#5ea396', border: 'none',
                   borderRadius: '6px', padding: '4px 10px',
                   fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                  fontWeight: 600, color: '#e8dbce', cursor: 'pointer',
+                  fontWeight: 600, color: '#fff', cursor: 'pointer',
                   transition: 'all 0.15s'
                 }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#3a3327'; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
               >
-                🎒 Inventory
+                Kembali ke Koleksi Sendiri
               </button>
-              <button
-                onClick={() => setIsBackupModalOpen(true)}
-                title="Data Backup"
-                style={{
-                  background: 'transparent', border: '1px solid #3a3327',
-                  borderRadius: '6px', padding: '4px 10px',
-                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                  fontWeight: 600, color: '#5ea396', cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#5ea396'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#5ea396'; }}
-              >
-                💾 Backup
-              </button>
-              <button
-                onClick={() => setIsProfileModalOpen(true)}
-                title="Profil"
-                style={{
-                  background: 'transparent', border: '1px solid #3a3327',
-                  borderRadius: '6px', padding: '4px 10px',
-                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                  fontWeight: 600, color: '#d8923e', cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
-              >
-                Profil
-              </button>
-              <button
-                onClick={() => signOut(auth)}
-                title="Keluar"
-                style={{
-                  background: 'transparent', border: '1px solid #3a3327',
-                  borderRadius: '6px', padding: '4px 10px',
-                  fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                  fontWeight: 600, color: '#9c8f76', cursor: 'pointer',
-                  transition: 'all 0.15s'
-                }}
-                onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.borderColor = '#d8923e'; }}
-                onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#9c8f76'; (e.target as HTMLButtonElement).style.borderColor = '#3a3327'; }}
-              >
-                Keluar
-              </button>
-            </div>
+            )}
+          </div>
         </header>
 
         {/* NAVIGATION TABS */}
@@ -1807,7 +1834,7 @@ export default function App() {
           <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
           <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Pekerja</button>
           <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
-          <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>
+          {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>}
         </nav>
 
         {/* MAIN BODY AREA */}
@@ -1855,8 +1882,12 @@ export default function App() {
                   ))}
                 </select>
                 
-                <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
-                <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (Copas k!c)</button>
+                {!isReadOnly && (
+                  <>
+                    <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
+                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (Copas k!c)</button>
+                  </>
+                )}
                 
                 <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', background: '#1c1912', borderRadius: '6px', padding: '4px' }}>
                   <button 
@@ -1877,7 +1908,7 @@ export default function App() {
               </div>
 
               {/* Batch Actions Panel */}
-              {selectedCards.size > 0 && (
+              {selectedCards.size > 0 && !isReadOnly && (
                 <div className="batch-panel">
                   <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
                   <div className="batch-actions">
@@ -1896,7 +1927,7 @@ export default function App() {
                   <div className="stamp-big">🎴</div>
                   <h3>Binder masih kosong</h3>
                   <p>Masukkan kartu Karuta Anda secara manual atau gunakan Bulk Import di atas.</p>
-                  <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu Pertama</button>
+                  {!isReadOnly && <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu Pertama</button>}
                 </div>
               ) : (
                 <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
@@ -1920,33 +1951,37 @@ export default function App() {
                           onClick={(e) => handleSleeveContainerClick(c.id, e)}
                         >
                           {c.imageUrl && (
-                            <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} />
+                            <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxImageUrl(c.imageUrl || null); }} />
                           )}
-                          <div 
-                            className="select-indicator" 
-                            style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
-                            onClick={(e) => toggleSleeveSelect(c.id, e)}
-                          />
-                          <button 
-                            className="nc-delete-btn"
-                            title="Hapus Kartu"
-                            onClick={async (e) => { 
-                              e.stopPropagation(); 
-                              await handleDeleteCard(c.id); 
-                            }}
-                          >
-                            ×
-                          </button>
-                          <button 
-                            className="nc-edit-btn"
-                            title="Edit Kartu"
-                            onClick={(e) => { 
-                              e.stopPropagation(); 
-                              openCardModal(c); 
-                            }}
-                          >
-                            ✏️
-                          </button>
+                          {!isReadOnly && (
+                            <>
+                              <div 
+                                className="select-indicator" 
+                                style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
+                                onClick={(e) => toggleSleeveSelect(c.id, e)}
+                              />
+                              <button 
+                                className="nc-delete-btn"
+                                title="Hapus Kartu"
+                                onClick={async (e) => { 
+                                  e.stopPropagation(); 
+                                  await handleDeleteCard(c.id); 
+                                }}
+                              >
+                                ×
+                              </button>
+                              <button 
+                                className="nc-edit-btn"
+                                title="Edit Kartu"
+                                onClick={(e) => { 
+                                  e.stopPropagation(); 
+                                  openCardModal(c); 
+                                }}
+                              >
+                                ✏️
+                              </button>
+                            </>
+                          )}
 
                           <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
                           
@@ -2058,7 +2093,7 @@ export default function App() {
                           </div>
                         )}
 
-                        <div className="card-actions" style={{ justifyContent: 'space-between' }}>
+                        {!isReadOnly && (                        <div className="card-actions" style={{ justifyContent: 'space-between' }}>
                           <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => { e.stopPropagation(); toggleSleeveSelect(c.id, e as any); }}>
                             <input 
                               type="checkbox" 
@@ -2072,7 +2107,7 @@ export default function App() {
                             <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
                             <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Hapus</button>
                           </div>
-                        </div>
+                        </div>)}
                       </div>
                     );
                         })}
@@ -2107,7 +2142,7 @@ export default function App() {
                   <option value="name">Nama A-Z</option>
                   <option value="series">Series A-Z</option>
                 </select>
-                <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist</button>
+                {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist</button>}
               </div>
 
               {wishlist.length === 0 ? (
@@ -2115,7 +2150,7 @@ export default function App() {
                   <div className="stamp-big">✨</div>
                   <h3>Belum ada wishlist</h3>
                   <p>Catat karakter incaran kamu agar tidak terlewatkan saat drop muncul.</p>
-                  <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist Pertama</button>
+                  {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist Pertama</button>}
                 </div>
               ) : (
                 <div className="binder">
@@ -2137,7 +2172,7 @@ export default function App() {
 
                       {w.notes && <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '4px', fontStyle: 'italic' }}>"{w.notes}"</div>}
 
-                      <div className="card-actions">
+                      {!isReadOnly && (                      <div className="card-actions">
                         <button className="icon-btn" onClick={() => openWishModal(w)}>✏️ Edit</button>
                         <button className="icon-btn delete" onClick={() => handleDeleteWish(w.id)}>🗑️ Hapus</button>
                         <button 
@@ -2147,7 +2182,7 @@ export default function App() {
                         >
                           🎉 Klaim
                         </button>
-                      </div>
+                      </div>)}
                     </div>
                   ))}
                 </div>
@@ -2347,7 +2382,7 @@ export default function App() {
                                 ))}
                               </div>
                             )}
-                            <button className="btn secondary" style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }} onClick={() => handleSetWorker(slotIdx, null)}>Lepas</button>
+                            {!isReadOnly && <button className="btn secondary" style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }} onClick={() => handleSetWorker(slotIdx, null)}>Lepas</button>}
                           </>
                         ) : (
                           <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Slot Kosong</div>
@@ -2366,7 +2401,8 @@ export default function App() {
                       min="0"
                       value={nodeMultiplier} 
                       onChange={e => handleSetNodeMultiplier(Number(e.target.value))}
-                      style={{ width: '80px', padding: '8px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', borderRadius: '4px' }}
+                      disabled={isReadOnly}
+                      style={{ width: '80px', padding: '8px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', borderRadius: '4px', opacity: isReadOnly ? 0.6 : 1 }}
                     />
                   </div>
                   <div style={{ textAlign: 'right' }}>
@@ -2388,6 +2424,7 @@ export default function App() {
                       <div 
                         key={c.id} 
                         onClick={() => {
+                          if (isReadOnly) return;
                           if (!isUsed) {
                             const emptyIdx = workerSlotIds.findIndex(id => id === null);
                             if (emptyIdx !== -1) handleSetWorker(emptyIdx, c.id);
@@ -2396,7 +2433,7 @@ export default function App() {
                         }}
                         style={{ 
                           minWidth: '120px', maxWidth: '140px', padding: '12px', background: isUsed ? '#2a251b' : '#1c1912', border: '1px solid #3a3327', 
-                          borderRadius: '8px', cursor: isUsed ? 'not-allowed' : 'pointer', opacity: isUsed ? 0.5 : 1, transition: '0.2s'
+                          borderRadius: '8px', cursor: isReadOnly ? 'default' : (isUsed ? 'not-allowed' : 'pointer'), opacity: isUsed ? 0.5 : 1, transition: '0.2s'
                         }}
                       >
                         <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8dbce', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>{c.name}</div>
@@ -3007,7 +3044,7 @@ export default function App() {
                   if (isFirebaseConfigured() && user) {
                     const batch = writeBatch(db);
                     selectedCards.forEach(cardId => {
-                      batch.delete(doc(db, 'users', user.uid, 'cards', cardId));
+                      batch.delete(doc(db, 'users', user!.uid, 'cards', cardId));
                     });
                     batch.commit().catch(err => console.error("Burn delete error:", err));
                   }
@@ -3136,6 +3173,34 @@ export default function App() {
             </div>
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              {/* User Account Info */}
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '10px' }}>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                  <span style={{ color: '#9c8f76' }}>Username:</span>
+                  <span style={{ color: '#e8dbce', fontWeight: 600 }}>{displayName}</span>
+                </div>
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
+                  <span style={{ color: '#9c8f76' }}>Firebase UID:</span>
+                  <span style={{ color: '#9c8f76', fontFamily: 'monospace', fontSize: '11px' }} title={user?.uid || ''}>
+                    {user?.uid ? `${user.uid.substring(0, 12)}...` : '-'}
+                  </span>
+                </div>
+                <button
+                  className="btn"
+                  style={{ width: '100%', marginTop: '4px', background: '#5ea396', color: '#fff', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
+                  onClick={() => {
+                    if (user?.uid) {
+                      const shareUrl = `${window.location.origin}/?p=${user.uid}`;
+                      navigator.clipboard.writeText(shareUrl)
+                        .then(() => alert('Link profil berhasil disalin ke clipboard!'))
+                        .catch(() => alert('Gagal menyalin link.'));
+                    }
+                  }}
+                >
+                  🔗 Salin Link Profil Publik
+                </button>
+              </div>
+
               {/* Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
                 <div style={{ background: '#17140f', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
@@ -3359,6 +3424,12 @@ export default function App() {
         {renderTimer('Work', workEnd, () => startTimer('work', 30))}
       </div>
 
+      {lightboxImageUrl && (
+        <div className="lightbox-overlay" onClick={() => setLightboxImageUrl(null)}>
+          <button className="lightbox-close" onClick={() => setLightboxImageUrl(null)}>&times;</button>
+          <img src={lightboxImageUrl} alt="Fullscreen Card" className="lightbox-image" />
+        </div>
+      )}
     </div>
   );
 }
