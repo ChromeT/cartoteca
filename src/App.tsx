@@ -2021,41 +2021,29 @@ export default function App() {
                           <div className="nc-bottom">
                             <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
                             <div className="nc-series">{c.series || 'Unknown'}</div>
-                            <div className="nc-meta" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', gap: '4px' }}>
-                              <div style={{ display: 'flex', alignItems: 'center', overflow: 'hidden', whiteSpace: 'nowrap' }}>
-                                <span style={{ flexShrink: 0 }}>◈{c.edition || '?'}</span>
-                                <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
-                                <span style={{ overflow: 'hidden', textOverflow: 'ellipsis', flexShrink: 1 }}>{c.condition}</span>
-                                {c.effort !== null && (
-                                  <>
-                                    <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
-                                    <span style={{ flexShrink: 0 }}>{c.effort}&nbsp;eff</span>
-                                  </>
-                                )}
-                                {c.wish !== null && (
-                                  <>
-                                    <span style={{ margin: '0 4px', flexShrink: 0 }}>|</span>
-                                    <span style={{ flexShrink: 0 }}>♡&nbsp;{c.wish.toLocaleString()}</span>
-                                  </>
-                                )}
+                            <div className="nc-meta">
+                              <div className="nc-meta-stats">
+                                {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
+                                {c.condition && <span className={`nc-badge-chip condition-text condition-${c.condition.toLowerCase()}`}>{c.condition}</span>}
+                                {c.effort !== null && <span className="nc-badge-chip">{c.effort} eff</span>}
+                                {c.wish !== null && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
                               </div>
-                              <div 
-                                className="nc-code" 
-                                title="Salin Kode"
-                                style={{ cursor: 'pointer' }}
-                                onClick={(e) => {
-                                  e.stopPropagation();
-                                  if (c.code) {
-                                    navigator.clipboard.writeText(c.code);
+                              {c.code && (
+                                <div 
+                                  className="nc-code-block" 
+                                  title="Salin Kode"
+                                  onClick={(e) => {
+                                    e.stopPropagation();
+                                    navigator.clipboard.writeText(c.code!);
                                     const el = e.currentTarget;
                                     const oldText = el.innerHTML;
                                     el.innerHTML = '📋 Copied!';
                                     setTimeout(() => { el.innerHTML = oldText; }, 800);
-                                  }
-                                }}
-                              >
-                                📋 {c.code}
-                              </div>
+                                  }}
+                                >
+                                  📋 {c.code}
+                                </div>
+                              )}
                             </div>
                           </div>
                         </div>
@@ -3206,12 +3194,6 @@ export default function App() {
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
                   <span style={{ color: '#9c8f76' }}>Username:</span>
                   <span style={{ color: '#e8dbce', fontWeight: 600 }}>{displayName}</span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                  <span style={{ color: '#9c8f76' }}>Firebase UID:</span>
-                  <span style={{ color: '#9c8f76', fontFamily: 'monospace', fontSize: '11px' }} title={user?.uid || ''}>
-                    {user?.uid ? `${user.uid.substring(0, 12)}...` : '-'}
-                  </span>
                 </div>
                 <button
                   className="btn"

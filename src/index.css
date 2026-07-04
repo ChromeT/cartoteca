@@ -1369,8 +1369,8 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 }
 
 .native-card.has-image .nc-bottom {
-  padding: 10px 12px 10px 12px;
-  background: linear-gradient(to top, rgba(14,12,9,0.95) 0%, rgba(23,20,15,0.5) 80%, transparent 100%);
+  padding: 24px 10px 10px 10px;
+  background: linear-gradient(to top, rgba(10, 8, 5, 0.95) 0%, rgba(10, 8, 5, 0.7) 60%, transparent 100%);
 }
 
 .nc-character {
@@ -1393,16 +1393,63 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   white-space: nowrap;
   overflow: hidden;
   text-overflow: ellipsis;
-  margin-bottom: 6px;
+  margin-bottom: 8px;
 }
 
 .nc-meta {
   display: flex;
-  align-items: center;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.nc-meta-stats {
+  display: flex;
+  flex-wrap: wrap;
+  gap: 4px;
+}
+
+.nc-badge-chip {
+  background: rgba(0, 0, 0, 0.5);
+  backdrop-filter: blur(4px);
+  padding: 3px 6px;
+  border-radius: 4px;
   font-family: var(--font-mono);
   font-size: 10px;
-  color: #a48e71;
-  font-weight: 600;
+  font-weight: 700;
+  color: #e8dbce;
+  border: 1px solid rgba(255, 255, 255, 0.1);
+  display: flex;
+  align-items: center;
+  white-space: nowrap;
+}
+
+.nc-badge-chip.condition-mint { color: #5ea396; border-color: rgba(94, 163, 150, 0.3); background: rgba(94, 163, 150, 0.1); }
+.nc-badge-chip.condition-great { color: #71b8ab; border-color: rgba(113, 184, 171, 0.3); background: rgba(113, 184, 171, 0.1); }
+.nc-badge-chip.condition-good { color: #d8923e; border-color: rgba(216, 146, 62, 0.3); background: rgba(216, 146, 62, 0.1); }
+.nc-badge-chip.condition-average { color: #c47c2b; border-color: rgba(196, 124, 43, 0.3); background: rgba(196, 124, 43, 0.1); }
+.nc-badge-chip.condition-poor { color: #a46118; border-color: rgba(164, 97, 24, 0.3); background: rgba(164, 97, 24, 0.1); }
+.nc-badge-chip.condition-damaged { color: #8a3a3a; border-color: rgba(138, 58, 58, 0.3); background: rgba(138, 58, 58, 0.1); }
+
+.nc-code-block {
+  background: rgba(216, 146, 62, 0.15);
+  color: #f6d8b5;
+  border: 1px solid rgba(216, 146, 62, 0.3);
+  padding: 4px 8px;
+  border-radius: 4px;
+  font-size: 11px;
+  font-family: var(--font-mono);
+  font-weight: 800;
+  text-align: center;
+  cursor: pointer;
+  transition: all 0.2s ease;
+  white-space: nowrap;
+  overflow: hidden;
+  text-overflow: ellipsis;
+}
+.nc-code-block:hover {
+  background: rgba(216, 146, 62, 0.35);
+  color: #fff;
+  border-color: rgba(216, 146, 62, 0.6);
 }
 
 /* Condition Frames */
