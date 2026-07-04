@@ -221,6 +221,15 @@ export default function App() {
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
   const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
+  // Batch Input Modals
+  const [isBatchKiwiModalOpen, setIsBatchKiwiModalOpen] = useState(false);
+  const [batchKiwiText, setBatchKiwiText] = useState('');
+  const [batchKiwiFeedback, setBatchKiwiFeedback] = useState({ text: '', isError: false, isSuccess: false });
+  const [isBatchImageModalOpen, setIsBatchImageModalOpen] = useState(false);
+  const [batchImageText, setBatchImageText] = useState('');
+  const [batchImageFeedback, setBatchImageFeedback] = useState({ text: '', isError: false, isSuccess: false });
+  const [quickImageMode, setQuickImageMode] = useState(false);
+  const [quickImageIndex, setQuickImageIndex] = useState(0);
   // Custom Confirm Modal State
   const [confirmState, setConfirmState] = useState<{
     isOpen: boolean;
@@ -659,6 +668,181 @@ export default function App() {
       setBulkText('');
       setBulkImportFeedback({ text: '', isError: false, isSuccess: false });
     }, 2500);
+  }
+
+  // --- BATCH KIWI PARSER ---
+  async function handleBatchKiwiParse() {
+    if (!batchKiwiText.trim()) return;
+
+    const cleanText = batchKiwiText.replace(/^Owned by .*$/gim, '').trim();
+    const blocks = cleanText.split(/Worker Details/i).map(b => b.trim()).filter(Boolean);
+    
+    let updatedCount = 0;
+    let notFoundCount = 0;
+    let newCardsArray = [...cards];
+    const updatedCardsToSync: Card[] = [];
+
+    blocks.forEach(block => {
+      let parsedCode = '';
+      const charM = block.match(/(?:Character|Karakter)\s*[·:]\s*.+?\s*\(([a-zA-Z0-9]+)\)/i);
+      if (charM) {
+        parsedCode = charM[1].toLowerCase();
+      } else {
+        const bracketCodeM = block.match(/\(([a-zA-Z0-9]{5,8})\)/);
+        if (bracketCodeM) {
+          parsedCode = bracketCodeM[1].toLowerCase();
+        }
+      }
+
+      if (!parsedCode) return;
+
+      const getStat = (name: string) => {
+        const m2 = block.match(new RegExp(`(?:\\d+\\s*)?\\(([A-S])\\)\\s*${name}`, 'i'));
+        if (m2) return m2[1].toUpperCase();
+        
+        const m3 = block.match(new RegExp(`${name}\\s*:\\s*([A-S])`, 'i'));
+        if (m3) return m3[1].toUpperCase();
+
+        return undefined;
+      };
+
+      const parsedPurity = getStat('Purity');
+      const parsedWellness = getStat('Wellness');
+      const parsedToughness = getStat('Toughness');
+      const parsedQuickness = getStat('Quickness');
+      const parsedStyle = getStat('Style');
+      const parsedAppeal = getStat('Appeal');
+      const parsedGrabber = getStat('Grabber');
+      const parsedDropper = getStat('Dropper');
+      const parsedVanity = getStat('Vanity');
+      
+      const effM = block.match(/(?:Effort|Eff)\s*[·:-]\s*(\d+)/i);
+      const parsedEffort = effM ? parseInt(effM[1]) : undefined;
+
+      const cardIndex = newCardsArray.findIndex(c => c.code?.toLowerCase() === parsedCode);
+      if (cardIndex > -1) {
+        const card = newCardsArray[cardIndex];
+        const newStats = {
+          purity: parsedPurity || card.stats?.purity || '',
+          wellness: parsedWellness || card.stats?.wellness || '',
+          toughness: parsedToughness || card.stats?.toughness || '',
+          quickness: parsedQuickness || card.stats?.quickness || '',
+          style: parsedStyle || card.stats?.style || '',
+          appeal: parsedAppeal || card.stats?.appeal || '',
+          grabber: parsedGrabber || card.stats?.grabber || '',
+          dropper: parsedDropper || card.stats?.dropper || '',
+          vanity: parsedVanity || card.stats?.vanity || '',
+        };
+
+        const isWorker = checkWorkerIndicator(newStats, parsedEffort !== undefined ? parsedEffort : card.effort || null);
+
+        newCardsArray[cardIndex] = {
+          ...card,
+          stats: newStats,
+          effort: parsedEffort !== undefined ? parsedEffort : card.effort,
+          isWorker
+        };
+        updatedCardsToSync.push(newCardsArray[cardIndex]);
+        updatedCount++;
+      } else {
+        notFoundCount++;
+      }
+    });
+
+    if (updatedCount > 0) {
+      setCards(newCardsArray);
+      syncLocal('cards', newCardsArray);
+
+      if (isFirebaseConfigured() && user) {
+        const batch = writeBatch(db);
+        for (const card of updatedCardsToSync) {
+          batch.update(doc(db, 'users', user!.uid, 'cards', card.id), {
+            stats: card.stats,
+            effort: card.effort,
+            isWorker: card.isWorker
+          });
+        }
+        await batch.commit();
+      }
+      
+      setBatchKiwiFeedback({ text: `✅ Berhasil update ${updatedCount} kartu! (${notFoundCount} kartu tidak ditemukan)`, isError: false, isSuccess: true });
+      setTimeout(() => {
+        setIsBatchKiwiModalOpen(false);
+        setBatchKiwiText('');
+        setBatchKiwiFeedback({ text: '', isError: false, isSuccess: false });
+      }, 3000);
+    } else {
+      setBatchKiwiFeedback({ text: `⚠️ Tidak ada kartu yang berhasil dicocokkan. Pastikan teks k!wi memuat (kode_kartu).`, isError: true, isSuccess: false });
+    }
+  }
+
+  // --- BATCH IMAGE URL PARSER ---
+  async function handleBatchImageUpdate() {
+    if (!batchImageText.trim()) return;
+    const lines = batchImageText.trim().split('\n');
+    let updatedCount = 0;
+    let newCardsArray = [...cards];
+    const updatedCardsToSync: Card[] = [];
+
+    lines.forEach(line => {
+      const parts = line.split('|');
+      if (parts.length >= 2) {
+        const code = parts[0].trim().toLowerCase();
+        const url = parts.slice(1).join('|').trim();
+        if (code && url) {
+          const cardIndex = newCardsArray.findIndex(c => c.code?.toLowerCase() === code);
+          if (cardIndex > -1) {
+            newCardsArray[cardIndex] = { ...newCardsArray[cardIndex], imageUrl: url };
+            updatedCardsToSync.push(newCardsArray[cardIndex]);
+            updatedCount++;
+          }
+        }
+      }
+    });
+
+    if (updatedCount > 0) {
+      setCards(newCardsArray);
+      syncLocal('cards', newCardsArray);
+
+      if (isFirebaseConfigured() && user) {
+        const batch = writeBatch(db);
+        for (const card of updatedCardsToSync) {
+          batch.update(doc(db, 'users', user!.uid, 'cards', card.id), {
+            imageUrl: card.imageUrl
+          });
+        }
+        await batch.commit();
+      }
+      
+      setBatchImageFeedback({ text: `✅ Berhasil update gambar ${updatedCount} kartu!`, isError: false, isSuccess: true });
+      setTimeout(() => {
+        setIsBatchImageModalOpen(false);
+        setBatchImageText('');
+        setBatchImageFeedback({ text: '', isError: false, isSuccess: false });
+      }, 3000);
+    } else {
+      setBatchImageFeedback({ text: `⚠️ Tidak ada kode kartu yang cocok atau format salah.`, isError: true, isSuccess: false });
+    }
+  }
+
+  async function handleQuickImageSave(url: string, cardId: string) {
+    if (!url.trim()) return;
+    let newCardsArray = [...cards];
+    const cardIndex = newCardsArray.findIndex(c => c.id === cardId);
+    if (cardIndex > -1) {
+      const updatedCard = { ...newCardsArray[cardIndex], imageUrl: url.trim() };
+      newCardsArray[cardIndex] = updatedCard;
+      setCards(newCardsArray);
+      syncLocal('cards', newCardsArray);
+
+      if (isFirebaseConfigured() && user) {
+        const { updateDoc } = await import('firebase/firestore');
+        await updateDoc(doc(db, 'users', user!.uid, 'cards', cardId), { imageUrl: url.trim() });
+      }
+      // Move to next card
+      setBatchImageText(''); // clear input
+      setQuickImageIndex(prev => prev + 1);
+    }
   }
 
   const updateFStat = (key: keyof NonNullable<Card['stats']>, value: string) => {
@@ -1850,7 +2034,9 @@ export default function App() {
                 {!isReadOnly && (
                   <>
                     <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
-                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (Copas k!c)</button>
+                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (k!c)</button>
+                    <button className="btn secondary" onClick={() => setIsBatchKiwiModalOpen(true)}>⚡ Batch k!wi</button>
+                    <button className="btn secondary" onClick={() => setIsBatchImageModalOpen(true)}>🖼️ Batch Gambar</button>
                   </>
                 )}
                 
@@ -3143,6 +3329,139 @@ export default function App() {
               <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }} disabled={!!bulkImportFeedback.text && !bulkImportFeedback.isError}>
                 🚀 Proses & Simpan Semua Kartu
               </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BATCH KIWI */}
+      {isBatchKiwiModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#d8923e' }}>⚡</span> Batch Stats Pekerja (k!wi)
+              </h3>
+              <button onClick={() => setIsBatchKiwiModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
+                Paste banyak balasan bot <b>k!wi</b> sekaligus di bawah ini (bisa sekaligus 10, 20 kartu dst). Sistem akan mendeteksi kode kartu dalam kurung, misalnya <code>(a1b2c)</code> dan mencocokkannya dengan koleksi Anda secara otomatis.
+              </p>
+              
+              <textarea 
+                className="input-dark"
+                rows={10} 
+                placeholder="Worker Details&#10;Character · ... (a1b2c)&#10;Effort · 200&#10;&#10;... paste balasan lainnya ..."
+                value={batchKiwiText}
+                onChange={(e) => setBatchKiwiText(e.target.value)}
+              />
+
+              {batchKiwiFeedback.text && (
+                <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                  background: batchKiwiFeedback.isError ? '#b85c5c20' : batchKiwiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
+                  color: batchKiwiFeedback.isError ? '#ff8c8c' : batchKiwiFeedback.isSuccess ? '#5ea396' : '#d8923e',
+                  border: `1px solid ${batchKiwiFeedback.isError ? '#b85c5c50' : batchKiwiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                }}>
+                  {batchKiwiFeedback.text}
+                </div>
+              )}
+
+              <button className="btn" onClick={handleBatchKiwiParse} style={{ padding: '12px' }} disabled={!!batchKiwiFeedback.text && !batchKiwiFeedback.isError}>
+                🚀 Update Stats Massal
+              </button>
+            </div>
+          </div>
+        </div>
+      )}
+
+      {/* MODAL: BATCH IMAGE */}
+      {isBatchImageModalOpen && (
+        <div className="modal-overlay open">
+          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
+            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+              <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <span style={{ color: '#d8923e' }}>🖼️</span> Batch Gambar Kartu
+              </h3>
+              <button onClick={() => { setIsBatchImageModalOpen(false); setQuickImageMode(false); }} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
+            </div>
+            
+            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '12px' }}>
+                <button className={`tab-btn ${!quickImageMode ? 'active-text' : ''}`} onClick={() => setQuickImageMode(false)} style={{ flex: 1 }}>📜 Format Teks Massal</button>
+                <button className={`tab-btn ${quickImageMode ? 'active-text' : ''}`} onClick={() => { setQuickImageMode(true); setQuickImageIndex(0); }} style={{ flex: 1 }}>⚡ Quick Fill Mode</button>
+              </div>
+
+              {!quickImageMode ? (
+                <>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
+                    Paste dengan format: <code>kode|url_gambar</code> (satu per baris). Cocok untuk mass update jika Anda punya data di spreadsheet/notepad.
+                  </p>
+                  
+                  <textarea 
+                    className="input-dark"
+                    rows={10} 
+                    placeholder="a1b2c|https://...&#10;x9y8z|https://..."
+                    value={batchImageText}
+                    onChange={(e) => setBatchImageText(e.target.value)}
+                  />
+
+                  {batchImageFeedback.text && (
+                    <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                      background: batchImageFeedback.isError ? '#b85c5c20' : batchImageFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
+                      color: batchImageFeedback.isError ? '#ff8c8c' : batchImageFeedback.isSuccess ? '#5ea396' : '#d8923e',
+                      border: `1px solid ${batchImageFeedback.isError ? '#b85c5c50' : batchImageFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                    }}>
+                      {batchImageFeedback.text}
+                    </div>
+                  )}
+
+                  <button className="btn" onClick={handleBatchImageUpdate} style={{ padding: '12px' }} disabled={!!batchImageFeedback.text && !batchImageFeedback.isError}>
+                    🖼️ Update Gambar Massal
+                  </button>
+                </>
+              ) : (
+                <>
+                  <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
+                    Sistem akan memunculkan kartu Anda yang <b>belum memiliki gambar</b> satu per satu. Paste URL dan tekan Enter untuk menyimpan & lanjut.
+                  </p>
+                  {(() => {
+                    const cardsWithoutImage = cards.filter(c => !c.imageUrl);
+                    if (cardsWithoutImage.length === 0) {
+                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ Semua kartu di koleksi Anda sudah memiliki gambar!</div>;
+                    }
+                    if (quickImageIndex >= cardsWithoutImage.length) {
+                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ Anda telah menyelesaikan semua antrean pengisian gambar!</div>;
+                    }
+                    const c = cardsWithoutImage[quickImageIndex];
+                    return (
+                      <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>Kartu {quickImageIndex + 1} dari {cardsWithoutImage.length}</div>
+                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#e8dbce', marginBottom: '4px' }}>{c.name}</div>
+                        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '16px' }}>{c.series} • {c.code}</div>
+                        
+                        <div style={{ display: 'flex', gap: '8px' }}>
+                          <input 
+                            type="text" 
+                            className="input-dark" 
+                            placeholder="Paste URL gambar (https://...)"
+                            value={batchImageText}
+                            onChange={(e) => setBatchImageText(e.target.value)}
+                            onKeyDown={(e) => {
+                              if (e.key === 'Enter') handleQuickImageSave(batchImageText, c.id);
+                            }}
+                            style={{ flex: 1 }}
+                            autoFocus
+                          />
+                          <button className="btn secondary" onClick={() => { setBatchImageText(''); setQuickImageIndex(prev => prev + 1); }}>Skip</button>
+                          <button className="btn" onClick={() => handleQuickImageSave(batchImageText, c.id)}>Save</button>
+                        </div>
+                      </div>
+                    );
+                  })()}
+                </>
+              )}
             </div>
           </div>
         </div>
