@@ -1,5 +1,5 @@
 import React, { useState, useEffect, useRef } from 'react';
-import { db, auth, storage } from './firebase';
+import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import LoginPage from './LoginPage';
 import { 
@@ -12,7 +12,7 @@ import {
   writeBatch,
   onSnapshot
 } from 'firebase/firestore';
-import { ref, uploadBytesResumable, getDownloadURL } from 'firebase/storage';
+
 
 // --- TYPES ---
 interface Card {
@@ -278,8 +278,6 @@ export default function App() {
   const [fDye, setFDye] = useState('');
   const [fNotes, setFNotes] = useState('');
   const [fImageUrl, setFImageUrl] = useState('');
-  const [isUploadingImage, setIsUploadingImage] = useState(false);
-  const imageInputRef = useRef<HTMLInputElement>(null);
   const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
   const [fStats, setFStats] = useState<Card['stats'] | undefined>(undefined);
 
@@ -2665,69 +2663,12 @@ export default function App() {
               )}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input 
-                  type="file" 
-                  accept="image/*" 
-                  ref={imageInputRef}
-                  style={{ display: 'none' }}
-                  onChange={async (e) => {
-                    const file = e.target.files?.[0];
-                    if (!file) return;
-                    if (!user) {
-                      alert("Anda harus login untuk mengunggah gambar!");
-                      return;
-                    }
-                    if (file.size > 5 * 1024 * 1024) {
-                      alert("Ukuran gambar terlalu besar! Maksimal 5MB.");
-                      return;
-                    }
-                    setIsUploadingImage(true);
-                    try {
-                      const ext = file.name.split('.').pop() || 'png';
-                      const fileName = `card_${Date.now()}_${Math.floor(Math.random()*1000)}.${ext}`;
-                      const storageRef = ref(storage, `users/${user.uid}/cards/${fileName}`);
-                      const uploadTask = uploadBytesResumable(storageRef, file);
-                      
-                      uploadTask.on('state_changed', 
-                        () => {
-                           // upload progress indicator if needed
-                        },
-                        (error) => {
-                          alert("Gagal mengunggah gambar: " + error.message);
-                          setIsUploadingImage(false);
-                        },
-                        async () => {
-                          try {
-                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                            setFImageUrl(downloadURL);
-                            setIsUploadingImage(false);
-                          } catch (err: any) {
-                            alert("Gagal mendapatkan URL gambar: " + err.message);
-                            setIsUploadingImage(false);
-                          }
-                        }
-                      );
-                    } catch (err: any) {
-                      alert("Error: " + err.message);
-                      setIsUploadingImage(false);
-                    }
-                  }}
+                  type="text" 
+                  placeholder="Paste URL gambar dari Discord (opsional)" 
+                  value={fImageUrl}
+                  onChange={(e) => setFImageUrl(e.target.value)}
+                  style={{ flex: 1 }}
                 />
-                <button 
-                  type="button"
-                  className="btn secondary" 
-                  disabled={isUploadingImage}
-                  onClick={(e) => {
-                    e.preventDefault();
-                    if (imageInputRef.current) {
-                      imageInputRef.current.click();
-                    } else {
-                      alert("Error: Input file tidak ditemukan di DOM");
-                    }
-                  }}
-                >
-                  {isUploadingImage ? 'Mengunggah...' : '📷 Pilih Gambar'}
-                </button>
-                <small style={{ color: 'var(--ink-soft)' }}>Maks. 5MB</small>
               </div>
             </div>
 
