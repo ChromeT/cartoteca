@@ -1858,7 +1858,7 @@ export default function App() {
                 <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
                   {(() => {
                     const filtered = getFilteredCards();
-                    const CARDS_PER_PAGE = 9;
+                    const CARDS_PER_PAGE = 12;
                     const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
                     const safeCurrentPage = Math.min(currentPage, totalPages);
                     const paginated = filtered.slice((safeCurrentPage - 1) * CARDS_PER_PAGE, safeCurrentPage * CARDS_PER_PAGE);
