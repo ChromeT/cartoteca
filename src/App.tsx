@@ -159,6 +159,8 @@ export default function App() {
   const pUid = queryParams.get('p') || null;
 
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading
+  type UserStats = Record<string, string>;
+  const [userKUI, setUserKUI] = useState<UserStats>({});
   const [publicProfileId] = useState<string | null>(pUid);
   const isReadOnly = publicProfileId !== null && (user ? publicProfileId !== user!.uid : true);
   const targetUid = publicProfileId || user?.uid;
@@ -237,6 +239,9 @@ export default function App() {
     onConfirm: () => void;
     onCancel: () => void;
   }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
+
+  const [kuiInputText, setKuiInputText] = useState('');
+  const [kuiFeedback, setKuiFeedback] = useState({ text: '', isError: false, isSuccess: false });
 
   const customConfirm = (message: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -365,8 +370,10 @@ export default function App() {
         unsubProfile = onSnapshot(doc(db, 'users', targetUid), (profileSnap) => {
           if (profileSnap.exists()) {
             setPublicDisplayName(profileSnap.data().displayName || null);
+            setUserKUI(profileSnap.data().kuiStats || {});
           } else {
             setPublicDisplayName(null);
+            setUserKUI({});
           }
         }, (error) => {
           console.error("Profile listener error:", error);
@@ -437,6 +444,8 @@ export default function App() {
       console.log('Using LocalStorage fallback.');
       setPublicDisplayName(null);
       const uid = targetUid;
+      const savedKUI = localStorage.getItem(`cartoteca:${uid}:kui`);
+      if (savedKUI) setUserKUI(JSON.parse(savedKUI));
       const savedCards = localStorage.getItem(`cartoteca:${uid}:cards`);
       if (savedCards) setCards(JSON.parse(savedCards));
 
@@ -844,6 +853,43 @@ export default function App() {
       setQuickImageIndex(prev => prev + 1);
     }
   }
+
+  // --- KUI PARSER ---
+  const handleKUIParse = async () => {
+    if (!kuiInputText.trim()) return;
+    const lines = kuiInputText.split('\n');
+    const newKUI: Record<string, string> = {};
+    lines.forEach(line => {
+      if (line.includes('·')) {
+        const parts = line.split('·');
+        if (parts.length >= 2) {
+          const key = parts[0].trim();
+          const val = parts.slice(1).join('·').trim();
+          if (key && val) {
+            newKUI[key] = val;
+          }
+        }
+      }
+    });
+
+    if (Object.keys(newKUI).length > 0) {
+      setUserKUI(newKUI);
+      syncLocal('kui', newKUI);
+      
+      if (isFirebaseConfigured() && user) {
+        const { updateDoc } = await import('firebase/firestore');
+        await updateDoc(doc(db, 'users', user.uid), { kuiStats: newKUI });
+      }
+
+      setKuiFeedback({ text: `✅ Berhasil import ${Object.keys(newKUI).length} stat KUI!`, isError: false, isSuccess: true });
+      setTimeout(() => {
+        setKuiInputText('');
+        setKuiFeedback({ text: '', isError: false, isSuccess: false });
+      }, 3000);
+    } else {
+      setKuiFeedback({ text: '⚠️ Tidak ada data KUI yang valid ditemukan. Gunakan format "Key · Value".', isError: true, isSuccess: false });
+    }
+  };
 
   const updateFStat = (key: keyof NonNullable<Card['stats']>, value: string) => {
     setFStats(prev => ({
@@ -1989,6 +2035,36 @@ export default function App() {
         {/* MAIN BODY AREA */}
         <main className="content-area">
           
+          {/* KUI DASHBOARD WIDGET */}
+          {activeTab === 'collection' && Object.keys(userKUI).length > 0 && (
+            <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Dropped</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards dropped'] || '-'}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Grabbed</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards grabbed'] || '-'}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Burned</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards burned'] || '-'}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Fights Won</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total fights won'] || '-'}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Gold Spent</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Gold spent'] || '-'}</div>
+              </div>
+              <div style={{ display: 'flex', flexDirection: 'column' }}>
+                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Power Gained</div>
+                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total power gained'] || '-'}</div>
+              </div>
+            </div>
+          )}
+
           {/* TAB: BINDER COLLECTION */}
           {activeTab === 'collection' && (
             <div>
@@ -3498,7 +3574,7 @@ export default function App() {
                     if (user?.uid) {
                       const shareUrl = `${window.location.origin}/?p=${user.uid}`;
                       navigator.clipboard.writeText(shareUrl)
-                        .then(() => alert('Link profil berhasil disalin ke clipboard!'))
+                        .then(() => alert('Link profil publik Anda (read-only) berhasil disalin ke clipboard!'))
                         .catch(() => alert('Gagal menyalin link.'));
                     }
                   }}
@@ -3506,6 +3582,48 @@ export default function App() {
                   🔗 Salin Link Profil Publik
                 </button>
               </div>
+
+              {/* KUI Import Section */}
+              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px' }}>Karuta User Info (k!ui)</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', lineHeight: '1.5', margin: 0 }}>
+                  Paste balasan perintah <code>k!ui</code> dari Discord ke bawah ini untuk menampilkan statistik akun di halaman profil publik Anda.
+                </p>
+                <textarea 
+                  className="input-dark"
+                  rows={4} 
+                  placeholder="Cards dropped · 141,273&#10;Cards grabbed · 19,990"
+                  value={kuiInputText}
+                  onChange={(e) => setKuiInputText(e.target.value)}
+                />
+                {kuiFeedback.text && (
+                  <div style={{ padding: '10px', borderRadius: '4px', fontSize: '12px', 
+                    background: kuiFeedback.isError ? '#b85c5c20' : kuiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
+                    color: kuiFeedback.isError ? '#ff8c8c' : kuiFeedback.isSuccess ? '#5ea396' : '#d8923e',
+                    border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                  }}>
+                    {kuiFeedback.text}
+                  </div>
+                )}
+                <button className="btn secondary" onClick={handleKUIParse} disabled={!!kuiFeedback.text && !kuiFeedback.isError}>
+                  📥 Update Statistik
+                </button>
+              </div>
+
+              {/* KUI Raw Data Display */}
+              {Object.keys(userKUI).length > 0 && (
+                <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+                  <h4 style={{ margin: '0 0 12px 0', color: '#e8dbce', fontSize: '13px' }}>Semua Data KUI Anda:</h4>
+                  <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
+                    {Object.entries(userKUI).map(([k, v]) => (
+                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #3a3327', paddingBottom: '4px' }}>
+                        <span style={{ color: '#9c8f76' }}>{k}</span>
+                        <span style={{ color: '#e8dbce', fontWeight: 600, fontFamily: 'monospace' }}>{v}</span>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+              )}
 
               {/* Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
