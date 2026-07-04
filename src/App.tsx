@@ -1420,6 +1420,13 @@ export default function App() {
   }
 
   function handleSleeveContainerClick(id: string, e: React.MouseEvent) {
+    if (isReadOnly) {
+      const card = cards.find(c => c.id === id);
+      if (card?.imageUrl) {
+        setLightboxImageUrl(card.imageUrl);
+      }
+      return;
+    }
     toggleSleeveSelect(id, e);
   }
 
