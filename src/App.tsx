@@ -2708,9 +2708,17 @@ export default function App() {
                   }}
                 />
                 <button 
+                  type="button"
                   className="btn secondary" 
                   disabled={isUploadingImage}
-                  onClick={() => imageInputRef.current?.click()}
+                  onClick={(e) => {
+                    e.preventDefault();
+                    if (imageInputRef.current) {
+                      imageInputRef.current.click();
+                    } else {
+                      alert("Error: Input file tidak ditemukan di DOM");
+                    }
+                  }}
                 >
                   {isUploadingImage ? 'Mengunggah...' : '📷 Pilih Gambar'}
                 </button>
