@@ -513,7 +513,8 @@ export default function App() {
   async function handleBulkImportExecute() {
     if (!bulkText.trim()) return;
 
-    const lines = bulkText.trim().split('\n');
+    const cleanBulkText = bulkText.replace(/^Owned by .*$/gim, '');
+    const lines = cleanBulkText.trim().split('\n');
     const newCards: Card[] = [];
     let successCount = 0;
 
@@ -673,7 +674,10 @@ export default function App() {
       return;
     }
 
-    const cleanText = discordText.replace(/[\*_`~▫▪●○]/g, '').trim();
+    const cleanText = discordText
+      .replace(/^Owned by .*$/gim, '')
+      .replace(/[\*_`~▫▪●○]/g, '')
+      .trim();
 
     // Try multi-line parsing
     const lines = cleanText.split('\n');
@@ -881,7 +885,10 @@ export default function App() {
       return;
     }
 
-    const cleanText = effortDiscordText.replace(/[\*_`~▫▪●○]/g, '').trim();
+    const cleanText = effortDiscordText
+      .replace(/^Owned by .*$/gim, '')
+      .replace(/[\*_`~▫▪●○]/g, '')
+      .trim();
     const lines = cleanText.split('\n');
     let hasMatch = false;
 
