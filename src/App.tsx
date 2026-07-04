@@ -573,7 +573,7 @@ export default function App() {
 
         if (s.match(/^[★☆]+$/)) return; // Ignore star ratings if they get separated and not matched above
 
-        const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i);
+        const effM = s.match(/(\d+)\s*(?:eff|effort)/i) || s.match(/(?:eff|effort)\s*(\d+)/i) || s.match(/[✧✦]\s*(\d+)/);
         if (effM) { pEffort = parseInt(effM[1]); return; }
 
         const wishM = s.match(/(\d+)\s*(?:wishlist|wish)/i);
