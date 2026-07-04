@@ -170,10 +170,36 @@ export default function App() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
-  const [activeMode, setActiveMode] = useState<'collection' | 'gameplay'>('collection');
-  const [activeTab, setActiveTab] = useState<string>('collection');
+  const [activeMode, setActiveMode] = useState<'collection' | 'gameplay'>(() => {
+    const saved = localStorage.getItem('cartoteca:activeMode');
+    return (saved === 'collection' || saved === 'gameplay') ? saved : 'collection';
+  });
+  const [activeTab, setActiveTab] = useState<string>(() => {
+    const savedTab = localStorage.getItem('cartoteca:activeTab');
+    const savedMode = localStorage.getItem('cartoteca:activeMode') || 'collection';
+    if (savedMode === 'gameplay') {
+      return (savedTab === 'kui-stats' || savedTab === 'workers' || savedTab === 'inventory') ? savedTab : 'kui-stats';
+    } else {
+      return (savedTab === 'collection' || savedTab === 'wishlist' || savedTab === 'stats' || savedTab === 'tags-manager') ? savedTab : 'collection';
+    }
+  });
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({ left: 0, width: 0, opacity: 0 });
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
+
+  const handleModeChange = (mode: 'collection' | 'gameplay') => {
+    setActiveMode(mode);
+    localStorage.setItem('cartoteca:activeMode', mode);
+    const targetTab = mode === 'collection' ? 'collection' : 'kui-stats';
+    setActiveTab(targetTab);
+    localStorage.setItem('cartoteca:activeTab', targetTab);
+    setSelectedCards(new Set());
+  };
+
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    localStorage.setItem('cartoteca:activeTab', tab);
+    setSelectedCards(new Set());
+  };
 
   useEffect(() => {
     const updateIndicator = () => {
@@ -242,6 +268,8 @@ export default function App() {
 
   const [kuiInputText, setKuiInputText] = useState('');
   const [kuiFeedback, setKuiFeedback] = useState({ text: '', isError: false, isSuccess: false });
+  const [invPasteText, setInvPasteText] = useState('');
+  const [invParseFeedback, setInvParseFeedback] = useState<{ text: string; isError: boolean } | null>(null);
 
   const customConfirm = (message: string): Promise<boolean> => {
     return new Promise((resolve) => {
@@ -862,44 +890,46 @@ export default function App() {
     const lines = kuiInputText.split('\n');
     const newKUI: Record<string, string> = {};
 
-    // Known stat labels from k!ui output sections: Cards, Support, Affection, Jobs
-    const KNOWN_LABELS = new Set([
-      'Cards burned', 'Cards dropped', 'Cards grabbed', 'Cards given',
-      'Cards received from other users', 'Failed card upgrades', 'Successful card upgrades',
-      'Fights lost', 'Fights won', 'Trades completed',
-      'Gems contributed to server chest',
-      'Gold spent', 'Number of votes', 'Votes',
-      'Tickets spent', 'Total attack power spent', 'Total bandages applied',
-      'Total bits spent', 'Total defense power spent', 'Total fights lost', 'Total fights won',
-      'Total frames applied', 'Total morphs applied', 'Total morphs rolled',
-      'Total power gained', 'Total times worked', 'Total worker injuries',
-      'Affection Points gained', 'Affection questions answered',
-      'Job worker injuries', 'Job works completed',
-    ]);
-
     lines.forEach(line => {
-      // Strip leading emoji/icons (common in discord copy-paste)
-      const cleaned = line.replace(/^[\p{Emoji}\s]+/u, '').trim();
-      if (cleaned.includes('·')) {
-        const dotIdx = cleaned.indexOf('·');
-        const left = cleaned.substring(0, dotIdx).trim();  // NUMBER
-        const right = cleaned.substring(dotIdx + 1).trim(); // Label
-
-        // Format A: NUMBER · Label  (real k!ui format)
-        const numLeft = left.replace(/,/g, '');
-        if (/^\d+$/.test(numLeft) && right) {
+      // Clean brackets, asterisks, underscores, backticks, tildes
+      let cleanLine = line.replace(/[\*\_`~\[\]]/g, '').trim();
+      
+      // Match key-value separated by middle dot (·), dash (-), or colon (:)
+      const sepMatch = cleanLine.match(/^(.*?)\s*[\u00b7\-\:]\s*(.*)$/);
+      if (sepMatch) {
+        const left = sepMatch[1].trim();
+        const right = sepMatch[2].trim();
+        
+        // Find digit sequences
+        const leftNumMatch = left.match(/\b\d+(?:,\d+)*\b/);
+        const rightNumMatch = right.match(/\b\d+(?:,\d+)*\b/);
+        
+        if (leftNumMatch && !rightNumMatch) {
+          const val = leftNumMatch[0].replace(/,/g, '');
           const label = right;
-          // Accept if known label, or if right side looks like a descriptive text
-          if (KNOWN_LABELS.has(label) || /^[A-Za-z]/.test(label)) {
-            newKUI[label] = numLeft;
-          }
+          newKUI[label] = val;
+        } else if (rightNumMatch && !leftNumMatch) {
+          const val = rightNumMatch[0].replace(/,/g, '');
+          const label = left.replace(/^[\p{Emoji}\s]+/u, '').trim();
+          newKUI[label] = val;
+        } else if (leftNumMatch && rightNumMatch) {
+          const val = leftNumMatch[0].replace(/,/g, '');
+          const label = right;
+          newKUI[label] = val;
         }
-        // Format B: Label · NUMBER  (fallback for legacy data)
-        else if (right && /^[\d,]+$/.test(right.replace(/,/g, ''))) {
-          const numRight = right.replace(/,/g, '');
-          if (/^\d+$/.test(numRight) && left) {
-            newKUI[left] = numRight;
-          }
+      } else {
+        // Fallback for space-separated format (e.g. "52 Cards burned" or "Cards burned 52")
+        const leftNumMatch = cleanLine.match(/^\s*(\d+(?:,\d+)*)\s+(.+)$/);
+        const rightNumMatch = cleanLine.match(/^(.+?)\s+(\d+(?:,\d+)*)\s*$/);
+        
+        if (leftNumMatch) {
+          const val = leftNumMatch[1].replace(/,/g, '');
+          const label = leftNumMatch[2].trim();
+          newKUI[label] = val;
+        } else if (rightNumMatch) {
+          const val = rightNumMatch[2].replace(/,/g, '');
+          const label = rightNumMatch[1].replace(/^[\p{Emoji}\s]+/u, '').trim();
+          newKUI[label] = val;
         }
       }
     });
@@ -1602,7 +1632,7 @@ export default function App() {
 
   function handleViewTagCollection(name: string) {
     setSearchQuery(name.toLowerCase());
-    setActiveTab('collection');
+    handleTabChange('collection');
     window.scrollTo({ top: 0, behavior: 'smooth' });
   }
 
@@ -2028,7 +2058,7 @@ export default function App() {
         <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', marginBottom: '10px' }}>
           <div style={{ display: 'flex', background: '#1c1912', padding: '4px', borderRadius: '8px', border: '1px solid #3a3327' }}>
             <button
-              onClick={() => { setActiveMode('collection'); setActiveTab('collection'); setSelectedCards(new Set()); }}
+              onClick={() => handleModeChange('collection')}
               style={{
                 padding: '8px 24px', borderRadius: '6px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', transition: '0.2s',
                 background: activeMode === 'collection' ? '#d8923e' : 'transparent',
@@ -2038,7 +2068,7 @@ export default function App() {
               🎴 Collection
             </button>
             <button
-              onClick={() => { setActiveMode('gameplay'); setActiveTab('kui-stats'); setSelectedCards(new Set()); }}
+              onClick={() => handleModeChange('gameplay')}
               style={{
                 padding: '8px 24px', borderRadius: '6px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', transition: '0.2s',
                 background: activeMode === 'gameplay' ? '#5ea396' : 'transparent',
@@ -2070,15 +2100,16 @@ export default function App() {
           }}></div>
           {activeMode === 'collection' ? (
             <>
-              <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Binder</button>
-              <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
-              {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>}
+              <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => handleTabChange('collection')}>🎴 Binder</button>
+              <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => handleTabChange('wishlist')}>✨ Wishlist</button>
+              <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('stats')}>📈 Statistik</button>
+              {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => handleTabChange('tags-manager')}>🏷️ Kelola Tag</button>}
             </>
           ) : (
             <>
-              <button ref={el => tabRefs.current['kui-stats'] = el} className={`tab-btn ${activeTab === 'kui-stats' ? 'active-text' : ''}`} onClick={() => { setActiveTab('kui-stats'); setSelectedCards(new Set()); }}>📊 KUI Dashboard</button>
-              <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Job Board</button>
-              {!isReadOnly && <button ref={el => tabRefs.current['inventory'] = el} className={`tab-btn ${activeTab === 'inventory' ? 'active-text' : ''}`} onClick={() => { setActiveTab('inventory'); setSelectedCards(new Set()); }}>🎒 Inventory</button>}
+              <button ref={el => tabRefs.current['kui-stats'] = el} className={`tab-btn ${activeTab === 'kui-stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('kui-stats')}>📊 KUI Dashboard</button>
+              <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => handleTabChange('workers')}>💼 Job Board</button>
+              {!isReadOnly && <button ref={el => tabRefs.current['inventory'] = el} className={`tab-btn ${activeTab === 'inventory' ? 'active-text' : ''}`} onClick={() => handleTabChange('inventory')}>🎒 Inventory</button>}
             </>
           )}
         </nav>
@@ -2161,6 +2192,50 @@ export default function App() {
                           [userKUI['Affection questions answered'], '❓ AP Questions'],
                           [userKUI['Tickets spent'], '🎟️ Tickets Spent'],
                           [userKUI['Gems contributed to server chest'], '💎 Gems Contributed'],
+                        ].filter(([v]) => v).map(([v, label], i) => (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section: Collection Stats (KUI) */}
+                  {(userKUI['Wishlist items'] || userKUI['Tags created'] || userKUI['Albums created'] || userKUI['Album pages added'] || userKUI['Cards added to albums'] || userKUI['Koibito affection']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#c4a673', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>📚 Collection (KUI)</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[
+                          [userKUI['Wishlist items'], '✨ Wishlist Items'],
+                          [userKUI['Tags created'], '🏷️ Tags Created'],
+                          [userKUI['Albums created'], '📖 Albums Created'],
+                          [userKUI['Album pages added'], '📄 Album Pages'],
+                          [userKUI['Cards added to albums'], '🖼️ Album Cards'],
+                          [userKUI['Koibito affection'], '💖 Koibito Affection'],
+                        ].filter(([v]) => v).map(([v, label], i) => (
+                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
+                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
+                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Section: Gameplay Stats (KUI) */}
+                  {(userKUI['Total morphs rolled'] || userKUI['Total morphs applied'] || userKUI['Morph attempts'] || userKUI['Total dyes applied'] || userKUI['Dye refills'] || userKUI['Total trims applied']) && (
+                    <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
+                      <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎮 Gameplay Details (KUI)</div>
+                      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
+                        {[
+                          [userKUI['Total morphs rolled'], '🌀 Morphs Rolled'],
+                          [userKUI['Total morphs applied'], '🎨 Morphs Applied'],
+                          [userKUI['Morph attempts'], '🎯 Morph Attempts'],
+                          [userKUI['Total dyes applied'], '🧪 Dyes Applied'],
+                          [userKUI['Dye refills'], '🔄 Dye Refills'],
+                          [userKUI['Total trims applied'], '✂️ Trims Applied'],
                         ].filter(([v]) => v).map(([v, label], i) => (
                           <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
                             <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
@@ -2842,7 +2917,88 @@ export default function App() {
               </h3>
               
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-                
+
+                {/* === k!inv PARSER === */}
+                {(() => {
+                  const handleInvParse = () => {
+                    if (!invPasteText.trim()) return;
+                    const lines = invPasteText.split('\n');
+                    const updates: Partial<typeof inventory> = {};
+
+                    lines.forEach(line => {
+                      const clean = line.replace(/^[\p{Emoji}\s]+/u, '').trim();
+                      const parts = clean.split('\u00b7').map(s => s.trim());
+                      if (parts.length < 2) return;
+
+                      const numStr = parts[0].replace(/,/g, '');
+                      if (!/^\d+$/.test(numStr)) return;
+                      const num = parseInt(numStr);
+                      const rest = parts.slice(1).join(' ').toLowerCase();
+
+                      if (rest.includes('ticket')) updates.tickets = num;
+                      else if (rest.includes('gold')) updates.gold = num;
+                      else if (rest.includes('gem')) updates.gems = num;
+                      else if (rest.includes('work permit')) updates.workPermit = num;
+                      else if (rest.includes('trade license')) updates.tradeLicense = num;
+                      else if (rest.includes('bit') && !/(flower|wood|ice|stone|sugar|wool|uranium|bone|iron|copper|quartz|essence|magma|zinc)/.test(rest)) updates.bits = num;
+                      else if (rest.includes('dust')) {
+                        if (rest.includes('damaged') || rest.includes('\u2606\u2606\u2606\u2606')) updates.dust0 = num;
+                        else if (rest.includes('poor') || rest.includes('\u2605\u2606\u2606\u2606')) updates.dust1 = num;
+                        else if (rest.includes('good') || rest.includes('\u2605\u2605\u2606\u2606')) updates.dust2 = num;
+                        else if (rest.includes('excellent') || rest.includes('\u2605\u2605\u2605\u2606')) updates.dust3 = num;
+                        else if (rest.includes('mint') || rest.includes('\u2605\u2605\u2605\u2605')) updates.dust4 = num;
+                      }
+                    });
+
+                    if (Object.keys(updates).length > 0) {
+                      handleUpdateInventory({ ...inventory, ...updates });
+                      setInvParseFeedback({ text: `\u2705 ${Object.keys(updates).length} item berhasil diperbarui dari k!inv!`, isError: false });
+                      setInvPasteText('');
+                      setTimeout(() => setInvParseFeedback(null), 3000);
+                    } else {
+                      setInvParseFeedback({ text: '\u26a0\ufe0f Tidak ada item terdeteksi. Salin teks lengkap dari balasan k!inv / k!i Karuta.', isError: true });
+                    }
+                  };
+
+                  return (
+                    <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px' }}>
+                      <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
+                        \ud83d\udccb Sync dari k!inv
+                      </div>
+                      <p style={{ fontSize: '12px', color: '#9c8f76', margin: '0 0 10px 0' }}>
+                        Ketik <code style={{ background: '#252118', padding: '1px 5px', borderRadius: '3px' }}>k!inv</code> di Discord, lalu paste teks balasannya di sini. Semua nilai akan <b style={{ color: '#5ea396' }}>diperbarui otomatis</b>.
+                      </p>
+                      <textarea
+                        className="form-control"
+                        rows={4}
+                        placeholder={"Inventory\nItems carried by @Username\n\n\u2728 701 \u00b7 poor dust \u00b7 Dust (\u2605\u2606\u2606\u2606)\n\ud83e\ude99 1,200 \u00b7 gold \u00b7 Gold\n..."}
+                        value={invPasteText}
+                        onChange={e => setInvPasteText(e.target.value)}
+                        style={{ fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' }}
+                      />
+                      {invParseFeedback && (
+                        <div style={{
+                          marginTop: '8px', padding: '8px 12px', borderRadius: '6px', fontSize: '12px',
+                          background: invParseFeedback.isError ? '#b85c5c20' : '#5ea39620',
+                          color: invParseFeedback.isError ? '#ff8c8c' : '#5ea396',
+                          border: `1px solid ${invParseFeedback.isError ? '#b85c5c50' : '#5ea39650'}`
+                        }}>
+                          {invParseFeedback.text}
+                        </div>
+                      )}
+                      <button
+                        className="btn"
+                        style={{ marginTop: '10px', width: '100%' }}
+                        onClick={handleInvParse}
+                        disabled={!invPasteText.trim()}
+                      >
+                        \ud83d\udd04 Sync Inventory dari k!inv
+                      </button>
+                    </div>
+                  );
+                })()}
+
+
                 {/* Tickets */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🎟️ Tickets</span>
