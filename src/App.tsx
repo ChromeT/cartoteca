@@ -246,13 +246,6 @@ export default function App() {
     });
   };
 
-  // Timers State
-  const [dropEnd, setDropEnd] = useState<number | null>(null);
-  const [grabEnd, setGrabEnd] = useState<number | null>(null);
-  const [workEnd, setWorkEnd] = useState<number | null>(null);
-  const [now, setNow] = useState(Date.now());
-  const [notified, setNotified] = useState<Record<string, boolean>>({ drop: true, grab: true, work: true });
-
   // Worker Optimizer State
   const [workerSlotIds, setWorkerSlotIds] = useState<(string | null)[]>([null, null, null]);
   const [nodeMultiplier, setNodeMultiplier] = useState<number>(1.15);
@@ -453,34 +446,13 @@ export default function App() {
     }
   }, [user, targetUid, isReadOnly]);
 
-  // --- TIMERS LOGIC ---
   useEffect(() => {
     if (!user) return;
-    const loadT = (key: string) => {
-      const v = localStorage.getItem(`cartoteca:${user!.uid}:${key}`);
-      return v ? parseInt(v, 10) : null;
-    };
-    const dEnd = loadT('drop');
-    const gEnd = loadT('grab');
-    const wEnd = loadT('work');
-    setDropEnd(dEnd);
-    setGrabEnd(gEnd);
-    setWorkEnd(wEnd);
-
-    const n = Date.now();
-    setNotified({
-      drop: !dEnd || n >= dEnd,
-      grab: !gEnd || n >= gEnd,
-      work: !wEnd || n >= wEnd,
-    });
 
     const w = localStorage.getItem(`cartoteca:${user!.uid}:workers`);
     if (w) setWorkerSlotIds(JSON.parse(w));
     const m = localStorage.getItem(`cartoteca:${user!.uid}:nodemult`);
     if (m) setNodeMultiplier(parseFloat(m));
-
-    const iv = setInterval(() => setNow(Date.now()), 1000);
-    return () => clearInterval(iv);
   }, [user]);
 
   const handleSetWorker = (index: number, cardId: string | null) => {
@@ -495,81 +467,6 @@ export default function App() {
     if (!user) return;
     setNodeMultiplier(val);
     localStorage.setItem(`cartoteca:${user!.uid}:nodemult`, val.toString());
-  };
-
-  useEffect(() => {
-    const checkAlarm = (type: string, end: number | null) => {
-      if (end && now >= end && !notified[type]) {
-        if (Notification.permission === 'granted') {
-          new Notification(`Karuta: ${type.toUpperCase()} is Ready!`, { icon: '/favicon.ico' });
-        }
-        try {
-          const AudioContext = window.AudioContext || (window as any).webkitAudioContext;
-          if (AudioContext) {
-            const ctx = new AudioContext();
-            for (let i = 0; i < 4; i++) {
-              const osc = ctx.createOscillator();
-              const gain = ctx.createGain();
-              osc.connect(gain);
-              gain.connect(ctx.destination);
-              osc.type = 'square';
-              osc.frequency.setValueAtTime(800, ctx.currentTime + i * 0.25);
-              gain.gain.setValueAtTime(0, ctx.currentTime + i * 0.25);
-              gain.gain.linearRampToValueAtTime(0.1, ctx.currentTime + i * 0.25 + 0.05);
-              gain.gain.linearRampToValueAtTime(0, ctx.currentTime + i * 0.25 + 0.15);
-              osc.start(ctx.currentTime + i * 0.25);
-              osc.stop(ctx.currentTime + i * 0.25 + 0.15);
-            }
-          }
-        } catch (e) {}
-        setNotified(p => ({ ...p, [type]: true }));
-      }
-    };
-    checkAlarm('drop', dropEnd);
-    checkAlarm('grab', grabEnd);
-    checkAlarm('work', workEnd);
-  }, [now, dropEnd, grabEnd, workEnd, notified]);
-
-  const startTimer = (type: 'drop' | 'grab' | 'work', minutes: number) => {
-    if (!user) return;
-    const target = Date.now() + minutes * 60 * 1000;
-    localStorage.setItem(`cartoteca:${user!.uid}:${type}`, target.toString());
-    if (type === 'drop') setDropEnd(target);
-    if (type === 'grab') setGrabEnd(target);
-    if (type === 'work') setWorkEnd(target);
-    setNotified(p => ({ ...p, [type]: false }));
-    if (Notification.permission === 'default') Notification.requestPermission();
-  };
-
-  const renderTimer = (label: string, end: number | null, onClick: () => void) => {
-    const diff = end ? end - now : 0;
-    const isReady = diff <= 0;
-    const m = isReady ? 0 : Math.floor(diff / 60000);
-    const s = isReady ? 0 : Math.floor((diff % 60000) / 1000);
-    return (
-      <div 
-        onClick={onClick}
-        title={`Klik untuk memulai timer ${label}`}
-        style={{ 
-          background: isReady ? '#298246' : '#17140f',
-          border: '1px solid #3a3327',
-          padding: '6px 12px',
-          borderRadius: '6px',
-          cursor: 'pointer',
-          display: 'flex',
-          flexDirection: 'column',
-          alignItems: 'center',
-          gap: '2px',
-          transition: 'all 0.2s',
-          minWidth: '55px'
-        }}
-      >
-        <span style={{ fontSize: '10px', color: isReady ? '#e8dbce' : '#9c8f76', fontWeight: 600, textTransform: 'uppercase' }}>{label}</span>
-        <span style={{ fontSize: '13px', fontWeight: 700, fontFamily: 'monospace', color: '#fff' }}>
-          {isReady ? 'READY' : `${m}:${s.toString().padStart(2, '0')}`}
-        </span>
-      </div>
-    );
   };
 
   function getDefaultTags(): CustomTag[] {
@@ -3462,13 +3359,6 @@ export default function App() {
           </div>
         </div>
       )}
-
-      {/* FLOATING TIMERS */}
-      <div className="floating-timers">
-        {renderTimer('Drop', dropEnd, () => startTimer('drop', 30))}
-        {renderTimer('Grab', grabEnd, () => startTimer('grab', 10))}
-        {renderTimer('Work', workEnd, () => startTimer('work', 30))}
-      </div>
 
       {lightboxImageUrl && (
         <div className="lightbox-overlay" onClick={() => setLightboxImageUrl(null)}>
