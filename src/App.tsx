@@ -170,6 +170,7 @@ export default function App() {
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
   const [customTags, setCustomTags] = useState<CustomTag[]>([]);
   const [inventory, setInventory] = useState<Inventory>({ tickets: 0, gold: 0, gems: 0, dust0: 0, dust1: 0, dust2: 0, dust3: 0, dust4: 0, bits: 0, tradeLicense: 0, workPermit: 0 });
+  const [activeMode, setActiveMode] = useState<'collection' | 'gameplay'>('collection');
   const [activeTab, setActiveTab] = useState<string>('collection');
   const [tabIndicatorStyle, setTabIndicatorStyle] = useState<{ left: number; width: number; opacity: number }>({ left: 0, width: 0, opacity: 0 });
   const tabRefs = useRef<{ [key: string]: HTMLButtonElement | null }>({});
@@ -221,7 +222,6 @@ export default function App() {
   const [commandType, setCommandType] = useState('mt');
   const [commandArg, setCommandArg] = useState('');
   const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
-  const [isInventoryModalOpen, setIsInventoryModalOpen] = useState(false);
 
   // Batch Input Modals
   const [isBatchKiwiModalOpen, setIsBatchKiwiModalOpen] = useState(false);
@@ -1928,21 +1928,6 @@ export default function App() {
             {!isReadOnly && (
               <>
                 <button
-                  onClick={() => setIsInventoryModalOpen(true)}
-                  title="Inventory"
-                  style={{
-                    background: 'transparent', border: '1px solid #3a3327',
-                    borderRadius: '6px', padding: '4px 10px',
-                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                    fontWeight: 600, color: '#e8dbce', cursor: 'pointer',
-                    transition: 'all 0.15s'
-                  }}
-                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#3a3327'; }}
-                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; }}
-                >
-                  🎒 Inventory
-                </button>
-                <button
                   onClick={() => setIsBackupModalOpen(true)}
                   title="Data Backup"
                   style={{
@@ -2007,6 +1992,32 @@ export default function App() {
           </div>
         </header>
 
+        {/* MODE SWITCHER */}
+        <div style={{ display: 'flex', justifyContent: 'center', marginTop: '20px', marginBottom: '10px' }}>
+          <div style={{ display: 'flex', background: '#1c1912', padding: '4px', borderRadius: '8px', border: '1px solid #3a3327' }}>
+            <button
+              onClick={() => { setActiveMode('collection'); setActiveTab('collection'); setSelectedCards(new Set()); }}
+              style={{
+                padding: '8px 24px', borderRadius: '6px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', transition: '0.2s',
+                background: activeMode === 'collection' ? '#d8923e' : 'transparent',
+                color: activeMode === 'collection' ? '#1c1912' : '#9c8f76'
+              }}
+            >
+              🎴 Collection
+            </button>
+            <button
+              onClick={() => { setActiveMode('gameplay'); setActiveTab('kui-stats'); setSelectedCards(new Set()); }}
+              style={{
+                padding: '8px 24px', borderRadius: '6px', border: 'none', fontWeight: 'bold', fontSize: '14px', cursor: 'pointer', transition: '0.2s',
+                background: activeMode === 'gameplay' ? '#5ea396' : 'transparent',
+                color: activeMode === 'gameplay' ? '#1c1912' : '#9c8f76'
+              }}
+            >
+              🎮 Gameplay
+            </button>
+          </div>
+        </div>
+
         {/* NAVIGATION TABS */}
         <nav className="tabs" style={{ position: 'relative' }}>
           <div className="tab-indicator" style={{
@@ -2025,43 +2036,63 @@ export default function App() {
             zIndex: 1,
             pointerEvents: 'none'
           }}></div>
-          <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Koleksi</button>
-          <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
-          <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Pekerja</button>
-          <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => { setActiveTab('stats'); setSelectedCards(new Set()); }}>📊 Statistik</button>
-          {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>}
+          {activeMode === 'collection' ? (
+            <>
+              <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => { setActiveTab('collection'); setSelectedCards(new Set()); }}>🎴 Binder</button>
+              <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => { setActiveTab('wishlist'); setSelectedCards(new Set()); }}>✨ Wishlist</button>
+              {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => { setActiveTab('tags-manager'); setSelectedCards(new Set()); }}>🏷️ Kelola Tag</button>}
+            </>
+          ) : (
+            <>
+              <button ref={el => tabRefs.current['kui-stats'] = el} className={`tab-btn ${activeTab === 'kui-stats' ? 'active-text' : ''}`} onClick={() => { setActiveTab('kui-stats'); setSelectedCards(new Set()); }}>📊 KUI Dashboard</button>
+              <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => { setActiveTab('workers'); setSelectedCards(new Set()); }}>💼 Job Board</button>
+              {!isReadOnly && <button ref={el => tabRefs.current['inventory'] = el} className={`tab-btn ${activeTab === 'inventory' ? 'active-text' : ''}`} onClick={() => { setActiveTab('inventory'); setSelectedCards(new Set()); }}>🎒 Inventory</button>}
+            </>
+          )}
         </nav>
 
         {/* MAIN BODY AREA */}
         <main className="content-area">
           
-          {/* KUI DASHBOARD WIDGET */}
-          {activeTab === 'collection' && Object.keys(userKUI).length > 0 && (
-            <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px', marginBottom: '20px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(140px, 1fr))', gap: '16px' }}>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Dropped</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards dropped'] || '-'}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Grabbed</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards grabbed'] || '-'}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Burned</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards burned'] || '-'}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Fights Won</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total fights won'] || '-'}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Gold Spent</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Gold spent'] || '-'}</div>
-              </div>
-              <div style={{ display: 'flex', flexDirection: 'column' }}>
-                <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Power Gained</div>
-                <div style={{ fontSize: '20px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total power gained'] || '-'}</div>
-              </div>
+          {/* TAB: KUI DASHBOARD */}
+          {activeTab === 'kui-stats' && (
+            <div>
+              {Object.keys(userKUI).length > 0 ? (
+                <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '24px', display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '20px' }}>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Dropped</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards dropped'] || '-'}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Grabbed</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards grabbed'] || '-'}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Cards Burned</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Cards burned'] || '-'}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Fights Won</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total fights won'] || '-'}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Gold Spent</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Gold spent'] || '-'}</div>
+                  </div>
+                  <div style={{ display: 'flex', flexDirection: 'column' }}>
+                    <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>Power Gained</div>
+                    <div style={{ fontSize: '24px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{userKUI['Total power gained'] || '-'}</div>
+                  </div>
+                </div>
+              ) : (
+                <div style={{ textAlign: 'center', padding: '40px', background: '#17140f', borderRadius: '8px', border: '1px dashed #3a3327' }}>
+                  <div style={{ fontSize: '32px', marginBottom: '12px' }}>📊</div>
+                  <h3 style={{ color: '#e8dbce', marginBottom: '8px' }}>Belum Ada Data Statistik</h3>
+                  <p style={{ color: '#9c8f76', fontSize: '14px' }}>
+                    Buka menu <b>Profil</b> dan paste balasan <code>k!ui</code> dari Karuta untuk memunculkan dashboard statistik Anda di sini.
+                  </p>
+                </div>
+              )}
             </div>
           )}
 
@@ -2441,7 +2472,7 @@ export default function App() {
             </div>
           )}
 
-          {/* TAB: STATISTICS */}
+          {/* TAB: STATISTIK COLLECTION */}
           {activeTab === 'stats' && (
             <div>
               <div className="stats-grid">
@@ -2700,6 +2731,115 @@ export default function App() {
                     <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Tidak ada kartu yang ditandai sebagai Worker atau memiliki nilai effort.</div>
                   )}
                 </div>
+              </div>
+            </div>
+          )}
+
+          {/* TAB: INVENTORY TRACKER */}
+          {activeTab === 'inventory' && !isReadOnly && (
+            <div style={{ background: '#1c1912', padding: '24px', borderRadius: '12px', border: '1px solid #3a3327', maxWidth: '600px', margin: '0 auto' }}>
+              <h3 style={{ margin: '0 0 24px 0', color: '#e8dbce', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '16px' }}>
+                🎒 Inventory & Assets
+              </h3>
+              
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                
+                {/* Tickets */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🎟️ Tickets</span>
+                  <input 
+                    type="number" 
+                    value={inventory.tickets === 0 ? '' : inventory.tickets}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, tickets: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                {/* Gold */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🪙 Gold</span>
+                  <input 
+                    type="number" 
+                    value={inventory.gold === 0 ? '' : inventory.gold}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, gold: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                {/* Gems */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>💠 Gems</span>
+                  <input 
+                    type="number" 
+                    value={inventory.gems === 0 ? '' : inventory.gems}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, gems: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                {/* Trade License */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>📜 Trade License</span>
+                  <input 
+                    type="number" 
+                    value={inventory.tradeLicense === 0 ? '' : (inventory.tradeLicense || '')}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, tradeLicense: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                {/* Work Permit */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>📜 Work Permit</span>
+                  <input 
+                    type="number" 
+                    value={inventory.workPermit === 0 ? '' : (inventory.workPermit || '')}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, workPermit: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                {/* Bits */}
+                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🔵 Bits</span>
+                  <input 
+                    type="number" 
+                    value={inventory.bits === 0 ? '' : inventory.bits}
+                    placeholder="0"
+                    onChange={e => handleUpdateInventory({ ...inventory, bits: Number(e.target.value) })}
+                    style={{ width: '120px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right', fontSize: '16px', fontWeight: 'bold' }}
+                  />
+                </div>
+
+                <div style={{ marginTop: '16px', fontSize: '14px', color: '#9c8f76', borderBottom: '1px solid #3a3327', paddingBottom: '8px' }}>✨ Dusts</div>
+                <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '8px 12px', borderRadius: '8px' }}>
+                    <span style={{ color: '#e8dbce', fontSize: '12px' }}>Damaged (☆☆☆☆)</span>
+                    <input type="number" value={inventory.dust0 === 0 ? '' : (inventory.dust0 || '')} placeholder="0" onChange={e => handleUpdateInventory({ ...inventory, dust0: Number(e.target.value) })} style={{ width: '60px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '4px', borderRadius: '4px', textAlign: 'right' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '8px 12px', borderRadius: '8px' }}>
+                    <span style={{ color: '#e8dbce', fontSize: '12px' }}>Poor (★☆☆☆)</span>
+                    <input type="number" value={inventory.dust1 === 0 ? '' : (inventory.dust1 || '')} placeholder="0" onChange={e => handleUpdateInventory({ ...inventory, dust1: Number(e.target.value) })} style={{ width: '60px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '4px', borderRadius: '4px', textAlign: 'right' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '8px 12px', borderRadius: '8px' }}>
+                    <span style={{ color: '#e8dbce', fontSize: '12px' }}>Good (★★☆☆)</span>
+                    <input type="number" value={inventory.dust2 === 0 ? '' : (inventory.dust2 || '')} placeholder="0" onChange={e => handleUpdateInventory({ ...inventory, dust2: Number(e.target.value) })} style={{ width: '60px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '4px', borderRadius: '4px', textAlign: 'right' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '8px 12px', borderRadius: '8px' }}>
+                    <span style={{ color: '#e8dbce', fontSize: '12px' }}>Excellent (★★★☆)</span>
+                    <input type="number" value={inventory.dust3 === 0 ? '' : (inventory.dust3 || '')} placeholder="0" onChange={e => handleUpdateInventory({ ...inventory, dust3: Number(e.target.value) })} style={{ width: '60px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '4px', borderRadius: '4px', textAlign: 'right' }} />
+                  </div>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '8px 12px', borderRadius: '8px' }}>
+                    <span style={{ color: '#e8dbce', fontSize: '12px' }}>Mint (★★★★)</span>
+                    <input type="number" value={inventory.dust4 === 0 ? '' : (inventory.dust4 || '')} placeholder="0" onChange={e => handleUpdateInventory({ ...inventory, dust4: Number(e.target.value) })} style={{ width: '60px', background: '#252118', border: '1px solid #4a4132', color: '#e8dbce', padding: '4px', borderRadius: '4px', textAlign: 'right' }} />
+                  </div>
+                </div>
+
               </div>
             </div>
           )}
@@ -3683,149 +3823,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL: INVENTORY TRACKER */}
-      {isInventoryModalOpen && (
-        <div className="modal-overlay open">
-          <div className="modal" style={{ maxWidth: '360px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: '0', color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                🎒 Inventory
-              </h3>
-              <button onClick={() => setIsInventoryModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
-            </div>
-            
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              
-              {/* Tickets */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🎟️ Tickets</span>
-                <input 
-                  type="number" 
-                  value={inventory.tickets === 0 ? '' : inventory.tickets}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, tickets: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
 
-              {/* Gold */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🪙 Gold</span>
-                <input 
-                  type="number" 
-                  value={inventory.gold === 0 ? '' : inventory.gold}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, gold: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-              {/* Gems */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>💠 Gems</span>
-                <input 
-                  type="number" 
-                  value={inventory.gems === 0 ? '' : inventory.gems}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, gems: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-              {/* Trade License */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>📜 Trade License</span>
-                <input 
-                  type="number" 
-                  value={inventory.tradeLicense === 0 ? '' : (inventory.tradeLicense || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, tradeLicense: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-              {/* Work Permit */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>📜 Work Permit</span>
-                <input 
-                  type="number" 
-                  value={inventory.workPermit === 0 ? '' : (inventory.workPermit || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, workPermit: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-              {/* Dusts */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Damaged Dust (☆☆☆☆)</span>
-                <input 
-                  type="number" 
-                  value={inventory.dust0 === 0 ? '' : (inventory.dust0 || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, dust0: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Poor Dust (★☆☆☆)</span>
-                <input 
-                  type="number" 
-                  value={inventory.dust1 === 0 ? '' : (inventory.dust1 || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, dust1: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Good Dust (★★☆☆)</span>
-                <input 
-                  type="number" 
-                  value={inventory.dust2 === 0 ? '' : (inventory.dust2 || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, dust2: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Excellent Dust (★★★☆)</span>
-                <input 
-                  type="number" 
-                  value={inventory.dust3 === 0 ? '' : (inventory.dust3 || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, dust3: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>✨ Mint Dust (★★★★)</span>
-                <input 
-                  type="number" 
-                  value={inventory.dust4 === 0 ? '' : (inventory.dust4 || '')}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, dust4: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-              {/* Bits */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px' }}>🔵 Bits</span>
-                <input 
-                  type="number" 
-                  value={inventory.bits === 0 ? '' : inventory.bits}
-                  placeholder="0"
-                  onChange={e => handleUpdateInventory({ ...inventory, bits: Number(e.target.value) })}
-                  style={{ width: '100px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', padding: '8px', borderRadius: '4px', textAlign: 'right' }}
-                />
-              </div>
-
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* CUSTOM CONFIRM MODAL */}
       {confirmState.isOpen && (
         <div className="modal-overlay open" style={{ zIndex: 9999 }}>
           <div className="modal" style={{ maxWidth: '400px', padding: '24px', textAlign: 'center' }}>
