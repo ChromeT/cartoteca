@@ -2696,9 +2696,14 @@ export default function App() {
                           setIsUploadingImage(false);
                         },
                         async () => {
-                          const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
-                          setFImageUrl(downloadURL);
-                          setIsUploadingImage(false);
+                          try {
+                            const downloadURL = await getDownloadURL(uploadTask.snapshot.ref);
+                            setFImageUrl(downloadURL);
+                            setIsUploadingImage(false);
+                          } catch (err: any) {
+                            alert("Gagal mendapatkan URL gambar: " + err.message);
+                            setIsUploadingImage(false);
+                          }
                         }
                       );
                     } catch (err: any) {
