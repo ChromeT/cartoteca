@@ -785,13 +785,11 @@ export default function App() {
           vanity: parsedVanity || card.stats?.vanity || '',
         };
 
-        const isWorker = checkWorkerIndicator(newStats, parsedEffort !== undefined ? parsedEffort : card.effort || null);
-
         newCardsArray[cardIndex] = {
           ...card,
           stats: newStats,
           effort: parsedEffort !== undefined ? parsedEffort : card.effort,
-          isWorker
+          isWorker: card.isWorker
         };
         updatedCardsToSync.push(newCardsArray[cardIndex]);
         updatedCount++;
@@ -1173,20 +1171,6 @@ export default function App() {
     }
   }
 
-  const checkWorkerIndicator = (stats: any, effort: number | null) => {
-    if (effort !== null && effort > 250) return true;
-    if (!stats) return false;
-    
-    let highGrades = 0;
-    const keyStats = [stats.purity, stats.wellness, stats.toughness, stats.quickness];
-    keyStats.forEach(grade => {
-      if (grade === 'S' || grade === 'A') highGrades++;
-    });
-    
-    if (stats.purity === 'S' && highGrades >= 3) return true;
-    
-    return false;
-  };
 
   function handleParseEffortText() {
     if (!effortDiscordText.trim()) {
@@ -1256,9 +1240,6 @@ export default function App() {
           ...(prev || { toughness: '', quickness: '', purity: '', style: '', wellness: '', appeal: '', grabber: '', dropper: '', vanity: '' }),
           ...statsObj
         }));
-        setFIsWorker(checkWorkerIndicator(statsObj, parsedEffort));
-      } else if (parsedEffort !== null) {
-        setFIsWorker(checkWorkerIndicator(null, parsedEffort));
       }
       setEffortParserFeedback({ text: '✅ Status worker berhasil diparse!', isError: false, isSuccess: true });
     } else {
@@ -1292,7 +1273,6 @@ export default function App() {
       }
       
       setFStats(parsedStats);
-      setFIsWorker(checkWorkerIndicator(parsedStats, null));
       alert("Berhasil ekstrak status pekerja k!wi!");
     } catch (e) {
       alert("Gagal membaca clipboard. Mohon izinkan akses di browser atau paste manual lalu gunakan fitur lain.");
