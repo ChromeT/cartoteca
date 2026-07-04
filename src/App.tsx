@@ -935,13 +935,16 @@ export default function App() {
     });
 
     if (Object.keys(newKUI).length > 0) {
-      setUserKUI(newKUI);
-      syncLocal('kui', newKUI);
-
-      if (isFirebaseConfigured() && user) {
-        const { updateDoc } = await import('firebase/firestore');
-        await updateDoc(doc(db, 'users', user.uid), { kuiStats: newKUI });
-      }
+      setUserKUI(prev => {
+        const merged = { ...prev, ...newKUI };
+        syncLocal('kui', merged);
+        if (isFirebaseConfigured() && user) {
+          import('firebase/firestore').then(({ updateDoc }) => {
+            updateDoc(doc(db, 'users', user.uid), { kuiStats: merged });
+          });
+        }
+        return merged;
+      });
 
       setKuiFeedback({ text: `✅ Berhasil import ${Object.keys(newKUI).length} stat KUI!`, isError: false, isSuccess: true });
       setTimeout(() => {
