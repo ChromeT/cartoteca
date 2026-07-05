@@ -1438,8 +1438,13 @@ export default function App() {
         if (cardFormId) {
           await updateDoc(doc(db, 'users', user!.uid, 'cards', cardFormId), data);
         } else {
-          const docRef = await addDoc(collection(db, 'users', targetUid as string, 'cards'), data);
-          finalId = docRef.id;
+          if (data.code) {
+            finalId = data.code;
+            await setDoc(doc(db, 'users', targetUid as string, 'cards', finalId), data, { merge: true });
+          } else {
+            const docRef = await addDoc(collection(db, 'users', targetUid as string, 'cards'), data);
+            finalId = docRef.id;
+          }
         }
       } catch (error: any) {
         showToast("Failed to save to Firebase database: " + error.message, 'error');
