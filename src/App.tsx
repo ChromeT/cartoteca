@@ -311,8 +311,7 @@ export default function App() {
 
   const [kuiInputText, setKuiInputText] = useState('');
   const [kuiFeedback, setKuiFeedback] = useState({ text: '', isError: false, isSuccess: false });
-  const [invPasteText, setInvPasteText] = useState('');
-  const [invParseFeedback, setInvParseFeedback] = useState<{ text: string; isError: boolean } | null>(null);
+
 
   // Toast System State
   interface ToastState {
@@ -3219,104 +3218,7 @@ export default function App() {
 
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-                {/* === k!inv PARSER === */}
-                {(() => {
-                  const handleInvParse = () => {
-                    if (!invPasteText.trim()) return;
-                    const lines = invPasteText.replace(/\r/g, '').split('\n');
-                    const updates: Partial<typeof inventory> = {};
 
-                    lines.forEach(line => {
-                      // Clean bold, tildes, backticks, asterisks, underscores
-                      const cleanLine = line.replace(/[\*_`~]/g, '').trim();
-                      if (!cleanLine) return;
-
-                      // Split by dot (·), bar (|), or bullet (•)
-                      const parts = cleanLine.split(/\s*[\u00b7\|\u2022·•]\s*/);
-                      if (parts.length < 2) return;
-
-                      let count: number | null = null;
-                      let rest = '';
-
-                      parts.forEach(part => {
-                        const p = part.trim();
-                        // Remove emojis/clutter at start
-                        const cleanPart = p.replace(/^[^a-zA-Z0-9]+/, '').trim();
-
-                        // Parse count if it is a number
-                        const numStr = cleanPart.replace(/,/g, '');
-                        if (/^\d+$/.test(numStr)) {
-                          count = parseInt(numStr);
-                        } else if (cleanPart) {
-                          rest += ' ' + cleanPart.toLowerCase();
-                        }
-                      });
-
-                      if (count !== null) {
-                        const restStr = rest.trim();
-                        if (restStr.includes('ticket')) updates.tickets = count;
-                        else if (restStr.includes('gold')) updates.gold = count;
-                        else if (restStr.includes('gem')) updates.gems = count;
-                        else if (restStr.includes('work permit')) updates.workPermit = count;
-                        else if (restStr.includes('trade license')) updates.tradeLicense = count;
-                        else if (restStr.includes('bit') && !/(flower|wood|ice|stone|sugar|wool|uranium|bone|iron|copper|quartz|essence|magma|zinc)/.test(restStr)) updates.bits = count;
-                        else if (restStr.includes('dust')) {
-                          if (restStr.includes('damaged') || restStr.includes('\u2606\u2606\u2606\u2606') || restStr.includes('☆☆☆☆')) updates.dust0 = count;
-                          else if (restStr.includes('poor') || restStr.includes('\u2605\u2606\u2606\u2606') || restStr.includes('★☆☆☆')) updates.dust1 = count;
-                          else if (restStr.includes('good') || restStr.includes('\u2605\u2605\u2606\u2606') || restStr.includes('★★☆☆')) updates.dust2 = count;
-                          else if (restStr.includes('excellent') || restStr.includes('\u2605\u2605\u2605\u2606') || restStr.includes('★★★☆')) updates.dust3 = count;
-                          else if (restStr.includes('mint') || restStr.includes('\u2605\u2605\u2605\u2605') || restStr.includes('★★★★')) updates.dust4 = count;
-                        }
-                      }
-                    });
-
-                    if (Object.keys(updates).length > 0) {
-                      handleUpdateInventory({ ...inventory, ...updates });
-                      setInvParseFeedback({ text: `\u2705 ${Object.keys(updates).length} items successfully updated from k!inv!`, isError: false });
-                      setInvPasteText('');
-                      setTimeout(() => setInvParseFeedback(null), 3000);
-                    } else {
-                      setInvParseFeedback({ text: '\u26a0\ufe0f No items detected. Copy the entire response from the k!inv / k!i Karuta bot.', isError: true });
-                    }
-                  };
-
-                  return (
-                    <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px' }}>
-                      <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        📋 Sync from k!inv
-                      </div>
-                      <p style={{ fontSize: '12px', color: '#9c8f76', margin: '0 0 10px 0' }}>
-                        Type <code style={{ background: '#252118', padding: '1px 5px', borderRadius: '3px' }}>k!inv</code> in Discord, then paste the reply here. All values will be <b style={{ color: '#5ea396' }}>automatically updated</b>.
-                      </p>
-                      <textarea
-                        className="form-control"
-                        rows={4}
-                        placeholder={"Inventory\nItems carried by @Username\n\n✨ 701 · poor dust · Dust (★☆☆☆)\n🪙 1,200 · gold · Gold\n..."}
-                        value={invPasteText}
-                        onChange={e => setInvPasteText(e.target.value)}
-                        style={{ fontSize: '12px', fontFamily: 'monospace', resize: 'vertical' }}
-                      />
-                      {invParseFeedback && (
-                        <div style={{
-                          marginTop: '8px', padding: '8px 12px', borderRadius: '6px', fontSize: '12px',
-                          background: invParseFeedback.isError ? '#b85c5c20' : '#5ea39620',
-                          color: invParseFeedback.isError ? '#ff8c8c' : '#5ea396',
-                          border: `1px solid ${invParseFeedback.isError ? '#b85c5c50' : '#5ea39650'}`
-                        }}>
-                          {invParseFeedback.text}
-                        </div>
-                      )}
-                      <button
-                        className="btn"
-                        style={{ marginTop: '10px', width: '100%' }}
-                        onClick={handleInvParse}
-                        disabled={!invPasteText.trim()}
-                      >
-                        Sync
-                      </button>
-                    </div>
-                  );
-                })()}
 
 
                 {/* Tickets */}
