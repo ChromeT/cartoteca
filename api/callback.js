@@ -1,13 +1,14 @@
-import admin from 'firebase-admin';
+import { initializeApp, getApps, cert } from 'firebase-admin/app';
+import { getAuth } from 'firebase-admin/auth';
 
 // Inisialisasi Firebase Admin di Vercel menggunakan Environment Variable
-if (!admin.apps.length) {
+if (!getApps().length) {
   try {
     const serviceAccountJson = process.env.FIREBASE_SERVICE_ACCOUNT_JSON;
     if (serviceAccountJson) {
       const serviceAccount = JSON.parse(serviceAccountJson);
-      admin.initializeApp({
-        credential: admin.credential.cert(serviceAccount)
+      initializeApp({
+        credential: cert(serviceAccount)
       });
       console.log('✅ Firebase Admin SDK initialized inside Vercel API.');
     } else {
@@ -29,7 +30,7 @@ export default async function handler(req, res) {
 
   if (!code) return res.status(400).send('No code provided');
 
-  if (!admin.apps.length) {
+  if (!getApps().length) {
     return res.status(500).send('Firebase Admin is not configured. Please add FIREBASE_SERVICE_ACCOUNT_JSON to Vercel.');
   }
 
@@ -66,7 +67,7 @@ export default async function handler(req, res) {
 
     // Optional: Kita tidak bisa langsung menyimpan profil ke db dari sini tanpa import firestore,
     // tapi kita cukup mencetak token. Firestore sync bisa dilakukan dari Frontend setelah berhasil masuk.
-    const customToken = await admin.auth().createCustomToken(discordId);
+    const customToken = await getAuth().createCustomToken(discordId);
     
     // Kembali ke frontend membawa oleh-oleh berupa token VIP
     res.redirect(`${BASE_URL}?token=${customToken}`);
