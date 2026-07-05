@@ -4156,6 +4156,7 @@ export default function App() {
                                                     letterSpacing: '1px'
                                                   }}
                                                   onClick={(e) => {
+                                                    e.stopPropagation();
                                                     navigator.clipboard.writeText(copyId);
                                                     const el = e.currentTarget as HTMLElement;
                                                     const original = el.innerText;
