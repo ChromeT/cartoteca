@@ -324,6 +324,7 @@ export default function App() {
   const [fNotes, setFNotes] = useState('');
   const [fImageUrl, setFImageUrl] = useState('');
   const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
+  const [showFilters, setShowFilters] = useState(false);
   const [fStats, setFStats] = useState<Card['stats'] | undefined>(undefined);
 
   // Parser text area
@@ -2279,7 +2280,7 @@ export default function App() {
           {/* TAB: BINDER COLLECTION */}
           {activeTab === 'collection' && (
             <div>
-              <div className="toolbar">
+              <div className="toolbar" style={{ marginBottom: showFilters ? '12px' : '24px' }}>
                 <div className="search-wrapper">
                   <input 
                     className="search-box" 
@@ -2291,33 +2292,24 @@ export default function App() {
                   {searchQuery && <span className="clear-search" onClick={() => setSearchQuery('')}>&times;</span>}
                 </div>
                 
-                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)}>
-                  <option value="recent">Terbaru ditambahkan</option>
-                  <option value="effort-desc">Effort tertinggi</option>
-                  <option value="effort-asc">Effort terendah</option>
-                  <option value="print-asc">Print number terendah</option>
-                  <option value="edition-desc">Edisi terbaru (◈)</option>
-                  <option value="wish-desc">Wish tertinggi (Value)</option>
-                  <option value="name">Nama A-Z</option>
-                </select>
-                
-                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)}>
-                  <option value="">Semua kondisi</option>
-                  <option value="Damaged">Damaged</option>
-                  <option value="Poor">Poor</option>
-                  <option value="Average">Average</option>
-                  <option value="Good">Good</option>
-                  <option value="Great">Great</option>
-                  <option value="Mint">Mint</option>
-                </select>
+                <button 
+                  className={`btn secondary ${showFilters ? 'active' : ''}`}
+                  onClick={() => setShowFilters(!showFilters)}
+                  style={{ 
+                    padding: '10px 16px', 
+                    fontSize: '13.5px', 
+                    display: 'inline-flex', 
+                    alignItems: 'center', 
+                    gap: '6px', 
+                    minWidth: '100px',
+                    borderColor: showFilters ? 'var(--jade)' : 'var(--paper-line)',
+                    background: showFilters ? 'rgba(94, 163, 150, 0.15)' : 'transparent',
+                    color: showFilters ? 'var(--jade)' : 'var(--ink)'
+                  }}
+                >
+                  🎛️ Filter {showFilters ? '▲' : '▼'}
+                </button>
 
-                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)}>
-                  <option value="">Semua Tag</option>
-                  {getUsedTags().map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-                
                 {!isReadOnly && (
                   <>
                     <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
@@ -2344,6 +2336,37 @@ export default function App() {
                   </button>
                 </div>
               </div>
+
+              {showFilters && (
+                <div className="filter-panel" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', animation: 'fadeIn 0.2s ease-out' }}>
+                  <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                    <option value="recent">Terbaru ditambahkan</option>
+                    <option value="effort-desc">Effort tertinggi</option>
+                    <option value="effort-asc">Effort terendah</option>
+                    <option value="print-asc">Print number terendah</option>
+                    <option value="edition-desc">Edisi terbaru (◈)</option>
+                    <option value="wish-desc">Wish tertinggi (Value)</option>
+                    <option value="name">Nama A-Z</option>
+                  </select>
+                  
+                  <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                    <option value="">Semua kondisi</option>
+                    <option value="Damaged">Damaged</option>
+                    <option value="Poor">Poor</option>
+                    <option value="Average">Average</option>
+                    <option value="Good">Good</option>
+                    <option value="Great">Great</option>
+                    <option value="Mint">Mint</option>
+                  </select>
+
+                  <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                    <option value="">Semua Tag</option>
+                    {getUsedTags().map(t => (
+                      <option key={t} value={t}>{t}</option>
+                    ))}
+                  </select>
+                </div>
+              )}
 
               {/* Batch Actions Panel */}
               {selectedCards.size > 0 && !isReadOnly && (
