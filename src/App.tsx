@@ -1981,7 +1981,7 @@ export default function App() {
             <div className="hanko">🎴</div>
             <div>
               <h1>Cartoteca</h1>
-              <p>Karuta Companion App — Hybrid Edition</p>
+              <p>Karuta Companion App</p>
             </div>
           </div>
           <div className="mini-stats">
