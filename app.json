@@ -1,5 +1,8 @@
 {
   "expo": {
+    "android": {
+      "package": "com.chromet.cartoteca"
+    },
     "extra": {
       "eas": {
         "projectId": "f347b6fa-f3a3-4544-9241-d4977267a6f5"
