@@ -2060,38 +2060,7 @@ export default function App() {
         <header className="hdr">
           <div className="brand">
             <div className="hanko">
-              <div style={{
-                width: '28px',
-                height: '40px',
-                background: '#13110d',
-                border: '1.5px solid #d8923e',
-                borderRadius: '4px',
-                position: 'relative',
-                display: 'flex',
-                alignItems: 'center',
-                justifyContent: 'center',
-                boxShadow: '0 2px 4px rgba(0,0,0,0.5)',
-                overflow: 'hidden'
-              }}>
-                <div style={{
-                  position: 'absolute',
-                  top: '6px',
-                  width: '12px',
-                  height: '12px',
-                  borderRadius: '50%',
-                  background: '#c14e4e',
-                  boxShadow: '0 0 6px rgba(193, 78, 78, 0.4)'
-                }}></div>
-                <div style={{
-                  position: 'absolute',
-                  bottom: '-2px',
-                  left: '-2px',
-                  right: '-2px',
-                  height: '14px',
-                  background: '#d8923e',
-                  borderRadius: '12px 12px 0 0'
-                }}></div>
-              </div>
+              <img src="/logo.png" alt="Cartoteca Logo" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
             </div>
             <div className="brand-text">
               <h1>Cartoteca</h1>
