@@ -1788,7 +1788,7 @@ textarea::-webkit-scrollbar-thumb:hover {
   pointer-events: none;
 }
 
-/* TCG Style Layout */
+/* TCG / Silver Dashboard Style Layout */
 .tcg-card {
   display: flex;
   flex-direction: column;
@@ -1799,45 +1799,143 @@ textarea::-webkit-scrollbar-thumb:hover {
   display: flex;
   align-items: center;
   gap: 10px;
-  background: linear-gradient(90deg, #b9772c, #89551c);
+  background: linear-gradient(180deg, #d8dadd, #888d94);
   padding: 12px 16px;
-  border-bottom: 3px solid #5a3811;
-  box-shadow: inset 0 2px 5px rgba(255,255,255,0.2);
+  border-bottom: 2px solid #5a5f66;
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.7), inset 0 -2px 5px rgba(0,0,0,0.2);
+  position: relative;
+}
+.tcg-header::after {
+  content: '';
+  position: absolute;
+  bottom: 0; left: 0; right: 0;
+  height: 1px;
+  background: rgba(255,255,255,0.3);
 }
 
 .tcg-icon {
-  font-size: 22px;
-  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.6));
+  font-size: 20px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.3));
 }
 
 .tcg-title {
-  font-family: 'Georgia', serif;
+  font-family: var(--font-sans);
   font-weight: 800;
-  font-size: 16px;
-  color: #fff;
+  font-size: 14px;
+  color: #1a1c1e;
   text-transform: uppercase;
   letter-spacing: 1px;
-  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
 }
 
 .tcg-body {
   flex: 1;
-  background: #f4ebd8; /* Warna perkamen / kertas tua */
-  border: 4px solid #d8923e;
+  background: #121416; /* Dark background matching the main site */
+  border: 4px solid #888d94;
   border-top: none;
   border-radius: 0 0 12px 12px;
   padding: 16px;
   overflow-y: auto;
-  box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.8);
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
 }
 
-.tcg-text {
-  margin: 0;
-  white-space: pre-wrap;
-  font-family: 'Consolas', monospace;
+/* KUI Dashboard Style Utilities for Card Contents */
+.card-info-owner {
+  color: var(--ink-soft);
   font-size: 13px;
-  color: #2b251a; /* Tinta gelap agar kontras dengan perkamen */
-  line-height: 1.5;
+  text-align: center;
+  margin-bottom: 4px;
+}
+.card-info-owner span {
+  color: var(--gold);
+  font-weight: bold;
+}
+
+.card-info-grid {
+  display: grid;
+  grid-template-columns: 1fr 1fr;
+  gap: 10px;
+}
+.card-info-box {
+  background: rgba(255,255,255,0.03);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 8px;
+  padding: 10px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+}
+.card-info-box .label {
+  font-size: 10px;
+  text-transform: uppercase;
+  color: var(--ink-soft);
+  letter-spacing: 1px;
+  margin-bottom: 4px;
+}
+.card-info-box .value {
+  font-size: 16px;
+  font-weight: bold;
+  color: #fff;
+}
+.card-info-box .value.highlight {
+  color: var(--gold);
+}
+
+/* Worker Stats Grid */
+.worker-stats-grid {
+  display: grid;
+  grid-template-columns: repeat(3, 1fr);
+  gap: 8px;
+}
+.worker-stat-item {
+  background: rgba(0,0,0,0.4);
+  border: 1px solid rgba(255,255,255,0.05);
+  border-radius: 6px;
+  padding: 6px;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+}
+.worker-stat-item .stat-name {
+  font-size: 9px;
+  color: #888;
+  text-transform: uppercase;
+}
+.worker-stat-item .stat-grade {
+  font-size: 16px;
+  font-weight: 800;
+  text-shadow: 0 0 8px rgba(255,255,255,0.2);
+}
+.grade-S { color: #ffb700; text-shadow: 0 0 10px rgba(255, 183, 0, 0.5) !important; }
+.grade-A { color: #ff4757; }
+.grade-B { color: #2ed573; }
+.grade-C { color: #1e90ff; }
+.grade-D { color: #9c88ff; }
+.grade-E { color: #747d8c; }
+.grade-F { color: #57606f; }
+
+.tcg-raw-footer {
+  margin-top: auto;
+  border-top: 1px dashed rgba(255,255,255,0.1);
+  padding-top: 12px;
+}
+.tcg-raw-footer summary {
+  font-size: 11px;
+  color: #666;
+  cursor: pointer;
+  user-select: none;
+}
+.tcg-raw-footer pre {
+  background: #0a0b0c;
+  color: #555;
+  padding: 10px;
+  border-radius: 4px;
+  font-size: 10px;
+  white-space: pre-wrap;
+  margin-top: 8px;
 }
 
 .tcg-body::-webkit-scrollbar {
@@ -1847,6 +1945,6 @@ textarea::-webkit-scrollbar-thumb:hover {
   background: transparent;
 }
 .tcg-body::-webkit-scrollbar-thumb {
-  background: rgba(216, 146, 62, 0.6);
+  background: #888d94;
   border-radius: 4px;
 }

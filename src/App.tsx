@@ -4020,9 +4020,93 @@ export default function App() {
                                <span className="tcg-title">{title}</span>
                              </div>
                              <div className="tcg-body">
-                               <pre className="tcg-text">
-                                 {item.content}
-                               </pre>
+                               {item.id === 'kv' && (
+                                 <>
+                                   <div className="card-info-owner">Owned by <span>{publicDisplayName || user?.displayName || 'Unknown'}</span></div>
+                                   <div className="card-info-grid">
+                                     <div className="card-info-box">
+                                        <span className="label">Print</span>
+                                        <span className="value highlight">#{lightboxCard.print || '?'}</span>
+                                     </div>
+                                     <div className="card-info-box">
+                                        <span className="label">Edition</span>
+                                        <span className="value">◈{lightboxCard.edition || '?'}</span>
+                                     </div>
+                                     <div className="card-info-box">
+                                        <span className="label">Condition</span>
+                                        <span className="value">{lightboxCard.condition || 'Unknown'}</span>
+                                     </div>
+                                     <div className="card-info-box">
+                                        <span className="label">Series</span>
+                                        <span className="value" style={{fontSize: '11px', textAlign: 'center'}}>{lightboxCard.series}</span>
+                                     </div>
+                                   </div>
+                                   
+                                   <details className="tcg-raw-footer">
+                                      <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
+
+                               {item.id === 'kwi' && (
+                                 <>
+                                   <div className="card-info-grid" style={{ marginBottom: '16px' }}>
+                                     <div className="card-info-box" style={{ gridColumn: 'span 2', padding: '16px' }}>
+                                        <span className="label">Total Effort</span>
+                                        <span className="value highlight" style={{ fontSize: '24px' }}>{lightboxCard.effort || '?'}</span>
+                                     </div>
+                                   </div>
+                                   {lightboxCard.stats && (
+                                     <div className="worker-stats-grid">
+                                       {Object.entries(lightboxCard.stats).map(([key, val]) => (
+                                         <div key={key} className="worker-stat-item">
+                                           <span className="stat-name">{key}</span>
+                                           <span className={`stat-grade grade-${val}`}>{val}</span>
+                                         </div>
+                                       ))}
+                                     </div>
+                                   )}
+                                   <details className="tcg-raw-footer">
+                                      <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
+
+                               {item.id === 'klu' && (
+                                 <>
+                                   <div className="card-info-grid">
+                                     <div className="card-info-box">
+                                        <span className="label">Wishlisted</span>
+                                        <span className="value highlight">{lightboxCard.wish || 0}</span>
+                                     </div>
+                                     <div className="card-info-box">
+                                        <span className="label">Character</span>
+                                        <span className="value" style={{fontSize: '11px', textAlign: 'center'}}>{lightboxCard.name}</span>
+                                     </div>
+                                   </div>
+                                   <details className="tcg-raw-footer">
+                                      <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
+
+                               {item.id === 'price' && (
+                                 <>
+                                   <div className="card-info-grid">
+                                     <div className="card-info-box" style={{ gridColumn: 'span 2' }}>
+                                        <span className="label">Estimated Price</span>
+                                        <span className="value highlight">{lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
+                                     </div>
+                                   </div>
+                                   <details className="tcg-raw-footer">
+                                      <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
                              </div>
                           </div>
                        )}
