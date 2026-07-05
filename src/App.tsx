@@ -2337,36 +2337,34 @@ export default function App() {
                 </div>
               </div>
 
-              {showFilters && (
-                <div className="filter-panel" style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', marginBottom: '24px', animation: 'fadeIn 0.2s ease-out' }}>
-                  <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                    <option value="recent">Terbaru ditambahkan</option>
-                    <option value="effort-desc">Effort tertinggi</option>
-                    <option value="effort-asc">Effort terendah</option>
-                    <option value="print-asc">Print number terendah</option>
-                    <option value="edition-desc">Edisi terbaru (◈)</option>
-                    <option value="wish-desc">Wish tertinggi (Value)</option>
-                    <option value="name">Nama A-Z</option>
-                  </select>
-                  
-                  <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                    <option value="">Semua kondisi</option>
-                    <option value="Damaged">Damaged</option>
-                    <option value="Poor">Poor</option>
-                    <option value="Average">Average</option>
-                    <option value="Good">Good</option>
-                    <option value="Great">Great</option>
-                    <option value="Mint">Mint</option>
-                  </select>
+              <div className={`filter-panel ${showFilters ? 'show' : ''}`}>
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="recent">Terbaru ditambahkan</option>
+                  <option value="effort-desc">Effort tertinggi</option>
+                  <option value="effort-asc">Effort terendah</option>
+                  <option value="print-asc">Print number terendah</option>
+                  <option value="edition-desc">Edisi terbaru (◈)</option>
+                  <option value="wish-desc">Wish tertinggi (Value)</option>
+                  <option value="name">Nama A-Z</option>
+                </select>
+                
+                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="">Semua kondisi</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Poor">Poor</option>
+                  <option value="Average">Average</option>
+                  <option value="Good">Good</option>
+                  <option value="Great">Great</option>
+                  <option value="Mint">Mint</option>
+                </select>
 
-                  <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                    <option value="">Semua Tag</option>
-                    {getUsedTags().map(t => (
-                      <option key={t} value={t}>{t}</option>
-                    ))}
-                  </select>
-                </div>
-              )}
+                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="">Semua Tag</option>
+                  {getUsedTags().map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
 
               {/* Batch Actions Panel */}
               {selectedCards.size > 0 && !isReadOnly && (
