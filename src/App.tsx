@@ -225,12 +225,13 @@ export default function App() {
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
   const [selectedTag, setSelectedTag] = useState('');
+  const [selectedStatus, setSelectedStatus] = useState<'all' | 'worker' | 'trade' | 'injured'>('all');
   const [sortOption, setSortOption] = useState('recent');
   const [currentPage, setCurrentPage] = useState(1);
 
   useEffect(() => {
     setCurrentPage(1);
-  }, [searchQuery, selectedCondition, selectedTag, sortOption, activeTab]);
+  }, [searchQuery, selectedCondition, selectedTag, selectedStatus, sortOption, activeTab]);
   
   // Wishlist Search & Sort
   const [wishSearchQuery, setWishSearchQuery] = useState('');
@@ -1946,6 +1947,15 @@ export default function App() {
       });
     }
 
+    // Status filter
+    if (selectedStatus === 'worker') {
+      list = list.filter(c => c.isWorker);
+    } else if (selectedStatus === 'trade') {
+      list = list.filter(c => c.isTrade);
+    } else if (selectedStatus === 'injured') {
+      list = list.filter(c => c.isInjured);
+    }
+
     // Sort order
     if (sortOption === 'effort-desc') list.sort((a, b) => (b.effort || 0) - (a.effort || 0));
     else if (sortOption === 'effort-asc') list.sort((a, b) => (a.effort || 0) - (b.effort || 0));
@@ -2061,7 +2071,23 @@ export default function App() {
             <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
           </div>
           <div className="user-menu" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-            <span style={{ fontFamily: "'IBM Plex Mono', monospace", fontSize: '12px', color: '#9c8f76' }}>
+            <span style={{ 
+              fontFamily: "'IBM Plex Sans', sans-serif", 
+              fontSize: '11px', 
+              fontWeight: 700,
+              color: '#d8923e',
+              background: 'rgba(216, 146, 62, 0.1)',
+              border: '1px solid rgba(216, 146, 62, 0.2)',
+              borderRadius: '20px',
+              padding: '5px 14px',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              textTransform: 'uppercase',
+              letterSpacing: '0.8px',
+              boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
+            }}>
+              <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#5ea396', boxShadow: '0 0 8px #5ea396', animation: 'pulse 2s infinite' }}></span>
               👤 {displayName}
             </span>
             {!isReadOnly && (
@@ -2477,6 +2503,35 @@ export default function App() {
                         <button
                           key={opt.value}
                           onClick={() => setSelectedTag(opt.value)}
+                          className="tag-select-chip"
+                          style={{
+                            borderColor: active ? 'var(--stamp)' : 'var(--paper-line)',
+                            background: active ? 'rgba(216, 146, 62, 0.15)' : 'transparent',
+                            color: active ? 'var(--stamp)' : 'var(--ink-soft)'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Group: Status */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Status</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { value: 'all', label: 'All Status' },
+                      { value: 'worker', label: 'Worker Deck' },
+                      { value: 'trade', label: 'Trade / Sale' },
+                      { value: 'injured', label: 'Injured 🩹' }
+                    ].map(opt => {
+                      const active = selectedStatus === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSelectedStatus(opt.value as any)}
                           className="tag-select-chip"
                           style={{
                             borderColor: active ? 'var(--stamp)' : 'var(--paper-line)',
