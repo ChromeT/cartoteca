@@ -1805,6 +1805,14 @@ textarea::-webkit-scrollbar-thumb:hover {
   user-select: none;
 }
 
+/* Shrink non-image cards to match the transparent margins of Karuta image frames */
+.poker-card:not(.image-card) {
+  width: 92%;
+  height: 94%;
+  top: 3%;
+  left: 4%;
+}
+
 .poker-card.image-card {
   background: transparent;
   box-shadow: none;
