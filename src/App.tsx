@@ -269,6 +269,7 @@ export default function App() {
   }>({ isOpen: false, message: '', onConfirm: () => { }, onCancel: () => { } });
 
   const [kuiInputText, setKuiInputText] = useState('');
+  const [discordIdInput, setDiscordIdInput] = useState('');
   const [kuiFeedback, setKuiFeedback] = useState({ text: '', isError: false, isSuccess: false });
   const [invPasteText, setInvPasteText] = useState('');
   const [invParseFeedback, setInvParseFeedback] = useState<{ text: string; isError: boolean } | null>(null);
@@ -984,6 +985,21 @@ export default function App() {
       }, 3000);
     } else {
       setKuiFeedback({ text: '⚠️ Tidak ada data KUI yang valid. Salin semua teks dari balasan k!ui Karuta.', isError: true, isSuccess: false });
+    }
+  };
+
+  const handleSaveDiscordId = async () => {
+    if (!discordIdInput.trim() || !user || !isFirebaseConfigured()) {
+      showToast('⚠️ Make sure you are logged in.', 'error');
+      return;
+    }
+    try {
+      const { updateDoc } = await import('firebase/firestore');
+      await updateDoc(doc(db, 'users', user.uid), { discordId: discordIdInput.trim() });
+      showToast('✅ Discord ID Linked Successfully!', 'success');
+    } catch (e) {
+      console.error(e);
+      showToast('Failed to link Discord ID.', 'error');
     }
   };
 
@@ -2268,6 +2284,36 @@ export default function App() {
                       {kuiFeedback.text}
                     </div>
                   )}
+                </div>
+              )}
+
+              {/* Bot Discord ID Linker */}
+              {!isReadOnly && (
+                <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    🤖 Link Discord ID
+                  </h4>
+                  <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: 0 }}>
+                    Enter your Discord User ID (e.g. 1460521600242941952) to automatically sync Karuta cards from the Discord Bot.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                    <input 
+                      type="text"
+                      className="input-dark"
+                      placeholder="Your Discord ID"
+                      value={discordIdInput}
+                      onChange={(e) => setDiscordIdInput(e.target.value)}
+                      style={{ flex: 1, minWidth: '280px', height: '40px', padding: '0 12px' }}
+                    />
+                    <button 
+                      className="btn secondary" 
+                      onClick={handleSaveDiscordId} 
+                      disabled={!discordIdInput.trim()}
+                      style={{ padding: '0 24px' }}
+                    >
+                      Link ID
+                    </button>
+                  </div>
                 </div>
               )}
 
