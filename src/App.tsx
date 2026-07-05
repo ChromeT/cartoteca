@@ -3992,6 +3992,13 @@ export default function App() {
                  
                  if (item.type === 'image') className += " image-card";
 
+                 let title = "";
+                 let icon = "";
+                 if (item.id === 'kv') { title = 'Card Details'; icon = '📜'; }
+                 else if (item.id === 'kwi') { title = 'Worker Stats'; icon = '⛏️'; }
+                 else if (item.id === 'klu') { title = 'Character Lookup'; icon = '🔍'; }
+                 else if (item.id === 'price') { title = 'Price Calculator'; icon = '🏷️'; }
+
                  return (
                     <div 
                       key={item.id} 
@@ -4007,10 +4014,16 @@ export default function App() {
                        {item.type === 'image' ? (
                           <img src={item.content} alt="Card" />
                        ) : (
-                          <div className="poker-card-content">
-                             <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
-                               {item.content}
-                             </pre>
+                          <div className="tcg-card">
+                             <div className="tcg-header">
+                               <span className="tcg-icon">{icon}</span>
+                               <span className="tcg-title">{title}</span>
+                             </div>
+                             <div className="tcg-body">
+                               <pre className="tcg-text">
+                                 {item.content}
+                               </pre>
+                             </div>
                           </div>
                        )}
                     </div>

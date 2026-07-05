@@ -1746,8 +1746,8 @@ textarea::-webkit-scrollbar-thumb:hover {
 .poker-stack-container {
   position: relative;
   width: 90vw;
-  max-width: 480px;
-  height: 80vh;
+  max-width: 320px; /* Lebar kartu standar */
+  aspect-ratio: 5 / 7; /* Rasio kartu mainan/TCG */
   display: flex;
   justify-content: center;
   align-items: center;
@@ -1759,10 +1759,9 @@ textarea::-webkit-scrollbar-thumb:hover {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 1px rgba(255, 255, 255, 0.08);
-  background: var(--paper);
-  overflow-y: auto;
-  overflow-x: hidden;
+  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(216, 146, 62, 0.4);
+  background: linear-gradient(135deg, #2b251a, #15130d);
+  overflow: hidden;
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
   cursor: pointer;
   user-select: none;
@@ -1776,15 +1775,11 @@ textarea::-webkit-scrollbar-thumb:hover {
   align-items: center;
 }
 .poker-card.image-card img {
-  max-width: 100%;
-  max-height: 100%;
-  object-fit: contain;
+  width: 100%;
+  height: 100%;
+  object-fit: cover;
   border-radius: 12px;
   box-shadow: 0 15px 35px rgba(0,0,0,0.8);
-}
-
-.poker-card-content {
-  padding: 30px;
 }
 
 .poker-card.animating-out {
@@ -1793,13 +1788,65 @@ textarea::-webkit-scrollbar-thumb:hover {
   pointer-events: none;
 }
 
-.poker-card::-webkit-scrollbar {
+/* TCG Style Layout */
+.tcg-card {
+  display: flex;
+  flex-direction: column;
+  height: 100%;
+}
+
+.tcg-header {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+  background: linear-gradient(90deg, #b9772c, #89551c);
+  padding: 12px 16px;
+  border-bottom: 3px solid #5a3811;
+  box-shadow: inset 0 2px 5px rgba(255,255,255,0.2);
+}
+
+.tcg-icon {
+  font-size: 22px;
+  filter: drop-shadow(0 2px 2px rgba(0,0,0,0.6));
+}
+
+.tcg-title {
+  font-family: 'Georgia', serif;
+  font-weight: 800;
+  font-size: 16px;
+  color: #fff;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+  text-shadow: 0 2px 4px rgba(0,0,0,0.8);
+}
+
+.tcg-body {
+  flex: 1;
+  background: #f4ebd8; /* Warna perkamen / kertas tua */
+  border: 4px solid #d8923e;
+  border-top: none;
+  border-radius: 0 0 12px 12px;
+  padding: 16px;
+  overflow-y: auto;
+  box-shadow: inset 0 0 20px rgba(0,0,0,0.15);
+}
+
+.tcg-text {
+  margin: 0;
+  white-space: pre-wrap;
+  font-family: 'Consolas', monospace;
+  font-size: 13px;
+  color: #2b251a; /* Tinta gelap agar kontras dengan perkamen */
+  line-height: 1.5;
+}
+
+.tcg-body::-webkit-scrollbar {
   width: 6px;
 }
-.poker-card::-webkit-scrollbar-track {
+.tcg-body::-webkit-scrollbar-track {
   background: transparent;
 }
-.poker-card::-webkit-scrollbar-thumb {
-  background: rgba(216, 146, 62, 0.3);
+.tcg-body::-webkit-scrollbar-thumb {
+  background: rgba(216, 146, 62, 0.6);
   border-radius: 4px;
 }
