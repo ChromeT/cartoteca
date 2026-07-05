@@ -2310,46 +2310,6 @@ export default function App() {
           {activeTab === 'kui-stats' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
-              {/* KUI Import Parser Section */}
-              {!isReadOnly && (
-                <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                    📥 Import Karuta User Info (k!ui)
-                  </h4>
-                  <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: 0 }}>
-                    Paste the entire <code>k!ui</code> command reply from Discord below to display player stats on your public profile page.
-                  </p>
-                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
-                    <textarea
-                      className="input-dark"
-                      rows={3}
-                      placeholder="Cards dropped · 141,273&#10;Cards grabbed · 19,990"
-                      value={kuiInputText}
-                      onChange={(e) => setKuiInputText(e.target.value)}
-                      style={{ flex: 1, minWidth: '280px' }}
-                    />
-                    <button
-                      className="btn"
-                      onClick={handleKUIParse}
-                      disabled={!kuiInputText.trim() || (!!kuiFeedback.text && !kuiFeedback.isError)}
-                      style={{ padding: '0 24px' }}
-                    >
-                      Update Stats
-                    </button>
-                  </div>
-                  {kuiFeedback.text && (
-                    <div style={{
-                      padding: '10px', borderRadius: '4px', fontSize: '12px',
-                      background: kuiFeedback.isError ? '#b85c5c20' : kuiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
-                      color: kuiFeedback.isError ? '#ff8c8c' : kuiFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                      border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
-                    }}>
-                      {kuiFeedback.text}
-                    </div>
-                  )}
-                </div>
-              )}
-
               {/* Bot Discord ID Linker */}
               {!isReadOnly && (
                 <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -2528,10 +2488,7 @@ export default function App() {
                 {!isReadOnly && (
                   <>
                     <button className="btn" onClick={() => openCardModal(null)}>+ Add Card</button>
-                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Card Import</button>
-                    <button className="btn secondary" onClick={() => setIsBatchKiwiModalOpen(true)}>⚡ Bulk Worker Info</button>
-                    <button className="btn secondary" onClick={() => setIsBatchImageModalOpen(true)}>🖼️ Batch Images</button>
-                  </>
+                    </>
                 )}
               </div>
 
@@ -3508,49 +3465,6 @@ export default function App() {
               <button className="close-modal-btn" onClick={() => setIsCardModalOpen(false)}>&times;</button>
             </div>
 
-            {/* Parser Section */}
-            <div className="parser-section">
-              <details>
-                <summary>✨ <b>Auto-fill via Discord Text</b></summary>
-                <div className="parser-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-
-                  {/* Card Info (k!c) */}
-                  <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d8923e', marginBottom: '8px' }}>1. Paste Card Info (k!c)</div>
-                    <textarea
-                      placeholder="Paste card info text here..."
-                      rows={2}
-                      value={discordText}
-                      onChange={(e) => setDiscordText(e.target.value)}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                      <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
-                      <button className="btn btn-sm" onClick={handleParseText}>Parse Card Info</button>
-                    </div>
-                  </div>
-
-                  {/* Worker/Effort Info (k!w) */}
-                  <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#5ea396', marginBottom: '8px' }}>2. Paste Worker/Effort Info (k!w / k!wi)</div>
-                    <textarea
-                      placeholder="Paste worker details text here..."
-                      rows={2}
-                      value={effortDiscordText}
-                      onChange={(e) => setEffortDiscordText(e.target.value)}
-                    />
-                    <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
-                      <span className={`parser-status ${effortParserFeedback.isError ? 'error' : effortParserFeedback.isSuccess ? 'success' : ''}`}>{effortParserFeedback.text}</span>
-                      <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="btn btn-sm secondary" onClick={handleParseKiwi}>From Clipboard</button>
-                        <button className="btn btn-sm" onClick={handleParseEffortText}>Parse Worker Info</button>
-                      </div>
-                    </div>
-                  </div>
-
-                </div>
-              </details>
-            </div>
-
             {fStats && (
               <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px dashed #3a3327', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <div style={{ width: '100%', fontSize: '11px', color: '#9c8f76', textAlign: 'center', marginBottom: '4px' }}>Worker Stats (k!wi)</div>
@@ -3613,16 +3527,7 @@ export default function App() {
             <div className="field-row">
               <div className="field">
                 <label>Estimated Price (Tickets)</label>
-                <input type="number" placeholder="e.g., 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} onPaste={(e) => {
-                  const paste = e.clipboardData.getData('text');
-                  if (paste.includes('Price Calculator') && paste.includes('🎟')) {
-                    e.preventDefault();
-                    const priceMatch = paste.match(/\|\|\s*([0-9.]+)\s*🎟/);
-                    if (priceMatch) {
-                      setFPrice(Number(priceMatch[1]));
-                    }
-                  }
-                }} />
+                <input type="number" placeholder="e.g., 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
                 {cardFormId && cards.find(c => c.id === cardFormId)?.priceHistory && cards.find(c => c.id === cardFormId)!.priceHistory!.length > 0 && (
                   <div style={{ background: '#17140f', padding: '8px', borderRadius: '4px', border: '1px solid #3a3327', marginTop: '8px' }}>
                     <div style={{ fontSize: '10px', color: '#9c8f76', marginBottom: '4px' }}>📉 Price History</div>
@@ -4134,183 +4039,6 @@ export default function App() {
                   ⚠️ Start Restoring Data
                 </button>
               </div>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: BULK IMPORT */}
-      {isBulkImportModalOpen && (
-        <div className="modal-overlay open">
-          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: '0', color: '#5ea396', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📥 Bulk Card Import
-              </h3>
-              <button onClick={() => setIsBulkImportModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
-            </div>
-
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
-                Open Discord, run the command <code style={{ background: '#1c1912', padding: '2px 4px', borderRadius: '4px' }}>k!c</code>, then copy the entire response text and paste it below:
-              </p>
-              <textarea
-                className="input-field"
-                style={{ width: '100%', height: '250px', fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', background: '#1c1912', color: '#e8dbce', border: '1px solid #3a3327', borderRadius: '8px', padding: '12px' }}
-                placeholder={`Example:\nkd · mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano\nkd · asdfg · ◈2 · #100 · Good · 330 effort · Rem · Re:Zero`}
-                value={bulkText}
-                onChange={(e) => setBulkText(e.target.value)}
-              />
-
-              {bulkImportFeedback.text && (
-                <div style={{
-                  padding: '12px', borderRadius: '6px', fontSize: '13px',
-                  background: bulkImportFeedback.isError ? '#b85c5c20' : bulkImportFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
-                  color: bulkImportFeedback.isError ? '#ff8c8c' : bulkImportFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                  border: `1px solid ${bulkImportFeedback.isError ? '#b85c5c50' : bulkImportFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
-                }}>
-                  {bulkImportFeedback.text}
-                </div>
-              )}
-
-              <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }} disabled={!!bulkImportFeedback.text && !bulkImportFeedback.isError}>
-                🚀 Process & Save All Cards
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: BATCH KIWI */}
-      {isBatchKiwiModalOpen && (
-        <div className="modal-overlay open">
-          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#d8923e' }}>⚡</span> Bulk Worker Info
-              </h3>
-              <button onClick={() => setIsBatchKiwiModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
-            </div>
-
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                Paste multiple k!wi bot replies below at once. The system will automatically detect the card code in parentheses, e.g., <code>(a1b2c)</code>, and match it to your collection.
-              </p>
-
-              <textarea
-                className="input-dark"
-                rows={10}
-                placeholder="Worker Details\nCharacter · ... (a1b2c)\nEffort · 200\n\n... paste more replies ..."
-                value={batchKiwiText}
-                onChange={(e) => setBatchKiwiText(e.target.value)}
-              />
-
-              {batchKiwiFeedback.text && (
-                <div style={{
-                  padding: '12px', borderRadius: '6px', fontSize: '13px',
-                  background: batchKiwiFeedback.isError ? '#b85c5c20' : batchKiwiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
-                  color: batchKiwiFeedback.isError ? '#ff8c8c' : batchKiwiFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                  border: `1px solid ${batchKiwiFeedback.isError ? '#b85c5c50' : batchKiwiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
-                }}>
-                  {batchKiwiFeedback.text}
-                </div>
-              )}
-
-              <button className="btn" onClick={handleBatchKiwiParse} style={{ padding: '12px' }} disabled={!!batchKiwiFeedback.text && !batchKiwiFeedback.isError}>
-                🚀 Batch Update Stats
-              </button>
-            </div>
-          </div>
-        </div>
-      )}
-
-      {/* MODAL: BATCH IMAGE */}
-      {isBatchImageModalOpen && (
-        <div className="modal-overlay open">
-          <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#d8923e' }}>🖼️</span> Batch Card Images
-              </h3>
-              <button onClick={() => { setIsBatchImageModalOpen(false); setQuickImageMode(false); }} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
-            </div>
-
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '12px' }}>
-                <button className={`tab-btn ${!quickImageMode ? 'active-text' : ''}`} onClick={() => setQuickImageMode(false)} style={{ flex: 1 }}>📜 Batch Text Format</button>
-                <button className={`tab-btn ${quickImageMode ? 'active-text' : ''}`} onClick={() => { setQuickImageMode(true); setQuickImageIndex(0); }} style={{ flex: 1 }}>⚡ Quick Fill Mode</button>
-              </div>
-
-              {!quickImageMode ? (
-                <>
-                  <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                    Paste in the format: <code>code|image_url</code> (one per line). Ideal for mass updates if you have data in a spreadsheet or notepad.
-                  </p>
-
-                  <textarea
-                    className="input-dark"
-                    rows={10}
-                    placeholder="a1b2c|https://...\nx9y8z|https://..."
-                    value={batchImageText}
-                    onChange={(e) => setBatchImageText(e.target.value)}
-                  />
-
-                  {batchImageFeedback.text && (
-                    <div style={{
-                      padding: '12px', borderRadius: '6px', fontSize: '13px',
-                      background: batchImageFeedback.isError ? '#b85c5c20' : batchImageFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
-                      color: batchImageFeedback.isError ? '#ff8c8c' : batchImageFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                      border: `1px solid ${batchImageFeedback.isError ? '#b85c5c50' : batchImageFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
-                    }}>
-                      {batchImageFeedback.text}
-                    </div>
-                  )}
-
-                  <button className="btn" onClick={handleBatchImageUpdate} style={{ padding: '12px' }} disabled={!!batchImageFeedback.text && !batchImageFeedback.isError}>
-                    🖼️ Batch Update Images
-                  </button>
-                </>
-              ) : (
-                <>
-                  <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                    The system will show your cards without images one by one. Paste the image URL and press Enter to save and continue.
-                  </p>
-                  {(() => {
-                    const cardsWithoutImage = cards.filter(c => !c.imageUrl);
-                    if (cardsWithoutImage.length === 0) {
-                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ All cards in your collection already have images!</div>;
-                    }
-                    if (quickImageIndex >= cardsWithoutImage.length) {
-                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ You have completed all image upload queues!</div>;
-                    }
-                    const c = cardsWithoutImage[quickImageIndex];
-                    return (
-                      <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>Card {quickImageIndex + 1} of {cardsWithoutImage.length}</div>
-                        <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#e8dbce', marginBottom: '4px' }}>{c.name}</div>
-                        <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '16px' }}>{c.series} • {c.code}</div>
-
-                        <div style={{ display: 'flex', gap: '8px' }}>
-                          <input
-                            type="text"
-                            className="input-dark"
-                            placeholder="Paste image URL (https://...)"
-                            value={batchImageText}
-                            onChange={(e) => setBatchImageText(e.target.value)}
-                            onKeyDown={(e) => {
-                              if (e.key === 'Enter') handleQuickImageSave(batchImageText, c.id);
-                            }}
-                            style={{ flex: 1 }}
-                            autoFocus
-                          />
-                          <button className="btn secondary" onClick={() => { setBatchImageText(''); setQuickImageIndex(prev => prev + 1); }}>Skip</button>
-                          <button className="btn" onClick={() => handleQuickImageSave(batchImageText, c.id)}>Save</button>
-                        </div>
-                      </div>
-                    );
-                  })()}
-                </>
-              )}
             </div>
           </div>
         </div>
