@@ -2256,21 +2256,21 @@ export default function App() {
                   {/* Insight: grab rate */}
                   {userKUI['Cards grabbed'] && userKUI['Cards dropped'] && (
                     <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px', fontSize: '13px', color: '#9c8f76' }}>
-                      💡 <span style={{ color: '#e8dbce' }}>Insight:</span> Dari <b style={{ color: '#d8923e' }}>{Number(userKUI['Cards dropped']).toLocaleString()}</b> drop,
-                      kamu grab <b style={{ color: '#5ea396' }}>{Number(userKUI['Cards grabbed']).toLocaleString()}</b> kartu
+                      💡 <span style={{ color: '#e8dbce' }}>Insight:</span> Out of <b style={{ color: '#d8923e' }}>{Number(userKUI['Cards dropped']).toLocaleString()}</b> drops,
+                      you grabbed <b style={{ color: '#5ea396' }}>{Number(userKUI['Cards grabbed']).toLocaleString()}</b> cards
                       (<b style={{ color: '#e8dbce' }}>{Math.round((Number(userKUI['Cards grabbed']) / Number(userKUI['Cards dropped'])) * 100)}%</b> grab rate).
                       {userKUI['Cards burned'] && (
-                        <> Kamu sudah burn <b style={{ color: '#c14e4e' }}>{Number(userKUI['Cards burned']).toLocaleString()}</b> kartu.
-                        Koleksi binder: <b style={{ color: '#d8923e' }}>{cards.length.toLocaleString()}</b> kartu.</>)}
+                        <> You have burned <b style={{ color: '#c14e4e' }}>{Number(userKUI['Cards burned']).toLocaleString()}</b> cards.
+                        Binder collection: <b style={{ color: '#d8923e' }}>{cards.length.toLocaleString()}</b> cards.</>)}
                     </div>
                   )}
                 </>
               ) : (
                 <div style={{ textAlign: 'center', padding: '40px', background: '#17140f', borderRadius: '8px', border: '1px dashed #3a3327' }}>
                   <div style={{ fontSize: '32px', marginBottom: '12px' }}>📊</div>
-                  <h3 style={{ color: '#e8dbce', marginBottom: '8px' }}>Belum Ada Data Statistik</h3>
+                  <h3 style={{ color: '#e8dbce', marginBottom: '8px' }}>No Player Stats Loaded</h3>
                   <p style={{ color: '#9c8f76', fontSize: '14px' }}>
-                    Buka menu <b>Profil</b> dan paste semua teks dari balasan <code>k!ui</code> Karuta untuk memunculkan dashboard statistik di sini.
+                    Open the <b>Profile</b> menu and paste the text from your Karuta <code>k!ui</code> bot response to initialize the player stats dashboard here.
                   </p>
                 </div>
               )}
@@ -2613,24 +2613,24 @@ export default function App() {
                 <input 
                   className="search-box" 
                   type="text" 
-                  placeholder="Cari nama wishlist..." 
+                  placeholder="Search wishlist..." 
                   value={wishSearchQuery}
                   onChange={(e) => setWishSearchQuery(e.target.value)}
                 />
                 <select value={wishSortOption} onChange={(e) => setWishSortOption(e.target.value)}>
-                  <option value="priority-desc">Prioritas tertinggi</option>
-                  <option value="name">Nama A-Z</option>
+                  <option value="priority-desc">Highest Priority</option>
+                  <option value="name">Name A-Z</option>
                   <option value="series">Series A-Z</option>
                 </select>
-                {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist</button>}
+                {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Add Wishlist</button>}
               </div>
 
               {wishlist.length === 0 ? (
                 <div className="empty">
                   <div className="stamp-big">✨</div>
-                  <h3>Belum ada wishlist</h3>
-                  <p>Catat karakter incaran kamu agar tidak terlewatkan saat drop muncul.</p>
-                  {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Tambah Wishlist Pertama</button>}
+                  <h3>No wishlist items yet</h3>
+                  <p>Keep track of your target characters so you don't miss them in drops.</p>
+                  {!isReadOnly && <button className="btn" onClick={() => openWishModal(null)}>+ Add First Wishlist</button>}
                 </div>
               ) : (
                 <div className="binder">
@@ -2641,26 +2641,26 @@ export default function App() {
                         <span>WISH</span>
                       </div>
                       <p className="card-name">{w.name}</p>
-                      <p className="card-series">{w.series || 'Series belum diisi'}</p>
+                      <p className="card-series">{w.series || 'Series not set'}</p>
 
                       <div className="card-meta">
                         <span className={`wish-priority ${w.priority}`}>
-                          {w.priority === 'high' ? '🚨 Prioritas Tinggi' : w.priority === 'med' ? '⚡ Prioritas Sedang' : '🌱 Prioritas Rendah'}
+                          {w.priority === 'high' ? '🚨 High Priority' : w.priority === 'med' ? '⚡ Medium Priority' : '🌱 Low Priority'}
                         </span>
-                        {w.targetWish && <span className="chip">Target: {w.targetWish} wish</span>}
+                        {w.targetWish && <span className="chip">Target: {w.targetWish} wishes</span>}
                       </div>
 
                       {w.notes && <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '4px', fontStyle: 'italic' }}>"{w.notes}"</div>}
 
                       {!isReadOnly && (                      <div className="card-actions">
                         <button className="icon-btn" onClick={() => openWishModal(w)}>✏️ Edit</button>
-                        <button className="icon-btn delete" onClick={() => handleDeleteWish(w.id)}>🗑️ Hapus</button>
+                        <button className="icon-btn delete" onClick={() => handleDeleteWish(w.id)}>🗑️ Delete</button>
                         <button 
                           className="btn btn-sm" 
                           style={{ marginLeft: 'auto', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }}
                           onClick={() => handleClaimWish(w)}
                         >
-                          🎉 Klaim
+                          🎉 Claim
                         </button>
                       </div>)}
                     </div>
@@ -2674,15 +2674,15 @@ export default function App() {
           {activeTab === 'stats' && (
             <div>
               <div className="stats-grid">
-                <div className="stat-card"><b>{totalCards}</b><span>Total Kartu</span></div>
-                <div className="stat-card"><b>{avgEffort}</b><span>Rata-Rata Effort</span></div>
+                <div className="stat-card"><b>{totalCards}</b><span>Total Cards</span></div>
+                <div className="stat-card"><b>{avgEffort}</b><span>Average Effort</span></div>
                 <div className="stat-card"><b>{lowPrint}</b><span>Low Print (≤99)</span></div>
-                <div className="stat-card"><b>{mintCount}</b><span>Kondisi Mint (MT)</span></div>
+                <div className="stat-card"><b>{mintCount}</b><span>Mint Condition (MT)</span></div>
               </div>
 
               <div className="charts-layout">
                 <div className="bars">
-                  <h4>Distribusi Kondisi</h4>
+                  <h4>Condition Distribution</h4>
                   {Object.entries(getConditionStats()).map(([k, v]) => {
                     const maxVal = Math.max(1, ...Object.values(getConditionStats()));
                     return (
@@ -2698,7 +2698,7 @@ export default function App() {
                 </div>
 
                 <div className="bars">
-                  <h4>Series Terbanyak</h4>
+                  <h4>Top Series</h4>
                   {getTopSeriesStats().length > 0 ? getTopSeriesStats().map(([k, v]) => {
                     const maxVal = Math.max(1, ...getTopSeriesStats().map(s => s[1]));
                     return (
@@ -2710,13 +2710,13 @@ export default function App() {
                         <div className="count">{v}</div>
                       </div>
                     );
-                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data series.</p>}
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>No series data yet.</p>}
                 </div>
               </div>
 
               <div className="charts-layout" style={{ marginTop: '16px' }}>
                 <div className="bars">
-                  <h4>Edisi Kartu ◈</h4>
+                  <h4>Card Editions</h4>
                   {getEditionStats().length > 0 ? getEditionStats().map(([k, v]) => {
                     const maxVal = Math.max(1, ...getEditionStats().map(e => e[1]));
                     return (
@@ -2728,11 +2728,11 @@ export default function App() {
                         <div className="count">{v}</div>
                       </div>
                     );
-                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data edisi.</p>}
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>No edition data yet.</p>}
                 </div>
 
                 <div className="bars">
-                  <h4>Kontributor Effort Teratas</h4>
+                  <h4>Top Effort Contributors</h4>
                   {getTopEffortCards().length > 0 ? getTopEffortCards().map(c => {
                     const maxVal = getTopEffortCards()[0]?.effort || 1;
                     return (
@@ -2744,7 +2744,7 @@ export default function App() {
                         <div className="count">{c.effort}</div>
                       </div>
                     );
-                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>Belum ada data effort.</p>}
+                  }) : <p style={{ fontSize: '13px', color: 'var(--ink-soft)', textAlign: 'center', padding: '10px' }}>No effort data yet.</p>}
                 </div>
               </div>
             </div>
@@ -2754,18 +2754,18 @@ export default function App() {
           {activeTab === 'tags-manager' && (
             <div className="tags-manager-layout">
               <div className="tag-form-card">
-                <h4>Tambah / Edit Tag</h4>
+                <h4>Add / Edit Tag</h4>
                 <div className="field">
-                  <label>Nama Tag *</label>
+                  <label>Tag Name *</label>
                   <input 
                     type="text" 
-                    placeholder="mis. waifu, trade, deck-1"
+                    placeholder="e.g., waifu, trade, deck-1"
                     value={tagNameInput}
                     onChange={(e) => setTagNameInput(e.target.value)}
                   />
                 </div>
                 <div className="field">
-                  <label>Warna Tag</label>
+                  <label>Tag Color</label>
                   <div className="tag-color-picker">
                     <input 
                       type="color" 
@@ -2785,32 +2785,32 @@ export default function App() {
                   </div>
                 </div>
                 <div className="field">
-                  <label>Deskripsi Tag</label>
+                  <label>Tag Description</label>
                   <input 
                     type="text" 
-                    placeholder="Keterangan opsional"
+                    placeholder="Optional description"
                     value={tagDescInput}
                     onChange={(e) => setTagDescInput(e.target.value)}
                   />
                 </div>
-                <button className="btn" style={{ width: '100%' }} onClick={handleSaveTag}>Simpan Tag</button>
+                <button className="btn" style={{ width: '100%' }} onClick={handleSaveTag}>Save Tag</button>
               </div>
 
               <div className="tag-list-card">
-                <h4>Daftar Tag Kustom</h4>
+                <h4>Custom Tags List</h4>
                 <div className="tag-table-container">
                   <table className="tag-table">
                     <thead>
                       <tr>
                         <th>Tag</th>
-                        <th>Keterangan</th>
-                        <th>Jumlah Kartu</th>
-                        <th>Aksi</th>
+                        <th>Description</th>
+                        <th>Card Count</th>
+                        <th>Actions</th>
                       </tr>
                     </thead>
                     <tbody>
                       {customTags.length === 0 ? (
-                        <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>Belum ada tag kustom.</td></tr>
+                        <tr><td colSpan={4} style={{ textAlign: 'center', color: 'var(--ink-soft)' }}>No custom tags defined yet.</td></tr>
                       ) : (
                         customTags.map(t => {
                           const cardCount = cards.filter(c => c.tags?.split(',').map(tg => tg.trim().toLowerCase()).includes(t.name.toLowerCase())).length;
@@ -2818,13 +2818,13 @@ export default function App() {
                             <tr key={t.name}>
                               <td><span className="custom-tag-chip" style={{ backgroundColor: t.color }}>{t.name}</span></td>
                               <td>{t.desc || '—'}</td>
-                              <td><b>{cardCount}</b> kartu</td>
+                              <td><b>{cardCount}</b> cards</td>
                               <td>
                                 <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
-                                  <button className="icon-btn" onClick={() => handleViewTagCollection(t.name)}>🔍 Lihat Koleksi</button>
+                                  <button className="icon-btn" onClick={() => handleViewTagCollection(t.name)}>🔍 View Collection</button>
                                   <button className="icon-btn" onClick={() => { setTagNameInput(t.name); setTagColorInput(t.color); setTagDescInput(t.desc); }}>✏️ Edit</button>
-                                  <button className="icon-btn" style={{ color: '#d8923e' }} onClick={() => handleUntagAll(t.name)}>❌ Untag Semua</button>
-                                  <button className="icon-btn delete" onClick={() => handleDeleteCustomTag(t.name)}>🗑️ Hapus</button>
+                                  <button className="icon-btn" style={{ color: '#d8923e' }} onClick={() => handleUntagAll(t.name)}>❌ Untag All</button>
+                                  <button className="icon-btn delete" onClick={() => handleDeleteCustomTag(t.name)}>🗑️ Delete</button>
                                 </div>
                               </td>
                             </tr>
@@ -2842,9 +2842,9 @@ export default function App() {
           {activeTab === 'workers' && (
             <div className="stats-grid">
               <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-                <h3 style={{ marginBottom: '16px' }}>💼 Kalkulator Pekerja (Node Optimizer)</h3>
+                <h3 style={{ marginBottom: '16px' }}>💼 Job Board Calculator (Node Optimizer)</h3>
                 <p style={{ color: 'var(--ink-soft)', fontSize: '13px', marginBottom: '20px' }}>
-                  Pilih 5 kartu pekerja terbaik Anda (Slot A - E), masukkan estimasi Node Multiplier, dan lihat potensi Bits yang dihasilkan.
+                  Select your 5 best worker cards (Slots A - E), enter the estimated Node Multiplier, and see potential Bits generated.
                 </p>
                 
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', overflowX: 'auto' }}>
@@ -2856,7 +2856,7 @@ export default function App() {
                         {card ? (
                           <>
                             <div style={{ fontSize: '14px', fontWeight: 600, color: '#e8dbce', marginBottom: '8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '4px' }}>
-                              {card.name} {card.isInjured && <span title="Cedera" style={{ cursor: 'help' }}>🩹</span>}
+                              {card.name} {card.isInjured && <span title="Injured" style={{ cursor: 'help' }}>🩹</span>}
                             </div>
                             <div style={{ fontSize: '12px', color: '#d8923e', marginBottom: '12px', fontFamily: 'monospace' }}>Effort: {card.effort || 0}</div>
                             {card.stats && (
@@ -2868,10 +2868,10 @@ export default function App() {
                                 ))}
                               </div>
                             )}
-                            {!isReadOnly && <button className="btn secondary" style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }} onClick={() => handleSetWorker(slotIdx, null)}>Lepas</button>}
+                            {!isReadOnly && <button className="btn secondary" style={{ padding: '4px 8px', fontSize: '11px', width: '100%' }} onClick={() => handleSetWorker(slotIdx, null)}>Unequip</button>}
                           </>
                         ) : (
-                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Slot Kosong</div>
+                          <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Empty Slot</div>
                         )}
                       </div>
                     );
@@ -2900,7 +2900,7 @@ export default function App() {
                         <span style={{ color: '#c4964a', marginLeft: '6px' }}>{"⚠️ Target >= 800"}</span>
                       )}
                     </div>
-                    <div style={{ fontSize: '12px', color: '#9c8f76' }}>Estimasi Bit per Drop:</div>
+                    <div style={{ fontSize: '12px', color: '#9c8f76' }}>Est. Bits per Drop:</div>
                     <div style={{ fontSize: '24px', fontWeight: 700, color: '#5ea396', fontFamily: 'monospace' }}>
                       {Math.round(workerSlotIds.map(id => cards.find(c => c.id === id)?.effort || 0).reduce((a, b) => a + b, 0) * nodeMultiplier)} 🔵
                     </div>
@@ -2910,26 +2910,26 @@ export default function App() {
 
               {/* Guidelines / Tips from SKILL.md */}
               <div className="stat-card" style={{ gridColumn: '1 / -1', background: '#17140f', border: '1px solid #3a3327' }}>
-                <h4 style={{ color: '#d8923e', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>💡 Panduan Job Board Karuta</h4>
+                <h4 style={{ color: '#d8923e', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>💡 Karuta Job Board Guide</h4>
                 <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', fontSize: '12px', color: '#9c8f76' }}>
                   <div>
                     <b style={{ color: '#e8dbce' }}>🩹 Wellness & Injuries</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Kartu berisiko cedera saat bekerja (7.5% per kartu). Cedera mematikan nilai Wellness stat menjadi 0, sehingga menurunkan effort secara drastis. Sembuhkan dengan mencentang manual status Cedera 🩹 atau memakaikan Bandage.</p>
+                    <p style={{ margin: '4px 0 0 0' }}>Cards risk injury while working (7.5% per card). Injury sets the Wellness stat to 0, drastically reducing effort. Heal by manually checking the Injured 🩹 status or applying a Bandage.</p>
                   </div>
                   <div>
                     <b style={{ color: '#e8dbce' }}>📜 Work Permit</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Diperlukan untuk bekerja menggunakan perintah k!work. Biaya pembuatan Work Permit adalah 2,000 Gold dengan masa aktif selama 30 hari.</p>
+                    <p style={{ margin: '4px 0 0 0' }}>Required to work using the k!work command. Creating a Work Permit costs 2,000 Gold with an active period of 30 days.</p>
                   </div>
                   <div>
-                    <b style={{ color: '#e8dbce' }}>🗺️ Node & Pajak</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Selalu cari Node dengan pajak (Tax) terkecil untuk memaksimalkan hasil. Node Gold selalu memiliki pajak tetap sebesar 50% tanpa kepemilikan clan.</p>
+                    <b style={{ color: '#e8dbce' }}>🗺️ Node & Taxes</b>
+                    <p style={{ margin: '4px 0 0 0' }}>Always look for the Node with the lowest tax to maximize returns. Gold Nodes always have a flat 50% tax regardless of clan ownership.</p>
                   </div>
                 </div>
               </div>
 
               <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
-                <h4 style={{ marginBottom: '16px' }}>Daftar Kartu Pekerja Anda</h4>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Klik kartu di bawah ini untuk menugaskannya ke slot yang kosong (Hanya menampilkan kartu dengan centang 'Worker' atau memiliki nilai Effort tinggi).</p>
+                <h4 style={{ marginBottom: '16px' }}>Your Worker Cards</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Click a card below to assign it to an empty slot. (Shows cards marked as 'Worker' or with high Effort).</p>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '16px' }}>
                   {cards.filter(c => c.isWorker || c.tags.includes('worker') || c.tags.includes('deck-1') || (c.effort && c.effort > 0)).sort((a,b) => (b.effort||0)-(a.effort||0)).slice(0, 50).map(c => {
                     const isUsed = workerSlotIds.includes(c.id);
@@ -2950,14 +2950,14 @@ export default function App() {
                         }}
                       >
                         <div style={{ fontSize: '12px', fontWeight: 600, color: '#e8dbce', marginBottom: '4px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis', display: 'flex', alignItems: 'center', gap: '4px' }}>
-                          {c.name} {c.isInjured && <span title="Cedera" style={{ color: '#ff8c8c' }}>🩹</span>}
+                          {c.name} {c.isInjured && <span title="Injured" style={{ color: '#ff8c8c' }}>🩹</span>}
                         </div>
                         <div style={{ fontSize: '14px', color: '#d8923e', fontWeight: 'bold', fontFamily: 'monospace' }}>{c.effort || 0} E</div>
                       </div>
                     );
                   })}
                   {cards.length > 0 && cards.filter(c => c.isWorker || (c.effort && c.effort > 0)).length === 0 && (
-                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>Tidak ada kartu yang ditandai sebagai Worker atau memiliki nilai effort.</div>
+                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>No cards are marked as Workers or have effort stats.</div>
                   )}
                 </div>
               </div>
@@ -3026,21 +3026,21 @@ export default function App() {
 
                     if (Object.keys(updates).length > 0) {
                       handleUpdateInventory({ ...inventory, ...updates });
-                      setInvParseFeedback({ text: `\u2705 ${Object.keys(updates).length} item berhasil diperbarui dari k!inv!`, isError: false });
+                      setInvParseFeedback({ text: `\u2705 ${Object.keys(updates).length} items successfully updated from k!inv!`, isError: false });
                       setInvPasteText('');
                       setTimeout(() => setInvParseFeedback(null), 3000);
                     } else {
-                      setInvParseFeedback({ text: '\u26a0\ufe0f Tidak ada item terdeteksi. Salin teks lengkap dari balasan k!inv / k!i Karuta.', isError: true });
+                      setInvParseFeedback({ text: '\u26a0\ufe0f No items detected. Copy the entire response from the k!inv / k!i Karuta bot.', isError: true });
                     }
                   };
 
                   return (
                     <div style={{ background: '#17140f', border: '1px solid #3a3327', borderRadius: '8px', padding: '16px' }}>
                       <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase', letterSpacing: '1px' }}>
-                        📋 Sync dari k!inv
+                        📋 Sync from k!inv
                       </div>
                       <p style={{ fontSize: '12px', color: '#9c8f76', margin: '0 0 10px 0' }}>
-                        Ketik <code style={{ background: '#252118', padding: '1px 5px', borderRadius: '3px' }}>k!inv</code> di Discord, lalu paste teks balasannya di sini. Semua nilai akan <b style={{ color: '#5ea396' }}>diperbarui otomatis</b>.
+                        Type <code style={{ background: '#252118', padding: '1px 5px', borderRadius: '3px' }}>k!inv</code> in Discord, then paste the reply here. All values will be <b style={{ color: '#5ea396' }}>automatically updated</b>.
                       </p>
                       <textarea
                         className="form-control"
@@ -3188,7 +3188,7 @@ export default function App() {
         <div className="modal-overlay open">
           <div className="modal">
             <div className="modal-header">
-              <h2>{cardFormId ? 'Edit Detail Kartu' : 'Tambah Kartu Baru'}</h2>
+              <h2>{cardFormId ? 'Edit Card Details' : 'Add New Card'}</h2>
               <button className="close-modal-btn" onClick={() => setIsCardModalOpen(false)}>&times;</button>
             </div>
 
@@ -3200,24 +3200,24 @@ export default function App() {
                   
                   {/* Card Info (k!c) */}
                   <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d8923e', marginBottom: '8px' }}>1. Paste Info Kartu (k!c)</div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d8923e', marginBottom: '8px' }}>1. Paste Card Info (k!c)</div>
                     <textarea 
-                      placeholder="Tempel teks info kartu di sini..." 
+                      placeholder="Paste card info text here..." 
                       rows={2}
                       value={discordText}
                       onChange={(e) => setDiscordText(e.target.value)}
                     />
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <span className={`parser-status ${parserFeedback.isError ? 'error' : parserFeedback.isSuccess ? 'success' : ''}`}>{parserFeedback.text}</span>
-                      <button className="btn btn-sm" onClick={handleParseText}>Baca Info Kartu</button>
+                      <button className="btn btn-sm" onClick={handleParseText}>Parse Card Info</button>
                     </div>
                   </div>
 
                   {/* Worker/Effort Info (k!w) */}
                   <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#5ea396', marginBottom: '8px' }}>2. Paste Info Worker/Effort (k!w / k!wi)</div>
+                    <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#5ea396', marginBottom: '8px' }}>2. Paste Worker/Effort Info (k!w / k!wi)</div>
                     <textarea 
-                      placeholder="Tempel teks detail worker di sini..." 
+                      placeholder="Paste worker details text here..." 
                       rows={2}
                       value={effortDiscordText}
                       onChange={(e) => setEffortDiscordText(e.target.value)}
@@ -3225,8 +3225,8 @@ export default function App() {
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '6px' }}>
                       <span className={`parser-status ${effortParserFeedback.isError ? 'error' : effortParserFeedback.isSuccess ? 'success' : ''}`}>{effortParserFeedback.text}</span>
                       <div style={{ display: 'flex', gap: '8px' }}>
-                        <button className="btn btn-sm secondary" onClick={handleParseKiwi}>Dari Clipboard</button>
-                        <button className="btn btn-sm" onClick={handleParseEffortText}>Baca Info Worker</button>
+                        <button className="btn btn-sm secondary" onClick={handleParseKiwi}>From Clipboard</button>
+                        <button className="btn btn-sm" onClick={handleParseEffortText}>Parse Worker Info</button>
                       </div>
                     </div>
                   </div>
@@ -3237,44 +3237,44 @@ export default function App() {
             
             {fStats && (
               <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px dashed #3a3327', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
-                <div style={{ width: '100%', fontSize: '11px', color: '#9c8f76', textAlign: 'center', marginBottom: '4px' }}>Status Pekerja (k!wi)</div>
+                <div style={{ width: '100%', fontSize: '11px', color: '#9c8f76', textAlign: 'center', marginBottom: '4px' }}>Worker Stats (k!wi)</div>
                 {Object.entries(fStats).map(([k, v]) => (
                   <div key={k} style={{ background: '#2a251b', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                     <span style={{ color: '#9c8f76', textTransform: 'capitalize' }}>{k.substring(0,3)}</span>
                     <span style={{ color: v === 'S' ? '#d8923e' : v === 'A' ? '#5ea396' : '#fff', fontWeight: 'bold' }}>{v}</span>
                   </div>
                 ))}
-                <button className="btn secondary btn-sm" style={{ padding: '2px 6px', fontSize: '10px' }} onClick={() => setFStats(undefined)}>Hapus Status</button>
+                <button className="btn secondary btn-sm" style={{ padding: '2px 6px', fontSize: '10px' }} onClick={() => setFStats(undefined)}>Remove Stats</button>
               </div>
             )}
 
             <div className="field-row-3">
               <div className="field">
-                <label>Kode Kartu</label>
-                <input type="text" placeholder="mis. mz4xq" value={fCode} onChange={(e) => setFCode(e.target.value)} />
+                <label>Card Code</label>
+                <input type="text" placeholder="e.g., mz4xq" value={fCode} onChange={(e) => setFCode(e.target.value)} />
               </div>
               <div className="field">
                 <label>Print Num</label>
-                <input type="number" placeholder="mis. 14" value={fPrint} onChange={(e) => setFPrint(e.target.value === '' ? '' : Number(e.target.value))} />
+                <input type="number" placeholder="e.g., 14" value={fPrint} onChange={(e) => setFPrint(e.target.value === '' ? '' : Number(e.target.value))} />
               </div>
               <div className="field">
-                <label>Edisi ◈</label>
-                <input type="number" placeholder="mis. 3" value={fEdition} onChange={(e) => setFEdition(e.target.value === '' ? '' : Number(e.target.value))} />
+                <label>Edition ◈</label>
+                <input type="number" placeholder="e.g., 3" value={fEdition} onChange={(e) => setFEdition(e.target.value === '' ? '' : Number(e.target.value))} />
               </div>
             </div>
 
             <div className="field">
-              <label>Nama Karakter *</label>
-              <input type="text" placeholder="mis. Megumi Kato" value={fName} onChange={(e) => setFName(e.target.value)} required />
+              <label>Character Name *</label>
+              <input type="text" placeholder="e.g., Megumi Kato" value={fName} onChange={(e) => setFName(e.target.value)} required />
             </div>
             <div className="field">
-              <label>Series / Anime</label>
-              <input type="text" placeholder="mis. Saekano" value={fSeries} onChange={(e) => setFSeries(e.target.value)} />
+              <label>Series</label>
+              <input type="text" placeholder="e.g., Saekano" value={fSeries} onChange={(e) => setFSeries(e.target.value)} />
             </div>
 
             <div className="field-row-3">
               <div className="field">
-                <label>Kondisi</label>
+                <label>Condition</label>
                 <select value={fCondition} onChange={(e) => setFCondition(e.target.value)}>
                   <option value="Damaged">Damaged</option>
                   <option value="Poor">Poor</option>
@@ -3286,21 +3286,21 @@ export default function App() {
               </div>
               <div className="field">
                 <label>Effort</label>
-                <input type="number" placeholder="mis. 420" value={fEffort} onChange={(e) => setFEffort(e.target.value === '' ? '' : Number(e.target.value))} />
+                <input type="number" placeholder="e.g., 420" value={fEffort} onChange={(e) => setFEffort(e.target.value === '' ? '' : Number(e.target.value))} />
               </div>
               <div className="field">
                 <label>Wish Count</label>
-                <input type="number" placeholder="mis. 1200" value={fWish} onChange={(e) => setFWish(e.target.value === '' ? '' : Number(e.target.value))} />
+                <input type="number" placeholder="e.g., 1200" value={fWish} onChange={(e) => setFWish(e.target.value === '' ? '' : Number(e.target.value))} />
               </div>
             </div>
 
             <div className="field-row">
               <div className="field">
-                <label>Estimasi Harga (Ticket)</label>
-                <input type="number" placeholder="mis. 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
+                <label>Estimated Price (Tickets)</label>
+                <input type="number" placeholder="e.g., 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
                 {cardFormId && cards.find(c => c.id === cardFormId)?.priceHistory && cards.find(c => c.id === cardFormId)!.priceHistory!.length > 0 && (
                   <div style={{ background: '#17140f', padding: '8px', borderRadius: '4px', border: '1px solid #3a3327', marginTop: '8px' }}>
-                    <div style={{ fontSize: '10px', color: '#9c8f76', marginBottom: '4px' }}>📉 Riwayat Perubahan Harga</div>
+                    <div style={{ fontSize: '10px', color: '#9c8f76', marginBottom: '4px' }}>📉 Price History</div>
                     <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', maxHeight: '60px', overflowY: 'auto' }}>
                       {cards.find(c => c.id === cardFormId)!.priceHistory!.map((h, i) => (
                         <div key={i} style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: '#e8dbce', borderBottom: '1px dashed #3a3327', paddingBottom: '2px' }}>
@@ -3313,7 +3313,7 @@ export default function App() {
                 )}
               </div>
               <div className="field" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'center' }}>
-                <label style={{ marginBottom: '8px' }}>Status / Posisi</label>
+                <label style={{ marginBottom: '8px' }}>Status</label>
                 <div style={{ display: 'flex', gap: '12px', alignItems: 'center', height: '36px' }}>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer' }}>
                     <input type="checkbox" checked={fIsWorker} onChange={(e) => setFIsWorker(e.target.checked)} style={{ width: 'auto' }} /> Worker Deck
@@ -3322,7 +3322,7 @@ export default function App() {
                     <input type="checkbox" checked={fIsTrade} onChange={(e) => setFIsTrade(e.target.checked)} style={{ width: 'auto' }} /> Trade / Sale
                   </label>
                   <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontWeight: 'normal', cursor: 'pointer', color: fIsInjured ? '#ff8c8c' : 'inherit' }}>
-                    <input type="checkbox" checked={fIsInjured} onChange={(e) => setFIsInjured(e.target.checked)} style={{ width: 'auto' }} /> Cedera 🩹
+                    <input type="checkbox" checked={fIsInjured} onChange={(e) => setFIsInjured(e.target.checked)} style={{ width: 'auto' }} /> Injured 🩹
                   </label>
                 </div>
               </div>
@@ -3334,43 +3334,43 @@ export default function App() {
               <div className="field-row-3">
                 <div className="field">
                   <label>Purity</label>
-                  <input type="text" placeholder="mis. S" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
+                  <input type="text" placeholder="e.g., S" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Wellness</label>
-                  <input type="text" placeholder="mis. S" value={fStats?.wellness || ''} onChange={(e) => updateFStat('wellness', e.target.value)} />
+                  <input type="text" placeholder="e.g., S" value={fStats?.wellness || ''} onChange={(e) => updateFStat('wellness', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Toughness</label>
-                  <input type="text" placeholder="mis. F" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
+                  <input type="text" placeholder="e.g., F" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
                 </div>
               </div>
               <div className="field-row-3">
                 <div className="field">
                   <label>Quickness</label>
-                  <input type="text" placeholder="mis. B" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
+                  <input type="text" placeholder="e.g., B" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Style</label>
-                  <input type="text" placeholder="mis. F" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
+                  <input type="text" placeholder="e.g., F" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Grabber</label>
-                  <input type="text" placeholder="mis. S" value={fStats?.grabber || ''} onChange={(e) => updateFStat('grabber', e.target.value)} />
+                  <input type="text" placeholder="e.g., S" value={fStats?.grabber || ''} onChange={(e) => updateFStat('grabber', e.target.value)} />
                 </div>
               </div>
               <div className="field-row-3">
                 <div className="field">
                   <label>Dropper</label>
-                  <input type="text" placeholder="mis. S" value={fStats?.dropper || ''} onChange={(e) => updateFStat('dropper', e.target.value)} />
+                  <input type="text" placeholder="e.g., S" value={fStats?.dropper || ''} onChange={(e) => updateFStat('dropper', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Vanity</label>
-                  <input type="text" placeholder="mis. D" value={fStats?.vanity || ''} onChange={(e) => updateFStat('vanity', e.target.value)} />
+                  <input type="text" placeholder="e.g., D" value={fStats?.vanity || ''} onChange={(e) => updateFStat('vanity', e.target.value)} />
                 </div>
                 <div className="field">
                   <label>Appeal</label>
-                  <input type="text" placeholder="mis. S" value={fStats?.appeal || ''} onChange={(e) => updateFStat('appeal', e.target.value)} />
+                  <input type="text" placeholder="e.g., S" value={fStats?.appeal || ''} onChange={(e) => updateFStat('appeal', e.target.value)} />
                 </div>
               </div>
             </div>
@@ -3378,16 +3378,16 @@ export default function App() {
             <div className="field-row">
               <div className="field">
                 <label>Frame Name</label>
-                <input type="text" placeholder="mis. Maple Frame" value={fFrame} onChange={(e) => setFFrame(e.target.value)} />
+                <input type="text" placeholder="e.g., Maple Frame" value={fFrame} onChange={(e) => setFFrame(e.target.value)} />
               </div>
               <div className="field">
                 <label>Dye Name / Color</label>
-                <input type="text" placeholder="mis. Purple Haze" value={fDye} onChange={(e) => setFDye(e.target.value)} />
+                <input type="text" placeholder="e.g., Purple Haze" value={fDye} onChange={(e) => setFDye(e.target.value)} />
               </div>
             </div>
 
             <div className="field">
-              <label>Tag Koleksi (Klik untuk memilih)</label>
+              <label>Collection Tags (Click to select)</label>
               <div className="tag-selector-grid">
                 {customTags.map(t => {
                   const isSel = cardSelectedTags.includes(t.name.toLowerCase());
@@ -3406,18 +3406,18 @@ export default function App() {
             </div>
 
             <div className="field">
-              <label>Catatan Tambahan</label>
-              <textarea placeholder="Tulis catatan, detail trade, dll..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
+              <label>Additional Notes</label>
+              <textarea placeholder="Write notes, trade details, etc..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
             </div>
 
             <div className="form-group" style={{ marginBottom: '16px' }}>
-              <label>Gambar Kartu (Album View)</label>
+              <label>Card Image (Album View)</label>
               {fImageUrl && (
                 <div style={{ marginBottom: '8px', position: 'relative', width: '120px', height: '180px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--paper-line)' }}>
                   <img src={fImageUrl} alt="Card" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
                   <button 
                     className="icon-btn delete" 
-                    title="Hapus Gambar"
+                    title="Delete Image"
                     style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.7)', padding: '2px 6px', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                     onClick={() => setFImageUrl('')}
                   >
@@ -3428,7 +3428,7 @@ export default function App() {
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
                 <input 
                   type="text" 
-                  placeholder="Paste URL gambar dari Discord (opsional)" 
+                  placeholder="Paste image URL from Discord (optional)" 
                   value={fImageUrl}
                   onChange={(e) => setFImageUrl(e.target.value)}
                   style={{ flex: 1 }}
@@ -3446,12 +3446,12 @@ export default function App() {
                     if (deleted) setIsCardModalOpen(false);
                   }}
                 >
-                  Hapus
+                  Delete
                 </button>
               ) : <div />}
               <div style={{ display: 'flex', gap: '8px' }}>
-                <button className="btn secondary" onClick={() => setIsCardModalOpen(false)}>Batal</button>
-                <button className="btn" onClick={handleSaveCard}>Simpan Kartu</button>
+                <button className="btn secondary" onClick={() => setIsCardModalOpen(false)}>Cancel</button>
+                <button className="btn" onClick={handleSaveCard}>Save Card</button>
               </div>
             </div>
           </div>
@@ -3854,12 +3854,12 @@ export default function App() {
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
-                Buka Discord, jalankan perintah <code style={{ background: '#1c1912', padding: '2px 4px', borderRadius: '4px' }}>k!c</code>, lalu <b>copy semua teks balasan</b> (hingga puluhan baris) dan paste di bawah ini:
+                Open Discord, run the command <code style={{ background: '#1c1912', padding: '2px 4px', borderRadius: '4px' }}>k!c</code>, then copy the entire response text and paste it below:
               </p>
               <textarea 
                 className="input-field" 
                 style={{ width: '100%', height: '250px', fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', background: '#1c1912', color: '#e8dbce', border: '1px solid #3a3327', borderRadius: '8px', padding: '12px' }}
-                placeholder={`Contoh:\nkd · mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano\nkd · asdfg · ◈2 · #100 · Good · 330 effort · Rem · Re:Zero`}
+                placeholder={`Example:\nkd · mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano\nkd · asdfg · ◈2 · #100 · Good · 330 effort · Rem · Re:Zero`}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
               />
@@ -3875,7 +3875,7 @@ export default function App() {
               )}
 
               <button className="btn" onClick={handleBulkImportExecute} style={{ padding: '12px' }} disabled={!!bulkImportFeedback.text && !bulkImportFeedback.isError}>
-                🚀 Proses & Simpan Semua Kartu
+                🚀 Process & Save All Cards
               </button>
             </div>
           </div>
@@ -3888,24 +3888,24 @@ export default function App() {
           <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
             <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#d8923e' }}>⚡</span> Batch Stats Pekerja (k!wi)
+                <span style={{ color: '#d8923e' }}>⚡</span> Batch Worker Stats (k!wi)
               </h3>
               <button onClick={() => setIsBatchKiwiModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                Paste banyak balasan bot <b>k!wi</b> sekaligus di bawah ini (bisa sekaligus 10, 20 kartu dst). Sistem akan mendeteksi kode kartu dalam kurung, misalnya <code>(a1b2c)</code> dan mencocokkannya dengan koleksi Anda secara otomatis.
+                Paste multiple k!wi bot replies below at once. The system will automatically detect the card code in parentheses, e.g., <code>(a1b2c)</code>, and match it to your collection.
               </p>
               
               <textarea 
                 className="input-dark"
                 rows={10} 
-                placeholder="Worker Details&#10;Character · ... (a1b2c)&#10;Effort · 200&#10;&#10;... paste balasan lainnya ..."
+                placeholder="Worker Details\nCharacter · ... (a1b2c)\nEffort · 200\n\n... paste more replies ..."
                 value={batchKiwiText}
                 onChange={(e) => setBatchKiwiText(e.target.value)}
               />
-
+ 
               {batchKiwiFeedback.text && (
                 <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
                   background: batchKiwiFeedback.isError ? '#b85c5c20' : batchKiwiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
@@ -3917,7 +3917,7 @@ export default function App() {
               )}
 
               <button className="btn" onClick={handleBatchKiwiParse} style={{ padding: '12px' }} disabled={!!batchKiwiFeedback.text && !batchKiwiFeedback.isError}>
-                🚀 Update Stats Massal
+                🚀 Batch Update Stats
               </button>
             </div>
           </div>
@@ -3930,27 +3930,27 @@ export default function App() {
           <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
             <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#d8923e' }}>🖼️</span> Batch Gambar Kartu
+                <span style={{ color: '#d8923e' }}>🖼️</span> Batch Card Images
               </h3>
               <button onClick={() => { setIsBatchImageModalOpen(false); setQuickImageMode(false); }} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '12px' }}>
-                <button className={`tab-btn ${!quickImageMode ? 'active-text' : ''}`} onClick={() => setQuickImageMode(false)} style={{ flex: 1 }}>📜 Format Teks Massal</button>
+                <button className={`tab-btn ${!quickImageMode ? 'active-text' : ''}`} onClick={() => setQuickImageMode(false)} style={{ flex: 1 }}>📜 Batch Text Format</button>
                 <button className={`tab-btn ${quickImageMode ? 'active-text' : ''}`} onClick={() => { setQuickImageMode(true); setQuickImageIndex(0); }} style={{ flex: 1 }}>⚡ Quick Fill Mode</button>
               </div>
 
               {!quickImageMode ? (
                 <>
                   <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                    Paste dengan format: <code>kode|url_gambar</code> (satu per baris). Cocok untuk mass update jika Anda punya data di spreadsheet/notepad.
+                    Paste in the format: <code>code|image_url</code> (one per line). Ideal for mass updates if you have data in a spreadsheet or notepad.
                   </p>
                   
                   <textarea 
                     className="input-dark"
                     rows={10} 
-                    placeholder="a1b2c|https://...&#10;x9y8z|https://..."
+                    placeholder="a1b2c|https://...\nx9y8z|https://..."
                     value={batchImageText}
                     onChange={(e) => setBatchImageText(e.target.value)}
                   />
@@ -3966,26 +3966,26 @@ export default function App() {
                   )}
 
                   <button className="btn" onClick={handleBatchImageUpdate} style={{ padding: '12px' }} disabled={!!batchImageFeedback.text && !batchImageFeedback.isError}>
-                    🖼️ Update Gambar Massal
+                    🖼️ Batch Update Images
                   </button>
                 </>
               ) : (
                 <>
                   <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
-                    Sistem akan memunculkan kartu Anda yang <b>belum memiliki gambar</b> satu per satu. Paste URL dan tekan Enter untuk menyimpan & lanjut.
+                    The system will show your cards without images one by one. Paste the image URL and press Enter to save and continue.
                   </p>
                   {(() => {
                     const cardsWithoutImage = cards.filter(c => !c.imageUrl);
                     if (cardsWithoutImage.length === 0) {
-                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ Semua kartu di koleksi Anda sudah memiliki gambar!</div>;
+                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ All cards in your collection already have images!</div>;
                     }
                     if (quickImageIndex >= cardsWithoutImage.length) {
-                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ Anda telah menyelesaikan semua antrean pengisian gambar!</div>;
+                      return <div style={{ textAlign: 'center', padding: '40px 0', color: '#5ea396' }}>✅ You have completed all image upload queues!</div>;
                     }
                     const c = cardsWithoutImage[quickImageIndex];
                     return (
                       <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>Kartu {quickImageIndex + 1} dari {cardsWithoutImage.length}</div>
+                        <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>Card {quickImageIndex + 1} of {cardsWithoutImage.length}</div>
                         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#e8dbce', marginBottom: '4px' }}>{c.name}</div>
                         <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '16px' }}>{c.series} • {c.code}</div>
                         
@@ -3993,7 +3993,7 @@ export default function App() {
                           <input 
                             type="text" 
                             className="input-dark" 
-                            placeholder="Paste URL gambar (https://...)"
+                            placeholder="Paste image URL (https://...)"
                             value={batchImageText}
                             onChange={(e) => setBatchImageText(e.target.value)}
                             onKeyDown={(e) => {
@@ -4046,12 +4046,12 @@ export default function App() {
                     if (user?.uid) {
                       const shareUrl = `${window.location.origin}/?p=${user.uid}`;
                       navigator.clipboard.writeText(shareUrl)
-                        .then(() => alert('Link profil publik Anda (read-only) berhasil disalin ke clipboard!'))
-                        .catch(() => alert('Gagal menyalin link.'));
+                        .then(() => alert('Your public read-only profile link has been copied to clipboard!'))
+                        .catch(() => alert('Failed to copy link.'));
                     }
                   }}
                 >
-                  🔗 Salin Link Profil Publik
+                  🔗 Copy Public Profile Link
                 </button>
               </div>
 
@@ -4059,7 +4059,7 @@ export default function App() {
               <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
                 <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px' }}>Karuta User Info (k!ui)</h4>
                 <p style={{ fontSize: '12px', color: 'var(--ink-soft)', lineHeight: '1.5', margin: 0 }}>
-                  Paste balasan perintah <code>k!ui</code> dari Discord ke bawah ini untuk menampilkan statistik akun di halaman profil publik Anda.
+                  Paste the k!ui command reply from Discord below to display player stats on your public profile page.
                 </p>
                 <textarea 
                   className="input-dark"
@@ -4078,7 +4078,7 @@ export default function App() {
                   </div>
                 )}
                 <button className="btn secondary" onClick={handleKUIParse} disabled={!!kuiFeedback.text && !kuiFeedback.isError}>
-                  📥 Update Statistik
+                  📥 Update Stats
                 </button>
               </div>
 
