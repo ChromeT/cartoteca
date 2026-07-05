@@ -2109,12 +2109,12 @@ export default function App() {
             <>
               <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => handleTabChange('collection')}>🎴 Binder</button>
               <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => handleTabChange('wishlist')}>✨ Wishlist</button>
-              <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('stats')}>📈 Statistik</button>
-              {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => handleTabChange('tags-manager')}>🏷️ Kelola Tag</button>}
+              <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('stats')}>📈 Stats</button>
+              {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => handleTabChange('tags-manager')}>🏷️ Manage Tags</button>}
             </>
           ) : (
             <>
-              <button ref={el => tabRefs.current['kui-stats'] = el} className={`tab-btn ${activeTab === 'kui-stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('kui-stats')}>📊 KUI Dashboard</button>
+              <button ref={el => tabRefs.current['kui-stats'] = el} className={`tab-btn ${activeTab === 'kui-stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('kui-stats')}>📊 Player Stats</button>
               <button ref={el => tabRefs.current['workers'] = el} className={`tab-btn ${activeTab === 'workers' ? 'active-text' : ''}`} onClick={() => handleTabChange('workers')}>💼 Job Board</button>
               {!isReadOnly && <button ref={el => tabRefs.current['inventory'] = el} className={`tab-btn ${activeTab === 'inventory' ? 'active-text' : ''}`} onClick={() => handleTabChange('inventory')}>🎒 Inventory</button>}
             </>
@@ -2285,7 +2285,7 @@ export default function App() {
                   <input 
                     className="search-box" 
                     type="text" 
-                    placeholder="Cari nama karakter, series, kode, atau tag..." 
+                    placeholder="Search character, series, code, or tag..." 
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
@@ -2312,14 +2312,45 @@ export default function App() {
 
                 {!isReadOnly && (
                   <>
-                    <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu</button>
+                    <button className="btn" onClick={() => openCardModal(null)}>+ Add Card</button>
                     <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (k!c)</button>
                     <button className="btn secondary" onClick={() => setIsBatchKiwiModalOpen(true)}>⚡ Batch k!wi</button>
-                    <button className="btn secondary" onClick={() => setIsBatchImageModalOpen(true)}>🖼️ Batch Gambar</button>
+                    <button className="btn secondary" onClick={() => setIsBatchImageModalOpen(true)}>🖼️ Batch Images</button>
                   </>
                 )}
+              </div>
+
+              <div className={`filter-panel ${showFilters ? 'show' : ''}`}>
+                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="recent">Recently Added</option>
+                  <option value="effort-desc">Highest Effort</option>
+                  <option value="effort-asc">Lowest Effort</option>
+                  <option value="print-asc">Lowest Print</option>
+                  <option value="edition-desc">Latest Edition (◈)</option>
+                  <option value="wish-desc">Most Wishlisted</option>
+                  <option value="name">Name A-Z</option>
+                </select>
                 
-                <div style={{ marginLeft: 'auto', display: 'flex', gap: '4px', background: '#1c1912', borderRadius: '6px', padding: '4px' }}>
+                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="">All Conditions</option>
+                  <option value="Damaged">Damaged</option>
+                  <option value="Poor">Poor</option>
+                  <option value="Average">Average</option>
+                  <option value="Good">Good</option>
+                  <option value="Great">Great</option>
+                  <option value="Mint">Mint</option>
+                </select>
+
+                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
+                  <option value="">All Tags</option>
+                  {getUsedTags().map(t => (
+                    <option key={t} value={t}>{t}</option>
+                  ))}
+                </select>
+              </div>
+
+              <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
+                <div style={{ display: 'flex', gap: '4px', background: '#1c1912', borderRadius: '6px', padding: '4px' }}>
                   <button 
                     title="List View"
                     onClick={() => setViewMode('list')}
@@ -2337,45 +2368,16 @@ export default function App() {
                 </div>
               </div>
 
-              <div className={`filter-panel ${showFilters ? 'show' : ''}`}>
-                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="recent">Terbaru ditambahkan</option>
-                  <option value="effort-desc">Effort tertinggi</option>
-                  <option value="effort-asc">Effort terendah</option>
-                  <option value="print-asc">Print number terendah</option>
-                  <option value="edition-desc">Edisi terbaru (◈)</option>
-                  <option value="wish-desc">Wish tertinggi (Value)</option>
-                  <option value="name">Nama A-Z</option>
-                </select>
-                
-                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="">Semua kondisi</option>
-                  <option value="Damaged">Damaged</option>
-                  <option value="Poor">Poor</option>
-                  <option value="Average">Average</option>
-                  <option value="Good">Good</option>
-                  <option value="Great">Great</option>
-                  <option value="Mint">Mint</option>
-                </select>
-
-                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="">Semua Tag</option>
-                  {getUsedTags().map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
-              </div>
-
               {/* Batch Actions Panel */}
               {selectedCards.size > 0 && !isReadOnly && (
                 <div className="batch-panel">
-                  <span className="batch-info"><b>{selectedCards.size}</b> kartu terpilih</span>
+                  <span className="batch-info"><b>{selectedCards.size}</b> cards selected</span>
                   <div className="batch-actions">
-                    <button className="btn btn-sm" onClick={() => setIsCommandModalOpen(true)}>Buat Command</button>
-                    <button className="btn btn-sm" style={{ background: '#c14e4e', color: 'white', borderColor: '#a34141' }} onClick={() => setIsBurnResolveModalOpen(true)}>Proses Burn</button>
-                    <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Tambah Tag</button>
-                    <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Hapus Terpilih</button>
-                    <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Batal</button>
+                    <button className="btn btn-sm" onClick={() => setIsCommandModalOpen(true)}>Generate Command</button>
+                    <button className="btn btn-sm" style={{ background: '#c14e4e', color: 'white', borderColor: '#a34141' }} onClick={() => setIsBurnResolveModalOpen(true)}>Process Burn</button>
+                    <button className="btn secondary btn-sm" onClick={() => { setBatchSelectedTags([]); setIsBatchTagModalOpen(true); }}>Add Tag</button>
+                    <button className="btn secondary btn-sm" onClick={handleBatchDelete}>Delete Selected</button>
+                    <button className="btn secondary btn-sm" onClick={() => setSelectedCards(new Set())}>Cancel</button>
                   </div>
                 </div>
               )}
@@ -2384,9 +2386,9 @@ export default function App() {
               {cards.length === 0 ? (
                 <div className="empty">
                   <div className="stamp-big">🎴</div>
-                  <h3>Binder masih kosong</h3>
-                  <p>Masukkan kartu Karuta Anda secara manual atau gunakan Bulk Import di atas.</p>
-                  {!isReadOnly && <button className="btn" onClick={() => openCardModal(null)}>+ Tambah Kartu Pertama</button>}
+                  <h3>Binder is empty</h3>
+                  <p>Add your Karuta cards manually or use Bulk Import above.</p>
+                  {!isReadOnly && <button className="btn" onClick={() => openCardModal(null)}>+ Add First Card</button>}
                 </div>
               ) : (
                 <div className={viewMode === 'album' ? 'album-grid' : 'binder'}>
