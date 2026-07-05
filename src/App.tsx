@@ -1979,7 +1979,7 @@ export default function App() {
         <header className="hdr">
           <div className="brand">
             <div className="hanko">🎴</div>
-            <div>
+            <div className="brand-text">
               <h1>Cartoteca</h1>
               <p>Karuta Companion App</p>
             </div>
@@ -2542,7 +2542,7 @@ export default function App() {
                         })}
                         {totalPages > 1 && (
                           <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)', flexWrap: 'wrap' }}>
-                            <button className="btn" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>&larr;</button>
+                            <button className="pag-btn" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>←</button>
                             
                             {(() => {
                               const pages = [];
@@ -2563,14 +2563,7 @@ export default function App() {
                                 ) : (
                                   <button 
                                     key={`page-${p}`} 
-                                    className="btn"
-                                    style={{ 
-                                      padding: '8px 12px', 
-                                      minWidth: '36px',
-                                      background: safeCurrentPage === p ? '#5ea396' : 'transparent',
-                                      color: safeCurrentPage === p ? '#fff' : 'var(--ink)',
-                                      borderColor: safeCurrentPage === p ? '#5ea396' : 'var(--paper-line)'
-                                    }}
+                                    className={`pag-btn ${safeCurrentPage === p ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(p as number)}
                                   >
                                     {p}
@@ -2579,7 +2572,7 @@ export default function App() {
                               ));
                             })()}
 
-                            <button className="btn" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>&rarr;</button>
+                            <button className="pag-btn" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>→</button>
                           </div>
                         )}
                       </>
