@@ -4067,20 +4067,6 @@ export default function App() {
                 </button>
               </div>
 
-              {/* KUI Raw Data Display */}
-              {Object.keys(userKUI).length > 0 && (
-                <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                  <h4 style={{ margin: '0 0 12px 0', color: '#e8dbce', fontSize: '13px' }}>Semua Data KUI Anda:</h4>
-                  <div style={{ maxHeight: '200px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '6px', fontSize: '12px' }}>
-                    {Object.entries(userKUI).map(([k, v]) => (
-                      <div key={k} style={{ display: 'flex', justifyContent: 'space-between', borderBottom: '1px dashed #3a3327', paddingBottom: '4px' }}>
-                        <span style={{ color: '#9c8f76' }}>{k}</span>
-                        <span style={{ color: '#e8dbce', fontWeight: 600, fontFamily: 'monospace' }}>{v}</span>
-                      </div>
-                    ))}
-                  </div>
-                </div>
-              )}
 
               {/* Stats Grid */}
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
