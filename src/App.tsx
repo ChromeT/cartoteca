@@ -2374,8 +2374,8 @@ export default function App() {
                 {!isReadOnly && (
                   <>
                     <button className="btn" onClick={() => openCardModal(null)}>+ Add Card</button>
-                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Import (k!c)</button>
-                    <button className="btn secondary" onClick={() => setIsBatchKiwiModalOpen(true)}>⚡ Batch k!wi</button>
+                    <button className="btn secondary" onClick={() => setIsBulkImportModalOpen(true)}>📥 Bulk Card Import</button>
+                    <button className="btn secondary" onClick={() => setIsBatchKiwiModalOpen(true)}>⚡ Bulk Worker Info</button>
                     <button className="btn secondary" onClick={() => setIsBatchImageModalOpen(true)}>🖼️ Batch Images</button>
                   </>
                 )}
@@ -3978,7 +3978,7 @@ export default function App() {
           <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
             <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: '0', color: '#5ea396', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                📥 Bulk Import via Text
+                📥 Bulk Card Import
               </h3>
               <button onClick={() => setIsBulkImportModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
@@ -4019,7 +4019,7 @@ export default function App() {
           <div className="modal" style={{ maxWidth: '600px', padding: '0', overflow: 'hidden' }}>
             <div style={{ background: '#1c1912', padding: '16px 20px', borderBottom: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
               <h3 style={{ margin: 0, color: '#e8dbce', fontSize: '16px', display: 'flex', alignItems: 'center', gap: '8px' }}>
-                <span style={{ color: '#d8923e' }}>⚡</span> Batch Worker Stats (k!wi)
+                <span style={{ color: '#d8923e' }}>⚡</span> Bulk Worker Info
               </h3>
               <button onClick={() => setIsBatchKiwiModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
