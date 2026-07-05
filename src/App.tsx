@@ -4062,46 +4062,65 @@ export default function App() {
                                    <div className="card-info-owner">Owned by <span>{publicDisplayName || user?.displayName || 'Unknown'}</span></div>
                                    <div className="card-info-grid">
                                      <div className="card-info-box">
-                                        <span className="label">Print</span>
-                                        <span className="value highlight">🖨️ #{lightboxCard.print || '?'}</span>
+                                        <span className="label">🖨️ Print</span>
+                                        <span className="value highlight">#{lightboxCard.print || '?'}</span>
                                      </div>
                                      <div className="card-info-box">
-                                        <span className="label">Edition</span>
-                                        <span className="value">🌟 ◈{lightboxCard.edition || '?'}</span>
+                                        <span className="label">🌟 Edition</span>
+                                        <span className="value">◈{lightboxCard.edition || '?'}</span>
                                      </div>
                                      <div className="card-info-box">
-                                        <span className="label">Condition</span>
-                                        <span className="value">✨ {lightboxCard.condition || 'Unknown'}</span>
+                                        <span className="label">✨ Condition</span>
+                                        <span className="value">{lightboxCard.condition || 'Unknown'}</span>
                                      </div>
                                      <div className="card-info-box">
-                                        <span className="label">Series</span>
+                                        <span className="label">📚 Series</span>
                                         <span className="value" style={{fontSize: '11px', textAlign: 'center'}}>{lightboxCard.series}</span>
                                      </div>
                                    </div>
-                                   
-                                   <details className="tcg-raw-footer">
-                                      <summary>Show Raw Discord Data</summary>
-                                      <pre>{item.content}</pre>
-                                   </details>
                                  </>
                                )}
 
                                {item.id === 'kci' && (
                                  <>
                                    <div className="card-info-grid">
-                                     <div className="card-info-box">
-                                        <span className="label">Dye</span>
-                                        <span className="value highlight">🎨 {lightboxCard.dye || 'None'}</span>
-                                     </div>
-                                     <div className="card-info-box">
-                                        <span className="label">Frame</span>
-                                        <span className="value">🖼️ {lightboxCard.frame || 'Default'}</span>
-                                     </div>
+                                     {item.content.split('\n')
+                                       .map(line => line.trim())
+                                       .filter(line => line.length > 0 && !line.includes('★') && !line.toLowerCase().includes('card details'))
+                                       .map((line, i) => {
+                                        let label = "";
+                                        let val = line;
+                                        let icon = '📌';
+                                        
+                                        const prefixes = ['Dropped on', 'Dropped in server ID', 'Dropped in', 'Dropped by', 'Owned by', 'Grabbed by', 'Grabbed after', 'Dye', 'Frame', 'Morph'];
+                                        for (const pref of prefixes) {
+                                           if (line.toLowerCase().startsWith(pref.toLowerCase())) {
+                                              label = pref;
+                                              val = line.substring(pref.length).replace(/^[:\s]+/, '');
+                                              break;
+                                           }
+                                        }
+
+                                        if(label) {
+                                           const l = label.toLowerCase();
+                                           if(l.includes('owned')) icon = '👑';
+                                           else if(l.includes('grabbed')) icon = '🖐️';
+                                           else if(l.includes('server')) icon = '🖥️';
+                                           else if(l.includes('dropped')) icon = '🎴';
+                                           else if(l.includes('after')) icon = '⏱️';
+                                           else if(l.includes('dye')) icon = '🎨';
+                                           else if(l.includes('frame')) icon = '🖼️';
+                                           else if(l.includes('morph')) icon = '🧬';
+                                        }
+
+                                        return (
+                                           <div key={i} className="card-info-box" style={{ gridColumn: 'span 2', padding: '8px 12px' }}>
+                                              {label && <span className="label" style={{ marginBottom: '4px' }}>{icon} {label}</span>}
+                                              <span className="value highlight" style={{ fontSize: '13px' }}>{val}</span>
+                                           </div>
+                                        );
+                                     })}
                                    </div>
-                                   <details className="tcg-raw-footer">
-                                      <summary>Show Raw Discord Data</summary>
-                                      <pre>{item.content}</pre>
-                                   </details>
                                  </>
                                )}
 
@@ -4109,8 +4128,8 @@ export default function App() {
                                  <>
                                    <div className="card-info-grid" style={{ marginBottom: '16px' }}>
                                      <div className="card-info-box" style={{ gridColumn: 'span 2', padding: '16px' }}>
-                                        <span className="label">Total Effort</span>
-                                        <span className="value highlight" style={{ fontSize: '24px' }}>💪 {lightboxCard.effort || '?'}</span>
+                                        <span className="label">💪 Total Effort</span>
+                                        <span className="value highlight" style={{ fontSize: '24px' }}>{lightboxCard.effort || '?'}</span>
                                      </div>
                                    </div>
                                    {lightboxCard.stats && (
@@ -4123,10 +4142,6 @@ export default function App() {
                                        ))}
                                      </div>
                                    )}
-                                   <details className="tcg-raw-footer">
-                                      <summary>Show Raw Discord Data</summary>
-                                      <pre>{item.content}</pre>
-                                   </details>
                                  </>
                                )}
 
@@ -4134,18 +4149,14 @@ export default function App() {
                                  <>
                                    <div className="card-info-grid">
                                      <div className="card-info-box">
-                                        <span className="label">Wishlisted</span>
-                                        <span className="value highlight">💖 {lightboxCard.wish || 0}</span>
+                                        <span className="label">💖 Wishlisted</span>
+                                        <span className="value highlight">{lightboxCard.wish || 0}</span>
                                      </div>
                                      <div className="card-info-box">
-                                        <span className="label">Character</span>
+                                        <span className="label">👤 Character</span>
                                         <span className="value" style={{fontSize: '11px', textAlign: 'center'}}>{lightboxCard.name}</span>
                                      </div>
                                    </div>
-                                   <details className="tcg-raw-footer">
-                                      <summary>Show Raw Discord Data</summary>
-                                      <pre>{item.content}</pre>
-                                   </details>
                                  </>
                                )}
 
@@ -4153,18 +4164,10 @@ export default function App() {
                                  <>
                                    <div className="card-info-grid">
                                      <div className="card-info-box" style={{ gridColumn: 'span 2' }}>
-                                        <span className="label">Estimated Price</span>
-                                        <span className="value highlight">🎟️ {lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
+                                        <span className="label">🎟️ Estimated Price</span>
+                                        <span className="value highlight">{lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
                                      </div>
                                    </div>
-                                   <details className="tcg-raw-footer">
-                                      <summary>Show Raw Discord Data</summary>
-                                      <pre>{item.content}</pre>
-                                   </details>
-                                 </>
-                               )}
-                                      <pre>{item.content}</pre>
-                                   </details>
                                  </>
                                )}
                              </div>
