@@ -82,7 +82,7 @@ interface Inventory {
 }
 
 const ConditionWatermark = ({ condition }: { condition: string }) => {
-  const c = condition.toLowerCase();
+  const c = (condition || '').toLowerCase();
 
   let icon = null;
   let color = 'rgba(255,255,255,0.05)';
@@ -2654,7 +2654,7 @@ export default function App() {
                             return (
                               <div
                                 key={c.id}
-                                className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
+                                className={`native-card condition-${(c.condition || '').toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
@@ -2704,7 +2704,7 @@ export default function App() {
                                   <div className="nc-meta">
                                     <div className="nc-meta-stats">
                                       {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
-                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${c.condition.toLowerCase()}`}>{c.condition}</span>}
+                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase()}`}>{c.condition}</span>}
                                       {c.effort !== null && <span className="nc-badge-chip">{c.effort} eff</span>}
                                       {c.wish !== null && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
                                     </div>
@@ -2734,7 +2734,7 @@ export default function App() {
                           return (
                             <div
                               key={c.id}
-                              className={`sleeve ${c.condition.toLowerCase() === 'mint' ? 'mint' : ''} ${c.condition.toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
+                              className={`sleeve ${(c.condition || '').toLowerCase() === 'mint' ? 'mint' : ''} ${(c.condition || '').toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
                               onClick={(e) => handleSleeveContainerClick(c.id, e)}
                             >
 
