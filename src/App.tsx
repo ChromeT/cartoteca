@@ -682,7 +682,7 @@ export default function App() {
 
         if (!isDuplicateInBinder && !isDuplicateInBatch) {
           newCards.push({
-            id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 9),
+            id: pCode || ('card-' + Date.now() + Math.random().toString(36).substr(2, 9)),
             code: pCode,
             print: pPrint,
             edition: pEdition,
@@ -1463,7 +1463,7 @@ export default function App() {
         updatedCards.push({ ...data, id: finalId });
       }
     } else {
-      const newCard = { ...data, id: 'card-' + Date.now() };
+      const newCard = { ...data, id: data.code || ('card-' + Date.now()) };
       updatedCards = [...cards, newCard];
     }
     setCards(updatedCards);
