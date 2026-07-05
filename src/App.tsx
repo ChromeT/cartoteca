@@ -2059,9 +2059,7 @@ export default function App() {
         {/* HEADER */}
         <header className="hdr">
           <div className="brand">
-            <div className="hanko">
-              <img src="/logo.png" alt="Cartoteca Logo" style={{ width: '100%', height: '100%', borderRadius: '10px', objectFit: 'cover' }} />
-            </div>
+            <div className="hanko">🎴</div>
             <div className="brand-text">
               <h1>Cartoteca</h1>
               <p>Karuta Companion App</p>

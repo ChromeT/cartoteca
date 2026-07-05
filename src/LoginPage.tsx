@@ -83,12 +83,10 @@ export default function LoginPage() {
             width: '72px', height: '72px', borderRadius: '14px',
             background: '#d8923e',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            margin: '0 auto 16px',
+            fontSize: '44px', margin: '0 auto 16px',
             boxShadow: '0 4px 0 #b87a2e, 0 10px 24px rgba(0,0,0,0.4)',
             transform: 'rotate(-3deg)'
-          }}>
-            <img src="/logo.png" alt="Cartoteca Logo" style={{ width: '100%', height: '100%', borderRadius: '14px', objectFit: 'cover' }} />
-          </div>
+          }}>🎴</div>
           <h1 style={{
             fontFamily: "'Spectral', serif", fontSize: '36px',
             fontWeight: 800, color: '#ede3ce', margin: '0 0 4px',
