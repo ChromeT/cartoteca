@@ -214,7 +214,7 @@ export default function App() {
   const isReadOnly = publicProfileId !== null && (user ? publicProfileId !== user!.uid : true);
   const targetUid = publicProfileId || user?.uid;
   const [lightboxCard, setLightboxCard] = useState<Card | null>(null);
-  const [lightboxTab, setLightboxTab] = useState<'image' | 'kv' | 'kwi' | 'klu' | 'price'>('image');
+  const [topCardIndex, setTopCardIndex] = useState<number>(0);
   const [publicDisplayName, setPublicDisplayName] = useState<string | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -1764,7 +1764,7 @@ export default function App() {
       const card = cards.find(c => c.id === id);
       if (card) {
         setLightboxCard(card);
-        setLightboxTab('image');
+        setTopCardIndex(0);
       }
       return;
     }
@@ -2659,7 +2659,7 @@ export default function App() {
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
-                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxCard(c); setLightboxTab('image'); }} />
+                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxCard(c); setTopCardIndex(0); }} />
                                 )}
                                 {!isReadOnly && (
                                   <>
@@ -3950,55 +3950,73 @@ export default function App() {
         <div className="lightbox-overlay" onClick={() => setLightboxCard(null)}>
           <button className="lightbox-close" onClick={() => setLightboxCard(null)}>&times;</button>
           
-          <div className="lightbox-carousel-container" onClick={e => e.stopPropagation()} style={{
-            display: 'flex', flexDirection: 'column', width: '90%', maxWidth: '800px', height: '90%', maxHeight: '800px',
-            background: '#1c1912', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
-          }}>
-            {/* Tabs Header */}
-            <div className="lightbox-tabs-header" style={{ display: 'flex', background: '#120f0b', borderBottom: '1px solid #3a3327', overflowX: 'auto' }}>
-              <button className={`lightbox-tab ${lightboxTab === 'image' ? 'active' : ''}`} onClick={() => setLightboxTab('image')}>Card Image</button>
-              {(lightboxCard.rawDetails?.kv || lightboxCard.rawDetails?.kci) && <button className={`lightbox-tab ${lightboxTab === 'kv' ? 'active' : ''}`} onClick={() => setLightboxTab('kv')}>Card Details</button>}
-              {lightboxCard.rawDetails?.kwi && <button className={`lightbox-tab ${lightboxTab === 'kwi' ? 'active' : ''}`} onClick={() => setLightboxTab('kwi')}>Worker Details</button>}
-              {lightboxCard.rawDetails?.klu && <button className={`lightbox-tab ${lightboxTab === 'klu' ? 'active' : ''}`} onClick={() => setLightboxTab('klu')}>Character Lookup</button>}
-              {lightboxCard.rawDetails?.priceCalc && <button className={`lightbox-tab ${lightboxTab === 'price' ? 'active' : ''}`} onClick={() => setLightboxTab('price')}>Price Calculator</button>}
-            </div>
+          <div className="poker-stack-container" onClick={(e) => e.stopPropagation()}>
+            {(() => {
+              const stackItems = [];
+              if (lightboxCard.imageUrl) {
+                 stackItems.push({ id: 'image', type: 'image', content: lightboxCard.imageUrl });
+              }
+              const rd = lightboxCard.rawDetails;
+              if (rd) {
+                 if (rd.kci || rd.kv) stackItems.push({ id: 'kv', type: 'text', content: rd.kci || rd.kv });
+                 if (rd.kwi) stackItems.push({ id: 'kwi', type: 'text', content: rd.kwi });
+                 if (rd.klu) stackItems.push({ id: 'klu', type: 'text', content: rd.klu });
+                 if (rd.priceCalc) stackItems.push({ id: 'price', type: 'text', content: rd.priceCalc });
+              }
+              
+              if (stackItems.length === 0) {
+                 return <div style={{ color: '#9c8f76' }}>No details available</div>;
+              }
 
-            {/* Tab Content */}
-            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#1c1912' }}>
-              {lightboxTab === 'image' && (
-                lightboxCard.imageUrl 
-                  ? <img src={lightboxCard.imageUrl} alt="Card" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
-                  : <div style={{ color: '#9c8f76' }}>No image available</div>
-              )}
-              {lightboxTab === 'kv' && (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
-                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
-                    {lightboxCard.rawDetails?.kci || lightboxCard.rawDetails?.kv}
-                  </pre>
-                </div>
-              )}
-              {lightboxTab === 'kwi' && (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
-                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
-                    {lightboxCard.rawDetails?.kwi}
-                  </pre>
-                </div>
-              )}
-              {lightboxTab === 'klu' && (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
-                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
-                    {lightboxCard.rawDetails?.klu}
-                  </pre>
-                </div>
-              )}
-              {lightboxTab === 'price' && (
-                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
-                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
-                    {lightboxCard.rawDetails?.priceCalc}
-                  </pre>
-                </div>
-              )}
-            </div>
+              return stackItems.map((item, index) => {
+                 const len = stackItems.length;
+                 const distance = (index - topCardIndex + len) % len;
+                 
+                 let className = "poker-card";
+                 let style: React.CSSProperties = {};
+                 
+                 if (distance === 0) {
+                    className += " active";
+                    style = { zIndex: 10, transform: 'translateY(0) scale(1) rotate(0deg)' };
+                 } else if (distance === len - 1 && len > 1) {
+                    className += " animating-out";
+                    style = { zIndex: 10 }; 
+                 } else {
+                    className += " stacked";
+                    const z = 10 - distance;
+                    const scale = 1 - (distance * 0.04);
+                    const y = distance * -12;
+                    const rot = (index % 2 === 0 ? 1 : -1) * (2 + index % 3);
+                    style = { zIndex: z, transform: `translateY(${y}px) scale(${scale}) rotate(${rot}deg)` };
+                 }
+                 
+                 if (item.type === 'image') className += " image-card";
+
+                 return (
+                    <div 
+                      key={item.id} 
+                      className={className} 
+                      style={style}
+                      onClick={(e) => {
+                         if (distance === 0) {
+                            e.stopPropagation();
+                            setTopCardIndex((prev) => (prev + 1) % len);
+                         }
+                      }}
+                    >
+                       {item.type === 'image' ? (
+                          <img src={item.content} alt="Card" />
+                       ) : (
+                          <div className="poker-card-content">
+                             <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
+                               {item.content}
+                             </pre>
+                          </div>
+                       )}
+                    </div>
+                 );
+              });
+            })()}
           </div>
         </div>
       )}
