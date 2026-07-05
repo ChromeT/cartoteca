@@ -1861,6 +1861,62 @@ export default function App() {
     }
   }
 
+  // --- KUI DASHBOARD UTILITY ---
+  const renderStatItem = (label: string, value: any, emoji: string, accentColor: string = '#d8923e') => {
+    if (value === undefined || value === null) return null;
+    return (
+      <div 
+        key={label}
+        className="kui-stat-item"
+        style={{
+          display: 'flex',
+          alignItems: 'center',
+          gap: '14px',
+          background: '#13110d',
+          border: '1px solid #2a251b',
+          borderRadius: '10px',
+          padding: '14px 16px',
+          boxShadow: '0 4px 12px rgba(0,0,0,0.15)',
+          transition: 'all 0.2s ease',
+          position: 'relative',
+          overflow: 'hidden'
+        }}
+      >
+        <div style={{
+          position: 'absolute',
+          top: 0,
+          left: 0,
+          width: '3px',
+          bottom: 0,
+          background: accentColor
+        }}></div>
+        
+        <div style={{
+          width: '42px',
+          height: '42px',
+          borderRadius: '8px',
+          background: `${accentColor}10`,
+          border: `1px solid ${accentColor}30`,
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          fontSize: '20px',
+          flexShrink: 0
+        }}>
+          {emoji}
+        </div>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '2px', minWidth: 0 }}>
+          <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.8px', whiteSpace: 'nowrap', overflow: 'hidden', textOverflow: 'ellipsis' }}>
+            {label}
+          </div>
+          <div style={{ fontSize: '20px', color: '#ede3ce', fontWeight: 800, fontFamily: "'IBM Plex Mono', monospace" }}>
+            {Number(value).toLocaleString()}
+          </div>
+        </div>
+      </div>
+    );
+  };
+
   // --- FILTER & SORT ENGINE ---
   const getFilteredCards = () => {
     let list = [...cards];
@@ -2195,15 +2251,12 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#d8923e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎴 Cards</div>
                       <div className="kui-dashboard-grid">
-                        {[['Cards dropped', '📥 Dropped'], ['Cards grabbed', '🤲 Grabbed'], ['Cards burned', '🔥 Burned'],
-                          ['Cards given', '🎁 Given'], ['Successful card upgrades', '⬆️ Upgrades OK'], ['Failed card upgrades', '❌ Upgrades Fail']].map(([k, label]) =>
-                          userKUI[k] ? (
-                            <div key={k} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                              <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                              <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(userKUI[k]).toLocaleString()}</div>
-                            </div>
-                          ) : null
-                        )}
+                        {renderStatItem('Dropped', userKUI['Cards dropped'], '📥', '#d8923e')}
+                        {renderStatItem('Grabbed', userKUI['Cards grabbed'], '🤲', '#5ea396')}
+                        {renderStatItem('Burned', userKUI['Cards burned'], '🔥', '#c14e4e')}
+                        {renderStatItem('Given', userKUI['Cards given'], '🎁', '#ff8c8c')}
+                        {renderStatItem('Upgrades OK', userKUI['Successful card upgrades'], '⬆️', '#5ea396')}
+                        {renderStatItem('Upgrades Fail', userKUI['Failed card upgrades'], '❌', '#c14e4e')}
                       </div>
                     </div>
                   )}
@@ -2213,18 +2266,11 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#5ea396', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚔️ Fights & Trades</div>
                       <div className="kui-dashboard-grid">
-                        {[
-                          [userKUI['Fights won'] || userKUI['Total fights won'], '🏆 Fights Won'],
-                          [userKUI['Fights lost'] || userKUI['Total fights lost'], '💀 Fights Lost'],
-                          [userKUI['Trades completed'], '🔄 Trades'],
-                          [userKUI['Gold spent'], '🪙 Gold Spent'],
-                          [userKUI['Total power gained'], '⚡ Power Gained'],
-                        ].filter(([v]) => v).map(([v, label], i) => (
-                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
-                          </div>
-                        ))}
+                        {renderStatItem('Fights Won', userKUI['Fights won'] || userKUI['Total fights won'], '🏆', '#d8923e')}
+                        {renderStatItem('Fights Lost', userKUI['Fights lost'] || userKUI['Total fights lost'], '💀', '#c14e4e')}
+                        {renderStatItem('Trades', userKUI['Trades completed'], '🔄', '#5ea396')}
+                        {renderStatItem('Gold Spent', userKUI['Gold spent'], '🪙', '#d8923e')}
+                        {renderStatItem('Power Gained', userKUI['Total power gained'], '⚡', '#ffb03b')}
                       </div>
                     </div>
                   )}
@@ -2234,17 +2280,10 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#c4964a', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>⚒️ Jobs</div>
                       <div className="kui-dashboard-grid">
-                        {[
-                          [userKUI['Job works completed'] || userKUI['Total times worked'], '💼 Works Done'],
-                          [userKUI['Job worker injuries'] || userKUI['Total worker injuries'], '🩹 Injuries'],
-                          [userKUI['Total bandages applied'], '🩹 Bandages Used'],
-                          [userKUI['Total bits spent'], '🔵 Bits Spent'],
-                        ].filter(([v]) => v).map(([v, label], i) => (
-                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
-                          </div>
-                        ))}
+                        {renderStatItem('Works Done', userKUI['Job works completed'] || userKUI['Total times worked'], '💼', '#d8923e')}
+                        {renderStatItem('Injuries', userKUI['Job worker injuries'] || userKUI['Total worker injuries'], '🩹', '#c14e4e')}
+                        {renderStatItem('Bandages Used', userKUI['Total bandages applied'], '🩹', '#5ea396')}
+                        {renderStatItem('Bits Spent', userKUI['Total bits spent'], '🔵', '#5ea396')}
                       </div>
                     </div>
                   )}
@@ -2254,18 +2293,11 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#b07cc6', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>💎 Support & Affection</div>
                       <div className="kui-dashboard-grid">
-                        {[
-                          [userKUI['Votes'] || userKUI['Number of votes'], '🗳️ Votes'],
-                          [userKUI['Affection Points gained'], '❤️ AP Gained'],
-                          [userKUI['Affection questions answered'], '❓ AP Questions'],
-                          [userKUI['Tickets spent'], '🎟️ Tickets Spent'],
-                          [userKUI['Gems contributed to server chest'], '💎 Gems Contributed'],
-                        ].filter(([v]) => v).map(([v, label], i) => (
-                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
-                          </div>
-                        ))}
+                        {renderStatItem('Votes', userKUI['Votes'] || userKUI['Number of votes'], '🗳️', '#d8923e')}
+                        {renderStatItem('AP Gained', userKUI['Affection Points gained'], '❤️', '#ff6b6b')}
+                        {renderStatItem('AP Questions', userKUI['Affection questions answered'], '❓', '#ffb03b')}
+                        {renderStatItem('Tickets Spent', userKUI['Tickets spent'], '🎟️', '#ff6b6b')}
+                        {renderStatItem('Gems Contributed', userKUI['Gems contributed to server chest'], '💎', '#5ea396')}
                       </div>
                     </div>
                   )}
@@ -2275,19 +2307,12 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#c4a673', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>📚 Collection (KUI)</div>
                       <div className="kui-dashboard-grid">
-                        {[
-                          [userKUI['Wishlist items'], '✨ Wishlist Items'],
-                          [userKUI['Tags created'], '🏷️ Tags Created'],
-                          [userKUI['Albums created'], '📖 Albums Created'],
-                          [userKUI['Album pages added'], '📄 Album Pages'],
-                          [userKUI['Cards added to albums'], '🖼️ Album Cards'],
-                          [userKUI['Koibito affection'], '💖 Koibito Affection'],
-                        ].filter(([v]) => v).map(([v, label], i) => (
-                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
-                          </div>
-                        ))}
+                        {renderStatItem('Wishlist Items', userKUI['Wishlist items'], '✨', '#d8923e')}
+                        {renderStatItem('Tags Created', userKUI['Tags created'], '🏷️', '#ff8c8c')}
+                        {renderStatItem('Albums Created', userKUI['Albums created'], '📖', '#c4a673')}
+                        {renderStatItem('Album Pages', userKUI['Album pages added'], '📄', '#ede3ce')}
+                        {renderStatItem('Album Cards', userKUI['Cards added to albums'], '🖼️', '#5ea396')}
+                        {renderStatItem('Koibito Affection', userKUI['Koibito affection'], '💖', '#ff6b6b')}
                       </div>
                     </div>
                   )}
@@ -2297,19 +2322,12 @@ export default function App() {
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
                       <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>👤 Player Details (KUI)</div>
                       <div className="kui-dashboard-grid">
-                        {[
-                          [userKUI['Total morphs rolled'], '🌀 Morphs Rolled'],
-                          [userKUI['Total morphs applied'], '🎨 Morphs Applied'],
-                          [userKUI['Morph attempts'], '🎯 Morph Attempts'],
-                          [userKUI['Total dyes applied'], '🧪 Dyes Applied'],
-                          [userKUI['Dye refills'], '🔄 Dye Refills'],
-                          [userKUI['Total trims applied'], '✂️ Trims Applied'],
-                        ].filter(([v]) => v).map(([v, label], i) => (
-                          <div key={i} style={{ display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                            <div style={{ fontSize: '10px', color: '#9c8f76', fontWeight: 600, textTransform: 'uppercase', letterSpacing: '1px' }}>{label}</div>
-                            <div style={{ fontSize: '22px', color: '#e8dbce', fontWeight: 'bold', fontFamily: 'monospace' }}>{Number(v).toLocaleString()}</div>
-                          </div>
-                        ))}
+                        {renderStatItem('Morphs Rolled', userKUI['Total morphs rolled'], '🌀', '#ff6b6b')}
+                        {renderStatItem('Morphs Applied', userKUI['Total morphs applied'], '🎨', '#ff8c8c')}
+                        {renderStatItem('Morph attempts', userKUI['Morph attempts'], '🎯', '#ffb03b')}
+                        {renderStatItem('Dyes Applied', userKUI['Total dyes applied'], '🧪', '#5ea396')}
+                        {renderStatItem('Dye Refills', userKUI['Dye refills'], '🔄', '#5ea396')}
+                        {renderStatItem('Trims Applied', userKUI['Total trims applied'], '✂️', '#ede3ce')}
                       </div>
                     </div>
                   )}
