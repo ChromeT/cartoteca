@@ -2966,27 +2966,46 @@ export default function App() {
                     const updates: Partial<typeof inventory> = {};
 
                     lines.forEach(line => {
-                      const clean = line.replace(/^[\p{Emoji}\s]+/u, '').trim();
-                      const parts = clean.split('\u00b7').map(s => s.trim());
+                      // Clean bold, tildes, backticks, asterisks, underscores
+                      const cleanLine = line.replace(/[\*_`~]/g, '').trim();
+                      if (!cleanLine) return;
+
+                      // Split by dot (·), bar (|), or bullet (•)
+                      const parts = cleanLine.split(/\s*[\u00b7\|\u2022·•]\s*/);
                       if (parts.length < 2) return;
 
-                      const numStr = parts[0].replace(/,/g, '');
-                      if (!/^\d+$/.test(numStr)) return;
-                      const num = parseInt(numStr);
-                      const rest = parts.slice(1).join(' ').toLowerCase();
+                      let count: number | null = null;
+                      let rest = '';
 
-                      if (rest.includes('ticket')) updates.tickets = num;
-                      else if (rest.includes('gold')) updates.gold = num;
-                      else if (rest.includes('gem')) updates.gems = num;
-                      else if (rest.includes('work permit')) updates.workPermit = num;
-                      else if (rest.includes('trade license')) updates.tradeLicense = num;
-                      else if (rest.includes('bit') && !/(flower|wood|ice|stone|sugar|wool|uranium|bone|iron|copper|quartz|essence|magma|zinc)/.test(rest)) updates.bits = num;
-                      else if (rest.includes('dust')) {
-                        if (rest.includes('damaged') || rest.includes('\u2606\u2606\u2606\u2606')) updates.dust0 = num;
-                        else if (rest.includes('poor') || rest.includes('\u2605\u2606\u2606\u2606')) updates.dust1 = num;
-                        else if (rest.includes('good') || rest.includes('\u2605\u2605\u2606\u2606')) updates.dust2 = num;
-                        else if (rest.includes('excellent') || rest.includes('\u2605\u2605\u2605\u2606')) updates.dust3 = num;
-                        else if (rest.includes('mint') || rest.includes('\u2605\u2605\u2605\u2605')) updates.dust4 = num;
+                      parts.forEach(part => {
+                        const p = part.trim();
+                        // Remove emojis/clutter at start
+                        const cleanPart = p.replace(/^[^a-zA-Z0-9]+/, '').trim();
+                        
+                        // Parse count if it is a number
+                        const numStr = cleanPart.replace(/,/g, '');
+                        if (/^\d+$/.test(numStr)) {
+                          count = parseInt(numStr);
+                        } else if (cleanPart) {
+                          rest += ' ' + cleanPart.toLowerCase();
+                        }
+                      });
+
+                      if (count !== null) {
+                        const restStr = rest.trim();
+                        if (restStr.includes('ticket')) updates.tickets = count;
+                        else if (restStr.includes('gold')) updates.gold = count;
+                        else if (restStr.includes('gem')) updates.gems = count;
+                        else if (restStr.includes('work permit')) updates.workPermit = count;
+                        else if (restStr.includes('trade license')) updates.tradeLicense = count;
+                        else if (restStr.includes('bit') && !/(flower|wood|ice|stone|sugar|wool|uranium|bone|iron|copper|quartz|essence|magma|zinc)/.test(restStr)) updates.bits = count;
+                        else if (restStr.includes('dust')) {
+                          if (restStr.includes('damaged') || restStr.includes('\u2606\u2606\u2606\u2606') || restStr.includes('☆☆☆☆')) updates.dust0 = count;
+                          else if (restStr.includes('poor') || restStr.includes('\u2605\u2606\u2606\u2606') || restStr.includes('★☆☆☆')) updates.dust1 = count;
+                          else if (restStr.includes('good') || restStr.includes('\u2605\u2605\u2606\u2606') || restStr.includes('★★☆☆')) updates.dust2 = count;
+                          else if (restStr.includes('excellent') || restStr.includes('\u2605\u2605\u2605\u2606') || restStr.includes('★★★☆')) updates.dust3 = count;
+                          else if (restStr.includes('mint') || restStr.includes('\u2605\u2605\u2605\u2605') || restStr.includes('★★★★')) updates.dust4 = count;
+                        }
                       }
                     });
 
