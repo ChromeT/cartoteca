@@ -159,25 +159,7 @@ export default function App() {
   // --- STATE ---
   const queryParams = new URLSearchParams(window.location.search);
 
-  const handleCleanupDatabase = async () => {
-    if (!user) return;
-    if (!window.confirm("Tindakan ini akan memindai database Anda dan membuang semua duplikat ber-ID acak. Lanjutkan?")) return;
-    try {
-      const cardsSnap = await getDocs(collection(db, 'users', user.uid, 'cards'));
-      let count = 0;
-      for (const cardDoc of cardsSnap.docs) {
-        const data = cardDoc.data();
-        if (data.code && cardDoc.id !== data.code) {
-          await setDoc(doc(db, 'users', user.uid, 'cards', data.code), data, { merge: true });
-          await deleteDoc(doc(db, 'users', user.uid, 'cards', cardDoc.id));
-          count++;
-        }
-      }
-      alert(`✨ Pembersihan Selesai! Sebanyak ${count} kartu ber-ID acak berhasil digabungkan ke ID asli.`);
-    } catch (err: any) {
-      alert("❌ Gagal membersihkan: " + err.message);
-    }
-  };
+
   const pUid = queryParams.get('p') || null;
 
   const [user, setUser] = useState<User | null | undefined>(undefined); // undefined = loading
@@ -2186,19 +2168,7 @@ export default function App() {
                 >
                   Logout
                 </button>
-                <button
-                  onClick={handleCleanupDatabase}
-                  title="Bersihkan duplikat kartu ber-ID acak"
-                  style={{
-                    background: '#ff4c4c', border: 'none',
-                    borderRadius: '6px', padding: '4px 10px',
-                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
-                    fontWeight: 600, color: '#fff', cursor: 'pointer',
-                    marginLeft: '8px'
-                  }}
-                >
-                  🧹 Cleanup DB
-                </button>
+
               </>
             )}
             {isReadOnly && (
