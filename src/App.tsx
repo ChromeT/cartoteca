@@ -410,23 +410,33 @@ export default function App() {
       console.log('Firebase configured. Setting up real-time listeners for target:', targetUid);
 
       let unsubProfile: (() => void) | undefined;
+      let unsubKui: (() => void) | undefined;
       let unsubCards: (() => void) | undefined;
       let unsubWishlist: (() => void) | undefined;
       let unsubTags: (() => void) | undefined;
       let unsubInventory: (() => void) | undefined;
 
       try {
-        // Profile Info
+        // User Info (Display Name)
         unsubProfile = onSnapshot(doc(db, 'users', targetUid), (profileSnap) => {
           if (profileSnap.exists()) {
             setPublicDisplayName(profileSnap.data().displayName || null);
-            setUserKUI(profileSnap.data().kuiStats || {});
           } else {
             setPublicDisplayName(null);
+          }
+        }, (error) => {
+          console.error("User listener error:", error);
+        });
+
+        // KUI Stats
+        unsubKui = onSnapshot(doc(db, 'users', targetUid as string, 'profile', 'current'), (kuiSnap) => {
+          if (kuiSnap.exists()) {
+            setUserKUI(kuiSnap.data() as any);
+          } else {
             setUserKUI({});
           }
         }, (error) => {
-          console.error("Profile listener error:", error);
+          console.error("KUI listener error:", error);
         });
 
         // Cards
@@ -464,7 +474,7 @@ export default function App() {
         });
 
         // Inventory
-        unsubInventory = onSnapshot(doc(db, 'users', targetUid as string, 'inventory', 'main'), (invSnap) => {
+        unsubInventory = onSnapshot(doc(db, 'users', targetUid as string, 'inventory', 'current'), (invSnap) => {
           if (invSnap.exists()) {
             setInventory(invSnap.data() as Inventory);
             if (!isReadOnly) syncLocal('inv', invSnap.data());
@@ -485,6 +495,7 @@ export default function App() {
 
       return () => {
         if (unsubProfile) unsubProfile();
+        if (unsubKui) unsubKui();
         if (unsubCards) unsubCards();
         if (unsubWishlist) unsubWishlist();
         if (unsubTags) unsubTags();
