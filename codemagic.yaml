@@ -1,0 +1,37 @@
+workflows:
+  android-capacitor:
+    name: Android Capacitor Build
+    max_build_duration: 60
+    instance_type: linux_x2
+    environment:
+      node: 20
+      java: 17
+      vars:
+        PACKAGE_NAME: "com.chromet.cartoteca"
+    scripts:
+      - name: Install dependencies
+        script: |
+          npm ci
+      - name: Build web assets
+        script: |
+          npm run build
+      - name: Add Android platform
+        script: |
+          if [ ! -d "android" ]; then
+            npx cap add android
+          fi
+      - name: Sync Capacitor
+        script: |
+          npx cap sync android
+      - name: Build Android APK
+        script: |
+          cd android
+          chmod +x ./gradlew
+          ./gradlew assembleDebug
+    artifacts:
+      - android/app/build/outputs/**/*.apk
+      - android/app/build/outputs/**/*.aab
+    publishing:
+      email: chrometcrosley@gmail.com
+        recipients:
+          - your-email@example.com
