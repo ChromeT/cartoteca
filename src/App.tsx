@@ -215,6 +215,8 @@ export default function App() {
   const targetUid = publicProfileId || user?.uid;
   const [lightboxCard, setLightboxCard] = useState<Card | null>(null);
   const [topCardIndex, setTopCardIndex] = useState<number>(0);
+  const [lightboxOrigin, setLightboxOrigin] = useState<{tx: number, ty: number, scale: number} | null>(null);
+  const [isClosingLightbox, setIsClosingLightbox] = useState(false);
   const [publicDisplayName, setPublicDisplayName] = useState<string | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -1759,12 +1761,37 @@ export default function App() {
     setSelectedCards(updated);
   }
 
+  function openLightbox(card: Card, e: React.MouseEvent) {
+    const rect = (e.currentTarget as HTMLElement).getBoundingClientRect();
+    const screenCenterX = window.innerWidth / 2;
+    const screenCenterY = window.innerHeight / 2;
+    const elementCenterX = rect.left + rect.width / 2;
+    const elementCenterY = rect.top + rect.height / 2;
+    const tx = elementCenterX - screenCenterX;
+    const ty = elementCenterY - screenCenterY;
+    
+    // Scale is based on the grid card width relative to the fixed 320px poker card width
+    const scale = rect.width / 320;
+    
+    setLightboxOrigin({ tx, ty, scale });
+    setLightboxCard(card);
+    setTopCardIndex(0);
+    setIsClosingLightbox(false);
+  }
+
+  function closeLightbox() {
+    setIsClosingLightbox(true);
+    setTimeout(() => {
+      setLightboxCard(null);
+      setIsClosingLightbox(false);
+    }, 300); // 300ms delay to allow zoomOutToOrigin animation to finish
+  }
+
   function handleSleeveContainerClick(id: string, e: React.MouseEvent) {
     if (isReadOnly) {
       const card = cards.find(c => c.id === id);
       if (card) {
-        setLightboxCard(card);
-        setTopCardIndex(0);
+        openLightbox(card, e);
       }
       return;
     }
@@ -2659,7 +2686,7 @@ export default function App() {
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
-                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxCard(c); setTopCardIndex(0); }} />
+                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); openLightbox(c, e); }} />
                                 )}
                                 {!isReadOnly && (
                                   <>
@@ -3947,10 +3974,18 @@ export default function App() {
       )}
 
       {lightboxCard && (
-        <div className="lightbox-overlay" onClick={() => setLightboxCard(null)}>
-          <button className="lightbox-close" onClick={() => setLightboxCard(null)}>&times;</button>
+        <div className={`lightbox-overlay ${isClosingLightbox ? 'closing' : ''}`} onClick={closeLightbox}>
+          <button className="lightbox-close" onClick={closeLightbox}>&times;</button>
           
-          <div className="poker-stack-container" onClick={(e) => e.stopPropagation()}>
+          <div 
+            className={`poker-stack-container ${isClosingLightbox ? 'closing' : ''}`} 
+            style={{ 
+              '--origin-tx': `${lightboxOrigin?.tx || 0}px`, 
+              '--origin-ty': `${lightboxOrigin?.ty || 0}px`,
+              '--origin-scale': lightboxOrigin?.scale || 0.2
+            } as React.CSSProperties}
+            onClick={(e) => e.stopPropagation()}
+          >
             {(() => {
               const stackItems = [];
               if (lightboxCard.imageUrl) {
@@ -3958,7 +3993,8 @@ export default function App() {
               }
               const rd = lightboxCard.rawDetails;
               if (rd) {
-                 if (rd.kci || rd.kv) stackItems.push({ id: 'kv', type: 'text', content: rd.kci || rd.kv });
+                 if (rd.kv) stackItems.push({ id: 'kv', type: 'text', content: rd.kv });
+                 if (rd.kci) stackItems.push({ id: 'kci', type: 'text', content: rd.kci });
                  if (rd.kwi) stackItems.push({ id: 'kwi', type: 'text', content: rd.kwi });
                  if (rd.klu) stackItems.push({ id: 'klu', type: 'text', content: rd.klu });
                  if (rd.priceCalc) stackItems.push({ id: 'price', type: 'text', content: rd.priceCalc });
@@ -3995,6 +4031,7 @@ export default function App() {
                  let title = "";
                  let icon = "";
                  if (item.id === 'kv') { title = 'Card Details'; icon = '📜'; }
+                 else if (item.id === 'kci') { title = 'Card Info'; icon = 'ℹ️'; }
                  else if (item.id === 'kwi') { title = 'Worker Stats'; icon = '⛏️'; }
                  else if (item.id === 'klu') { title = 'Character Lookup'; icon = '🔍'; }
                  else if (item.id === 'price') { title = 'Price Calculator'; icon = '🏷️'; }
@@ -4026,15 +4063,15 @@ export default function App() {
                                    <div className="card-info-grid">
                                      <div className="card-info-box">
                                         <span className="label">Print</span>
-                                        <span className="value highlight">#{lightboxCard.print || '?'}</span>
+                                        <span className="value highlight">🖨️ #{lightboxCard.print || '?'}</span>
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">Edition</span>
-                                        <span className="value">◈{lightboxCard.edition || '?'}</span>
+                                        <span className="value">🌟 ◈{lightboxCard.edition || '?'}</span>
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">Condition</span>
-                                        <span className="value">{lightboxCard.condition || 'Unknown'}</span>
+                                        <span className="value">✨ {lightboxCard.condition || 'Unknown'}</span>
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">Series</span>
@@ -4049,12 +4086,31 @@ export default function App() {
                                  </>
                                )}
 
+                               {item.id === 'kci' && (
+                                 <>
+                                   <div className="card-info-grid">
+                                     <div className="card-info-box">
+                                        <span className="label">Dye</span>
+                                        <span className="value highlight">🎨 {lightboxCard.dye || 'None'}</span>
+                                     </div>
+                                     <div className="card-info-box">
+                                        <span className="label">Frame</span>
+                                        <span className="value">🖼️ {lightboxCard.frame || 'Default'}</span>
+                                     </div>
+                                   </div>
+                                   <details className="tcg-raw-footer">
+                                      <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
+
                                {item.id === 'kwi' && (
                                  <>
                                    <div className="card-info-grid" style={{ marginBottom: '16px' }}>
                                      <div className="card-info-box" style={{ gridColumn: 'span 2', padding: '16px' }}>
                                         <span className="label">Total Effort</span>
-                                        <span className="value highlight" style={{ fontSize: '24px' }}>{lightboxCard.effort || '?'}</span>
+                                        <span className="value highlight" style={{ fontSize: '24px' }}>💪 {lightboxCard.effort || '?'}</span>
                                      </div>
                                    </div>
                                    {lightboxCard.stats && (
@@ -4079,7 +4135,7 @@ export default function App() {
                                    <div className="card-info-grid">
                                      <div className="card-info-box">
                                         <span className="label">Wishlisted</span>
-                                        <span className="value highlight">{lightboxCard.wish || 0}</span>
+                                        <span className="value highlight">💖 {lightboxCard.wish || 0}</span>
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">Character</span>
@@ -4098,11 +4154,15 @@ export default function App() {
                                    <div className="card-info-grid">
                                      <div className="card-info-box" style={{ gridColumn: 'span 2' }}>
                                         <span className="label">Estimated Price</span>
-                                        <span className="value highlight">{lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
+                                        <span className="value highlight">🎟️ {lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
                                      </div>
                                    </div>
                                    <details className="tcg-raw-footer">
                                       <summary>Show Raw Discord Data</summary>
+                                      <pre>{item.content}</pre>
+                                   </details>
+                                 </>
+                               )}
                                       <pre>{item.content}</pre>
                                    </details>
                                  </>
