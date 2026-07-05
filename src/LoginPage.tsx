@@ -19,11 +19,11 @@ export default function LoginPage() {
   async function handleSubmit(e: React.FormEvent) {
     e.preventDefault();
     if (!username.trim() || !password.trim()) {
-      setError('ID dan password tidak boleh kosong.');
+      setError('Username and password cannot be empty.');
       return;
     }
     if (password.length < 6) {
-      setError('Password minimal 6 karakter.');
+      setError('Password must be at least 6 characters.');
       return;
     }
 
@@ -40,15 +40,15 @@ export default function LoginPage() {
     } catch (err: any) {
       const code = err.code || '';
       if (code === 'auth/user-not-found' || code === 'auth/invalid-credential' || code === 'auth/wrong-password') {
-        setError('ID atau password salah.');
+        setError('Invalid username or password.');
       } else if (code === 'auth/email-already-in-use') {
-        setError('ID ini sudah digunakan. Silakan login.');
+        setError('This username is already taken. Please log in.');
       } else if (code === 'auth/weak-password') {
-        setError('Password terlalu lemah, minimal 6 karakter.');
+        setError('Password is too weak, must be at least 6 characters.');
       } else if (code === 'auth/network-request-failed') {
-        setError('Gagal terhubung. Periksa koneksi internet.');
+        setError('Connection failed. Please check your internet connection.');
       } else {
-        setError('Terjadi kesalahan: ' + (err.message || code));
+        setError('An error occurred: ' + (err.message || code));
       }
     } finally {
       setLoading(false);
@@ -124,7 +124,7 @@ export default function LoginPage() {
                   background: mode === m ? '#d8923e' : 'transparent',
                   color: mode === m ? '#fff' : '#9c8f76'
                 }}>
-                {m === 'login' ? 'Masuk' : 'Daftar'}
+                {m === 'login' ? 'Log In' : 'Sign Up'}
               </button>
             ))}
           </div>
@@ -136,7 +136,7 @@ export default function LoginPage() {
                 display: 'block', fontFamily: "'IBM Plex Sans', sans-serif",
                 fontSize: '11px', fontWeight: 700, color: '#9c8f76',
                 letterSpacing: '0.06em', textTransform: 'uppercase', marginBottom: '6px'
-              }}>ID Pengguna</label>
+              }}>Username</label>
               <input
                 type="text"
                 value={username}
@@ -167,7 +167,7 @@ export default function LoginPage() {
                 type="password"
                 value={password}
                 onChange={e => setPassword(e.target.value)}
-                placeholder="minimal 6 karakter"
+                placeholder="at least 6 characters"
                 autoComplete={mode === 'login' ? 'current-password' : 'new-password'}
                 style={{
                   width: '100%', boxSizing: 'border-box',
@@ -208,7 +208,7 @@ export default function LoginPage() {
                 boxShadow: loading ? 'none' : '0 2px 0 #b87a2e'
               }}
             >
-              {loading ? '⏳ Memproses...' : mode === 'login' ? '🎴 Masuk ke Binder' : '✨ Buat Akun'}
+              {loading ? '⏳ Processing...' : mode === 'login' ? '🎴 Log In to Binder' : '✨ Create Account'}
             </button>
           </form>
         </div>

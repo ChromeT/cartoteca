@@ -532,10 +532,10 @@ export default function App() {
 
   function getDefaultTags(): CustomTag[] {
     return [
-      { name: 'waifu', color: '#8b5cf6', desc: 'Karakter favorit utama' },
-      { name: 'trade', color: '#b85c5c', desc: 'Kartu siap barter / jual' },
-      { name: 'deck-1', color: '#3b82f6', desc: 'Worker deck utama' },
-      { name: 'keeper', color: '#e0b84c', desc: 'Koleksi disimpan' }
+      { name: 'waifu', color: '#8b5cf6', desc: 'Primary favorite character' },
+      { name: 'trade', color: '#b85c5c', desc: 'Card is ready for trade / sale' },
+      { name: 'deck-1', color: '#3b82f6', desc: 'Primary worker deck' },
+      { name: 'keeper', color: '#e0b84c', desc: 'Collection keepers' }
     ];
   }
 
@@ -687,11 +687,11 @@ export default function App() {
     }
 
     if (newCards.length === 0) {
-      setBulkImportFeedback({ text: "❌ Tidak ada kartu valid yang terdeteksi dari teks yang Anda masukkan.", isError: true, isSuccess: false });
+      setBulkImportFeedback({ text: "❌ No valid cards detected from the text you provided.", isError: true, isSuccess: false });
       return;
     }
 
-    setBulkImportFeedback({ text: `Memproses ${newCards.length} kartu... Mohon tunggu.`, isError: false, isSuccess: false });
+    setBulkImportFeedback({ text: `Processing ${newCards.length} cards... Please wait.`, isError: false, isSuccess: false });
 
     const mergedCards = [...cards, ...newCards];
     setCards(mergedCards);
@@ -710,12 +710,12 @@ export default function App() {
           }
         };
         await syncChunks(newCards);
-        setBulkImportFeedback({ text: `✅ ${successCount} kartu berhasil diimpor & sinkron ke Cloud! Halaman akan dimuat ulang.`, isError: false, isSuccess: true });
+        setBulkImportFeedback({ text: `✅ ${successCount} cards successfully imported & synchronized to the Cloud! Reloading page...`, isError: false, isSuccess: true });
       } catch (err: any) {
-        setBulkImportFeedback({ text: `⚠️ Sebagian kartu belum tersinkron ke cloud: ${err.message}`, isError: true, isSuccess: false });
+        setBulkImportFeedback({ text: `⚠️ Some cards failed to sync to the cloud: ${err.message}`, isError: true, isSuccess: false });
       }
     } else {
-      setBulkImportFeedback({ text: `✅ ${successCount} kartu berhasil diimpor ke aplikasi!`, isError: false, isSuccess: true });
+      setBulkImportFeedback({ text: `✅ ${successCount} cards successfully imported to the app!`, isError: false, isSuccess: true });
     }
 
     setTimeout(() => {
@@ -818,14 +818,14 @@ export default function App() {
         await batch.commit();
       }
       
-      setBatchKiwiFeedback({ text: `✅ Berhasil update ${updatedCount} kartu! (${notFoundCount} kartu tidak ditemukan)`, isError: false, isSuccess: true });
+      setBatchKiwiFeedback({ text: `✅ Successfully updated ${updatedCount} cards! (${notFoundCount} cards not found)`, isError: false, isSuccess: true });
       setTimeout(() => {
         setIsBatchKiwiModalOpen(false);
         setBatchKiwiText('');
         setBatchKiwiFeedback({ text: '', isError: false, isSuccess: false });
       }, 3000);
     } else {
-      setBatchKiwiFeedback({ text: `⚠️ Tidak ada kartu yang berhasil dicocokkan. Pastikan teks k!wi memuat (kode_kartu).`, isError: true, isSuccess: false });
+      setBatchKiwiFeedback({ text: `⚠️ No cards matched. Make sure the k!wi text contains the (card_code).`, isError: true, isSuccess: false });
     }
   }
 
@@ -867,14 +867,14 @@ export default function App() {
         await batch.commit();
       }
       
-      setBatchImageFeedback({ text: `✅ Berhasil update gambar ${updatedCount} kartu!`, isError: false, isSuccess: true });
+      setBatchImageFeedback({ text: `✅ Successfully updated images for ${updatedCount} cards!`, isError: false, isSuccess: true });
       setTimeout(() => {
         setIsBatchImageModalOpen(false);
         setBatchImageText('');
         setBatchImageFeedback({ text: '', isError: false, isSuccess: false });
       }, 3000);
     } else {
-      setBatchImageFeedback({ text: `⚠️ Tidak ada kode kartu yang cocok atau format salah.`, isError: true, isSuccess: false });
+      setBatchImageFeedback({ text: `⚠️ No matching card codes found or invalid format.`, isError: true, isSuccess: false });
     }
   }
 
@@ -1173,16 +1173,16 @@ export default function App() {
         }));
       }
 
-      setParserFeedback({ text: '✅ Info kartu berhasil diparse!', isError: false, isSuccess: true });
+      setParserFeedback({ text: '✅ Card info successfully parsed!', isError: false, isSuccess: true });
     } else {
-      setParserFeedback({ text: '❌ Tidak dapat menemukan nama karakter atau kode kartu. Pastikan format teks benar.', isError: true, isSuccess: false });
+      setParserFeedback({ text: '❌ Character name or card code not found. Make sure the text format is correct.', isError: true, isSuccess: false });
     }
   }
 
 
   function handleParseEffortText() {
     if (!effortDiscordText.trim()) {
-      setEffortParserFeedback({ text: '❌ Teks kosong.', isError: true, isSuccess: false });
+      setEffortParserFeedback({ text: '❌ Text is empty.', isError: true, isSuccess: false });
       return;
     }
 
@@ -1249,9 +1249,9 @@ export default function App() {
           ...statsObj
         }));
       }
-      setEffortParserFeedback({ text: '✅ Status worker berhasil diparse!', isError: false, isSuccess: true });
+      setEffortParserFeedback({ text: '✅ Worker stats successfully parsed!', isError: false, isSuccess: true });
     } else {
-      setEffortParserFeedback({ text: '❌ Tidak dapat menemukan status worker di teks.', isError: true, isSuccess: false });
+      setEffortParserFeedback({ text: '❌ Worker stats not found in text.', isError: true, isSuccess: false });
     }
   }
 
@@ -1276,14 +1276,14 @@ export default function App() {
       };
       
       if (Object.values(parsedStats).every(v => v === 'E') && !text.toLowerCase().includes('toughness')) {
-        alert("Teks tidak valid! Pastikan Anda meng-copy balasan k!wi (Work Info) dari bot Karuta.");
+        alert("Invalid text! Make sure you copied the k!wi (Work Info) reply from the Karuta bot.");
         return;
       }
       
       setFStats(parsedStats);
-      alert("Berhasil ekstrak status pekerja k!wi!");
+      alert("Successfully extracted k!wi worker stats!");
     } catch (e) {
-      alert("Gagal membaca clipboard. Mohon izinkan akses di browser atau paste manual lalu gunakan fitur lain.");
+      alert("Failed to read clipboard. Please allow clipboard access in your browser or paste the text manually.");
     }
   };
 
@@ -1301,9 +1301,9 @@ export default function App() {
   // --- CRUD CARD OPERATIONS ---
   function openCardModal(card: Card | null = null) {
     setDiscordText('');
-    setParserFeedback({ text: 'Siap memproses teks', isError: false, isSuccess: false });
+    setParserFeedback({ text: 'Ready to parse text', isError: false, isSuccess: false });
     setEffortDiscordText('');
-    setEffortParserFeedback({ text: 'Tempel teks stat (keqing/k!wi)', isError: false, isSuccess: false });
+    setEffortParserFeedback({ text: 'Paste stat text (keqing/k!wi)', isError: false, isSuccess: false });
 
     if (card) {
       setCardFormId(card.id);
@@ -1435,7 +1435,7 @@ export default function App() {
   }
 
   async function handleDeleteCard(id: string): Promise<boolean> {
-    if (!(await customConfirm('Yakin ingin menghapus kartu ini?'))) return false;
+    if (!(await customConfirm('Are you sure you want to delete this card?'))) return false;
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user!.uid, 'cards', id));
@@ -1509,7 +1509,7 @@ export default function App() {
   }
 
   async function handleDeleteWish(id: string) {
-    if (!(await customConfirm('Hapus dari wishlist?'))) return;
+    if (!(await customConfirm('Remove from wishlist?'))) return;
 
     if (isFirebaseConfigured() && user) {
       await deleteDoc(doc(db, 'users', user!.uid, 'wishlist', id));
@@ -1576,7 +1576,7 @@ export default function App() {
   }
 
   async function handleDeleteCustomTag(name: string) {
-    if (!(await customConfirm(`Hapus tag "${name}"? Tag ini juga akan dilepas dari kartu.`))) return;
+    if (!(await customConfirm(`Delete tag "${name}"? This tag will also be removed from all cards.`))) return;
 
     // Remove from custom tags config list
     const updatedTags = customTags.filter(t => t.name.toLowerCase() !== name.toLowerCase());
@@ -1612,7 +1612,7 @@ export default function App() {
   }
 
   async function handleUntagAll(name: string) {
-    if (!(await customConfirm(`Lepas tag "${name}" dari semua kartu? (Tag ini sendiri tidak akan dihapus dari daftar)`))) return;
+    if (!(await customConfirm(`Remove tag "${name}" from all cards? (The tag itself will not be deleted)`))) return;
 
     // Strip tags from all cards
     const updatedCards = cards.map(c => {
@@ -1668,7 +1668,7 @@ export default function App() {
   }
 
   async function handleBatchDelete() {
-    if (!(await customConfirm(`Hapus ${selectedCards.size} kartu terpilih?`))) return;
+    if (!(await customConfirm(`Delete ${selectedCards.size} selected cards?`))) return;
 
     if (isFirebaseConfigured() && user) {
       const batch = writeBatch(db);
@@ -1986,7 +1986,7 @@ export default function App() {
             </div>
           </div>
           <div className="mini-stats">
-            <div className="mini-stat"><b>{totalCards}</b><span>Kartu</span></div>
+            <div className="mini-stat"><b>{totalCards}</b><span>Cards</span></div>
             <div className="mini-stat"><b>{new Set(cards.map(c => c.series).filter(Boolean)).size}</b><span>Series</span></div>
             <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
           </div>
@@ -2013,7 +2013,7 @@ export default function App() {
                 </button>
                 <button
                   onClick={() => setIsProfileModalOpen(true)}
-                  title="Profil"
+                  title="Profile"
                   style={{
                     background: 'transparent', border: '1px solid #3a3327',
                     borderRadius: '6px', padding: '4px 10px',
@@ -2024,11 +2024,11 @@ export default function App() {
                   onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
                   onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
                 >
-                  Profil
+                  Profile
                 </button>
                 <button
                   onClick={() => signOut(auth)}
-                  title="Keluar"
+                  title="Logout"
                   style={{
                     background: 'transparent', border: '1px solid #3a3327',
                     borderRadius: '6px', padding: '4px 10px',
@@ -2039,7 +2039,7 @@ export default function App() {
                   onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; (e.target as HTMLButtonElement).style.borderColor = '#d8923e'; }}
                   onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#9c8f76'; (e.target as HTMLButtonElement).style.borderColor = '#3a3327'; }}
                 >
-                  Keluar
+                  Logout
                 </button>
               </>
             )}
@@ -2424,7 +2424,7 @@ export default function App() {
                               />
                               <button 
                                 className="nc-delete-btn"
-                                title="Hapus Kartu"
+                                title="Delete Card"
                                 onClick={async (e) => { 
                                   e.stopPropagation(); 
                                   await handleDeleteCard(c.id); 
@@ -2434,7 +2434,7 @@ export default function App() {
                               </button>
                               <button 
                                 className="nc-edit-btn"
-                                title="Edit Kartu"
+                                title="Edit Card"
                                 onClick={(e) => { 
                                   e.stopPropagation(); 
                                   openCardModal(c); 
@@ -2538,7 +2538,7 @@ export default function App() {
 
                         {(c.price || c.frame || c.dye || c.notes) && (
                           <div className="card-details-row">
-                            {c.price && <div><span>Est. Harga:</span> <b>{c.price} Tickets</b></div>}
+                            {c.price && <div><span>Est. Price:</span> <b>{c.price} Tickets</b></div>}
                             {c.frame && <div><span>Frame:</span> <b>{c.frame}</b></div>}
                             {c.dye && <div><span>Dye:</span> <b>{c.dye}</b></div>}
                             {c.notes && <div style={{ display: 'block', fontStyle: 'italic', marginTop: '2px' }}>"{c.notes}"</div>}
@@ -2553,11 +2553,11 @@ export default function App() {
                               readOnly
                               style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--stamp)', margin: 0 }}
                             />
-                            <span style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', fontWeight: 600 }}>Pilih</span>
+                            <span style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', fontWeight: 600 }}>Select</span>
                           </div>
                           <div style={{ display: 'flex', gap: '8px' }}>
                             <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
-                            <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Hapus</button>
+                            <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Delete</button>
                           </div>
                         </div>)}
                       </div>
@@ -3557,10 +3557,10 @@ export default function App() {
         <div className="modal-overlay open">
           <div className="modal" style={{ maxWidth: '380px' }}>
             <div className="modal-header">
-              <h3>Tambah Tag Massal</h3>
+              <h3>Batch Add Tag</h3>
               <button className="close-modal-btn" onClick={() => setIsBatchTagModalOpen(false)}>&times;</button>
             </div>
-            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '0' }}>Pilih tag yang ingin ditambahkan ke kartu terpilih:</p>
+            <p style={{ fontSize: '12.5px', color: 'var(--ink-soft)', marginTop: '0' }}>Select tags to add to the selected cards:</p>
 
             <div className="tag-selector-grid" style={{ marginBottom: '18px' }}>
               {customTags.map(t => {
@@ -3579,8 +3579,8 @@ export default function App() {
             </div>
 
             <div className="modal-actions">
-              <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Batal</button>
-              <button className="btn" onClick={handleBatchSaveTags}>Terapkan</button>
+              <button className="btn secondary" onClick={() => setIsBatchTagModalOpen(false)}>Cancel</button>
+              <button className="btn" onClick={handleBatchSaveTags}>Apply</button>
             </div>
           </div>
         </div>
@@ -3596,7 +3596,7 @@ export default function App() {
             </div>
             
             <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-              <label>Pilih Jenis Command</label>
+              <label>Select Command Type</label>
               <select value={commandType} onChange={(e) => setCommandType(e.target.value)} className="form-control">
                 <option value="mt">Multi Tag (ktag)</option>
                 <option value="mut">Multi Untag (kuntag)</option>
@@ -3608,13 +3608,13 @@ export default function App() {
 
             {(commandType === 'mt' || commandType === 'mut' || commandType === 'mb') && (
               <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                <label>Nama Tag</label>
+                <label>Tag Name</label>
                 <input 
                   type="text" 
                   value={commandArg} 
                   onChange={(e) => setCommandArg(e.target.value)} 
                   className="form-control" 
-                  placeholder="Misal: Worker"
+                  placeholder="e.g., Worker"
                 />
               </div>
             )}
@@ -3636,7 +3636,7 @@ export default function App() {
               
               return (
                 <div style={{ background: 'var(--paper-dark)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
-                  <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Hasil Command:</p>
+                  <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Command Output:</p>
                   <code style={{ display: 'block', wordBreak: 'break-all', fontSize: '13px', color: 'var(--jade-soft)', fontFamily: 'monospace' }}>
                     {cmdStr}
                   </code>
@@ -3645,11 +3645,11 @@ export default function App() {
                       className="btn btn-sm" 
                       onClick={(e) => {
                         navigator.clipboard.writeText(cmdStr);
-                        e.currentTarget.innerText = '📋 Tersalin!';
-                        setTimeout(() => { e.currentTarget.innerText = 'Salin ke Clipboard'; }, 1000);
+                        e.currentTarget.innerText = '📋 Copied!';
+                        setTimeout(() => { e.currentTarget.innerText = 'Copy to Clipboard'; }, 1000);
                       }}
                     >
-                      Salin ke Clipboard
+                      Copy to Clipboard
                     </button>
                   </div>
                 </div>
@@ -3664,11 +3664,11 @@ export default function App() {
         <div className="modal-overlay open">
           <div className="modal" style={{ maxWidth: '400px' }}>
             <div className="modal-header">
-              <h3>Proses Burn</h3>
+              <h3>Process Burn</h3>
               <button className="close-modal-btn" onClick={() => setIsBurnResolveModalOpen(false)}>&times;</button>
             </div>
             <p style={{ fontSize: '13px', color: 'var(--ink-soft)', marginTop: 0 }}>
-              Tempel pesan respons dari bot Karuta setelah Anda melakukan <code>k!mb</code> untuk mendapatkan material secara otomatis dan menghapus {selectedCards.size} kartu dari koleksi Cartoteca Anda.
+              Paste the response message from the Karuta bot after you run <code>k!mb</code> to automatically gain materials and delete {selectedCards.size} cards from your Cartoteca collection.
             </p>
             <div className="form-group">
               <textarea 
@@ -3719,14 +3719,14 @@ export default function App() {
                     {bits > 0 && <li>+{bits} Bit</li>}
                   </ul>
                   <p style={{ fontSize: '12px', color: '#c14e4e', margin: '8px 0 0 0', fontWeight: 'bold' }}>
-                    Peringatan: {selectedCards.size} kartu terpilih akan dihapus dari Cartoteca.
+                    Warning: {selectedCards.size} selected cards will be deleted from Cartoteca.
                   </p>
                 </div>
               );
             })()}
 
             <div className="modal-actions" style={{ marginTop: '16px' }}>
-              <button className="btn secondary" onClick={() => setIsBurnResolveModalOpen(false)}>Batal</button>
+              <button className="btn secondary" onClick={() => setIsBurnResolveModalOpen(false)}>Cancel</button>
               <button 
                 className="btn" 
                 style={{ 
@@ -3784,7 +3784,7 @@ export default function App() {
                   setIsBurnResolveModalOpen(false);
                 }}
               >
-                Selesaikan & Hapus Kartu
+                Resolve & Delete Cards
               </button>
             </div>
           </div>
@@ -3804,16 +3804,16 @@ export default function App() {
             
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Export (Cadangkan Data)</h4>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Unduh seluruh koleksi kartu, wishlist, dan pengaturan Anda sebagai file JSON.</p>
+                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Export (Back Up Data)</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Download your entire card collection, wishlist, and settings as a JSON file.</p>
                 <button className="btn" onClick={triggerExportJSON} style={{ width: '100%', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px' }}>
-                  📥 Download File JSON
+                  📥 Download JSON File
                 </button>
               </div>
 
               <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Import (Pulihkan Data)</h4>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Pilih file JSON backup untuk memulihkan koleksi Anda. (Perhatian: akan menimpa data yang ada secara lokal).</p>
+                <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Import (Restore Data)</h4>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Select a JSON backup file to restore your collection. (Warning: this will overwrite all existing local data).</p>
                 <input 
                   type="file" 
                   accept=".json" 
@@ -3822,7 +3822,7 @@ export default function App() {
                   style={{ display: 'none' }}
                 />
                 <div style={{ display: 'flex', gap: '8px', alignItems: 'center', marginBottom: '12px' }}>
-                  <button className="btn secondary" onClick={() => fileInputRef.current?.click()} style={{ padding: '6px 12px', fontSize: '12px' }}>Pilih File...</button>
+                  <button className="btn secondary" onClick={() => fileInputRef.current?.click()} style={{ padding: '6px 12px', fontSize: '12px' }}>Select File...</button>
                   <span style={{ fontSize: '11px', color: '#9c8f76', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', maxWidth: '180px' }}>
                     {backupFileName}
                   </span>
@@ -3833,7 +3833,7 @@ export default function App() {
                   onClick={handleApplyRestore}
                   disabled={!backupFileContent}
                 >
-                  ⚠️ Mulai Pulihkan Data
+                  ⚠️ Start Restoring Data
                 </button>
               </div>
             </div>
