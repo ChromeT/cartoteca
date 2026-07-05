@@ -155,6 +155,44 @@ const ConditionWatermark = ({ condition }: { condition: string }) => {
   );
 };
 
+const WorkerStatInput = ({ label, statKey, fStats, updateFStat }: any) => {
+  const val = fStats?.[statKey] || '';
+  let num = '';
+  let letter = '';
+  const match = val.match(/^([0-9-]+)?\s*(?:\(([A-Za-z])\)|([A-Za-z]))?/);
+  if (match) {
+    num = match[1] || '';
+    letter = match[2] || match[3] || '';
+  } else if (/^[0-9-]+$/.test(val)) {
+    num = val;
+  } else {
+    letter = val;
+  }
+
+  const handleNumChange = (e: any) => {
+    const newNum = e.target.value;
+    updateFStat(statKey, newNum && letter ? `${newNum} (${letter})` : (newNum || letter ? (newNum || letter) : ''));
+  };
+  const handleLetterChange = (e: any) => {
+    const newLetter = e.target.value;
+    updateFStat(statKey, num && newLetter ? `${num} (${newLetter})` : (num || newLetter ? (num || newLetter) : ''));
+  };
+
+  return (
+    <div className="field">
+      <label>{label}</label>
+      <div style={{ display: 'flex', gap: '4px' }}>
+        <input type="text" placeholder="0" value={num} onChange={handleNumChange} style={{ flex: '1', minWidth: '30px', padding: '6px' }} />
+        <select value={letter} onChange={handleLetterChange} style={{ width: '60px', padding: '6px', background: 'var(--bg-secondary)', color: 'var(--text-primary)', border: '1px solid var(--border-color)', borderRadius: 'var(--border-radius)' }}>
+          <option value="">-</option>
+          <option value="S">S</option><option value="A">A</option><option value="B">B</option>
+          <option value="C">C</option><option value="D">D</option><option value="E">E</option><option value="F">F</option>
+        </select>
+      </div>
+    </div>
+  );
+};
+
 export default function App() {
   // --- STATE ---
   const queryParams = new URLSearchParams(window.location.search);
@@ -3575,7 +3613,16 @@ export default function App() {
             <div className="field-row">
               <div className="field">
                 <label>Estimated Price (Tickets)</label>
-                <input type="number" placeholder="e.g., 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} />
+                <input type="number" placeholder="e.g., 15" value={fPrice} onChange={(e) => setFPrice(e.target.value === '' ? '' : Number(e.target.value))} onPaste={(e) => {
+                  const paste = e.clipboardData.getData('text');
+                  if (paste.includes('Price Calculator') && paste.includes('🎟')) {
+                    e.preventDefault();
+                    const priceMatch = paste.match(/\|\|\s*([0-9.]+)\s*🎟/);
+                    if (priceMatch) {
+                      setFPrice(Number(priceMatch[1]));
+                    }
+                  }
+                }} />
                 {cardFormId && cards.find(c => c.id === cardFormId)?.priceHistory && cards.find(c => c.id === cardFormId)!.priceHistory!.length > 0 && (
                   <div style={{ background: '#17140f', padding: '8px', borderRadius: '4px', border: '1px solid #3a3327', marginTop: '8px' }}>
                     <div style={{ fontSize: '10px', color: '#9c8f76', marginBottom: '4px' }}>📉 Price History</div>
@@ -3610,46 +3657,19 @@ export default function App() {
             <div className="worker-stats-section" style={{ background: 'var(--paper-dark)', padding: '16px', borderRadius: 'var(--border-radius)', border: '1px solid var(--paper-line)', marginBottom: '16px' }}>
               <div style={{ fontSize: '12px', fontWeight: 600, color: 'var(--stamp)', textTransform: 'uppercase', marginBottom: '12px' }}>Worker Stats (Effort Modifiers)</div>
               <div className="field-row-3">
-                <div className="field">
-                  <label>Purity</label>
-                  <input type="text" placeholder="e.g., S" value={fStats?.purity || ''} onChange={(e) => updateFStat('purity', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Wellness</label>
-                  <input type="text" placeholder="e.g., S" value={fStats?.wellness || ''} onChange={(e) => updateFStat('wellness', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Toughness</label>
-                  <input type="text" placeholder="e.g., F" value={fStats?.toughness || ''} onChange={(e) => updateFStat('toughness', e.target.value)} />
-                </div>
+                <WorkerStatInput label="Purity" statKey="purity" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Wellness" statKey="wellness" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Toughness" statKey="toughness" fStats={fStats} updateFStat={updateFStat} />
               </div>
               <div className="field-row-3">
-                <div className="field">
-                  <label>Quickness</label>
-                  <input type="text" placeholder="e.g., B" value={fStats?.quickness || ''} onChange={(e) => updateFStat('quickness', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Style</label>
-                  <input type="text" placeholder="e.g., F" value={fStats?.style || ''} onChange={(e) => updateFStat('style', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Grabber</label>
-                  <input type="text" placeholder="e.g., S" value={fStats?.grabber || ''} onChange={(e) => updateFStat('grabber', e.target.value)} />
-                </div>
+                <WorkerStatInput label="Quickness" statKey="quickness" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Style" statKey="style" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Grabber" statKey="grabber" fStats={fStats} updateFStat={updateFStat} />
               </div>
               <div className="field-row-3">
-                <div className="field">
-                  <label>Dropper</label>
-                  <input type="text" placeholder="e.g., S" value={fStats?.dropper || ''} onChange={(e) => updateFStat('dropper', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Vanity</label>
-                  <input type="text" placeholder="e.g., D" value={fStats?.vanity || ''} onChange={(e) => updateFStat('vanity', e.target.value)} />
-                </div>
-                <div className="field">
-                  <label>Appeal</label>
-                  <input type="text" placeholder="e.g., S" value={fStats?.appeal || ''} onChange={(e) => updateFStat('appeal', e.target.value)} />
-                </div>
+                <WorkerStatInput label="Dropper" statKey="dropper" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Vanity" statKey="vanity" fStats={fStats} updateFStat={updateFStat} />
+                <WorkerStatInput label="Appeal" statKey="appeal" fStats={fStats} updateFStat={updateFStat} />
               </div>
             </div>
 
