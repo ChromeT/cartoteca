@@ -83,10 +83,43 @@ export default function LoginPage() {
             width: '72px', height: '72px', borderRadius: '14px',
             background: '#d8923e',
             display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '44px', margin: '0 auto 16px',
+            margin: '0 auto 16px',
             boxShadow: '0 4px 0 #b87a2e, 0 10px 24px rgba(0,0,0,0.4)',
             transform: 'rotate(-3deg)'
-          }}>🎴</div>
+          }}>
+            <div style={{
+              width: '36px',
+              height: '52px',
+              background: '#13110d',
+              border: '2px solid #d8923e',
+              borderRadius: '6px',
+              position: 'relative',
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              boxShadow: '0 3px 6px rgba(0,0,0,0.5)',
+              overflow: 'hidden'
+            }}>
+              <div style={{
+                position: 'absolute',
+                top: '8px',
+                width: '16px',
+                height: '16px',
+                borderRadius: '50%',
+                background: '#c14e4e',
+                boxShadow: '0 0 8px rgba(193, 78, 78, 0.4)'
+              }}></div>
+              <div style={{
+                position: 'absolute',
+                bottom: '-2px',
+                left: '-2px',
+                right: '-2px',
+                height: '18px',
+                background: '#d8923e',
+                borderRadius: '16px 16px 0 0'
+              }}></div>
+            </div>
+          </div>
           <h1 style={{
             fontFamily: "'Spectral', serif", fontSize: '36px',
             fontWeight: 800, color: '#ede3ce', margin: '0 0 4px',
