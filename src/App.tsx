@@ -272,6 +272,21 @@ export default function App() {
   const [invPasteText, setInvPasteText] = useState('');
   const [invParseFeedback, setInvParseFeedback] = useState<{ text: string; isError: boolean } | null>(null);
 
+  // Toast System State
+  interface ToastState {
+    message: string;
+    type: 'info' | 'success' | 'error';
+    id: number;
+  }
+  const [toasts, setToasts] = useState<ToastState[]>([]);
+  const showToast = (message: string, type: 'info' | 'success' | 'error' = 'info') => {
+    const id = Date.now() + Math.random();
+    setToasts(prev => [...prev, { message, type, id }]);
+    setTimeout(() => {
+      setToasts(prev => prev.filter(t => t.id !== id));
+    }, 4000);
+  };
+
   const customConfirm = (message: string): Promise<boolean> => {
     return new Promise((resolve) => {
       setConfirmState({
@@ -457,7 +472,7 @@ export default function App() {
 
       } catch (error: any) {
         console.error("Firebase setup error:", error);
-        alert("Peringatan: Gagal memuat data dari Cloud (" + error.message + "). Memuat data dari cache lokal.");
+        showToast("Warning: Failed to load data from Cloud (" + error.message + "). Loading cache locally.", 'error');
         // Fallback if network blocked
         const savedCards = localStorage.getItem(`cartoteca:${targetUid}:cards`);
         if (savedCards) setCards(JSON.parse(savedCards));
@@ -1275,14 +1290,14 @@ export default function App() {
       };
       
       if (Object.values(parsedStats).every(v => v === 'E') && !text.toLowerCase().includes('toughness')) {
-        alert("Invalid text! Make sure you copied the k!wi (Work Info) reply from the Karuta bot.");
+        showToast("Invalid text! Make sure you copied the k!wi (Work Info) reply from the Karuta bot.", 'error');
         return;
       }
       
       setFStats(parsedStats);
-      alert("Successfully extracted k!wi worker stats!");
+      showToast("Successfully extracted k!wi worker stats!", 'success');
     } catch (e) {
-      alert("Failed to read clipboard. Please allow clipboard access in your browser or paste the text manually.");
+      showToast("Failed to read clipboard. Please allow clipboard access in your browser or paste the text manually.", 'error');
     }
   };
 
@@ -1352,7 +1367,7 @@ export default function App() {
 
   async function handleSaveCard() {
     if (!fName.trim()) {
-      alert("Nama karakter wajib diisi!");
+      showToast("Character name is required!", 'error');
       return;
     }
 
@@ -1410,7 +1425,7 @@ export default function App() {
           finalId = docRef.id;
         }
       } catch (error: any) {
-        alert("Gagal menyimpan ke database Firebase: " + error.message);
+        showToast("Failed to save to Firebase database: " + error.message, 'error');
         return; // Hentikan proses jika gagal
       }
     }
@@ -1774,7 +1789,7 @@ export default function App() {
           const parsed = JSON.parse(evt.target?.result as string);
           setBackupFileContent(parsed);
         } catch (err) {
-          alert('Format file JSON salah atau korup.');
+          showToast('JSON file format is incorrect or corrupted.', 'error');
           setBackupFileContent(null);
         }
       };
@@ -1784,11 +1799,11 @@ export default function App() {
 
   async function handleApplyRestore() {
     if (!backupFileContent || backupFileContent.app !== 'cartoteca') {
-      alert('Backup JSON Cartoteca tidak valid.');
+      showToast('Cartoteca JSON backup is invalid.', 'error');
       return;
     }
 
-    if (await customConfirm('Perhatian: Fitur ini akan menimpa dan menggabungkan data Anda saat ini dengan isi file backup. Proses di cloud (jika aktif) mungkin memakan waktu. Lanjutkan?')) {
+    if (await customConfirm('Warning: This feature will overwrite and merge your current data with the backup file. Processes on the Cloud (if active) may take some time. Proceed?')) {
       const importedCards = backupFileContent.cards || [];
       const importedWishlist = backupFileContent.wishlist || [];
       const importedTags = backupFileContent.customTags || [];
@@ -1811,7 +1826,7 @@ export default function App() {
 
       if (isFirebaseConfigured() && user) {
         try {
-          alert("Mulai menyinkronkan data ke Cloud Firestore. Jangan tutup aplikasi...");
+          showToast("Starting Cloud Firestore synchronization. Do not close the app...", 'info');
           
           // Use writeBatch to write in chunks of 400 (limit is 500)
           const syncChunks = async (items: any[], path: string) => {
@@ -1835,12 +1850,12 @@ export default function App() {
           tagBatch.set(doc(db, 'users', user!.uid, 'inventory', 'main'), importedInventory);
           await tagBatch.commit();
           
-          alert("Sinkronisasi Cloud Selesai! Data berhasil dipulihkan.");
+          showToast("Cloud Synchronization Complete! Data restored successfully.", 'success');
         } catch (e: any) {
-          alert("Gagal sinkronisasi cloud: " + e.message);
+          showToast("Cloud sync failed: " + e.message, 'error');
         }
       } else {
-        alert('Data berhasil dipulihkan secara lokal!');
+        showToast('Data successfully restored locally!', 'success');
       }
       setIsBackupModalOpen(false);
     }
@@ -2015,8 +2030,8 @@ export default function App() {
                     if (user?.uid) {
                       const shareUrl = `${window.location.origin}/?p=${user.uid}`;
                       navigator.clipboard.writeText(shareUrl)
-                        .then(() => alert('Your public read-only profile link has been copied to clipboard!'))
-                        .catch(() => alert('Failed to copy link.'));
+                        .then(() => showToast('Your public read-only profile link has been copied to clipboard!', 'success'))
+                        .catch(() => showToast('Failed to copy link.', 'error'));
                     }
                   }}
                   title="Share Profile"
@@ -3020,28 +3035,34 @@ export default function App() {
 
               {/* Guidelines / Tips from SKILL.md */}
               <div className="stat-card" style={{ gridColumn: '1 / -1', background: '#17140f', border: '1px solid #3a3327' }}>
-                <h4 style={{ color: '#d8923e', marginBottom: '12px', display: 'flex', alignItems: 'center', gap: '6px' }}>💡 Karuta Job Board Guide</h4>
-                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '16px', fontSize: '12px', color: '#9c8f76' }}>
-                  <div>
-                    <b style={{ color: '#e8dbce' }}>🩹 Wellness & Injuries</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Cards risk injury while working (7.5% per card). Injury sets the Wellness stat to 0, drastically reducing effort. Heal by manually checking the Injured 🩹 status or applying a Bandage.</p>
+                <h4 style={{ color: '#d8923e', marginBottom: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>💡 Karuta Job Board Guide</h4>
+                <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(200px, 1fr))', gap: '20px', fontSize: '13px', color: '#9c8f76' }}>
+                  <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #2a251b' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#ede3ce', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🩹 Wellness & Injuries
+                    </div>
+                    <p style={{ margin: 0, lineHeight: '1.5' }}>Cards risk injury while working (7.5% per card). Injury sets the Wellness stat to 0, drastically reducing effort. Heal by manually checking the Injured 🩹 status or applying a Bandage.</p>
                   </div>
-                  <div>
-                    <b style={{ color: '#e8dbce' }}>📜 Work Permit</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Required to work using the k!work command. Creating a Work Permit costs 2,000 Gold with an active period of 30 days.</p>
+                  <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #2a251b' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#ede3ce', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      📜 Work Permit
+                    </div>
+                    <p style={{ margin: 0, lineHeight: '1.5' }}>Required to work using the k!work command. Creating a Work Permit costs 2,000 Gold with an active period of 30 days.</p>
                   </div>
-                  <div>
-                    <b style={{ color: '#e8dbce' }}>🗺️ Node & Taxes</b>
-                    <p style={{ margin: '4px 0 0 0' }}>Always look for the Node with the lowest tax to maximize returns. Gold Nodes always have a flat 50% tax regardless of clan ownership.</p>
+                  <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #2a251b' }}>
+                    <div style={{ fontWeight: 'bold', fontSize: '14px', color: '#ede3ce', marginBottom: '6px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                      🗺️ Node & Taxes
+                    </div>
+                    <p style={{ margin: 0, lineHeight: '1.5' }}>Always look for the Node with the lowest tax to maximize returns. Gold Nodes always have a flat 50% tax regardless of clan ownership.</p>
                   </div>
                 </div>
               </div>
 
               <div className="stat-card" style={{ gridColumn: '1 / -1' }}>
                 <h4 style={{ marginBottom: '16px' }}>Your Worker Cards</h4>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Click a card below to assign it to an empty slot. (Shows cards marked as 'Worker' or with high Effort).</p>
+                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Click a card below to assign it to an empty slot. (Shows cards flagged as 'Worker').</p>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '16px' }}>
-                  {cards.filter(c => c.isWorker || c.tags.includes('worker') || c.tags.includes('deck-1') || (c.effort && c.effort > 0)).sort((a,b) => (b.effort||0)-(a.effort||0)).slice(0, 50).map(c => {
+                  {cards.filter(c => c.isWorker || (c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).some(t => t === 'worker' || t === 'worker-deck'))).sort((a,b) => (b.effort||0)-(a.effort||0)).slice(0, 50).map(c => {
                     const isUsed = workerSlotIds.includes(c.id);
                     return (
                       <div 
@@ -3066,8 +3087,8 @@ export default function App() {
                       </div>
                     );
                   })}
-                  {cards.length > 0 && cards.filter(c => c.isWorker || (c.effort && c.effort > 0)).length === 0 && (
-                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>No cards are marked as Workers or have effort stats.</div>
+                  {cards.length > 0 && cards.filter(c => c.isWorker || (c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).some(t => t === 'worker' || t === 'worker-deck'))).length === 0 && (
+                    <div style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>No cards are flagged as Workers.</div>
                   )}
                 </div>
               </div>
@@ -4149,6 +4170,57 @@ export default function App() {
           <img src={lightboxImageUrl} alt="Fullscreen Card" className="lightbox-image" />
         </div>
       )}
+
+      {/* Toast Notifications Container */}
+      <div style={{
+        position: 'fixed',
+        bottom: '24px',
+        right: '24px',
+        zIndex: 10000,
+        display: 'flex',
+        flexDirection: 'column',
+        gap: '10px',
+        maxWidth: '350px',
+        pointerEvents: 'none'
+      }}>
+        {toasts.map(t => (
+          <div 
+            key={t.id} 
+            style={{
+              padding: '12px 18px',
+              borderRadius: '8px',
+              color: '#fff',
+              fontSize: '13px',
+              fontWeight: 600,
+              boxShadow: '0 8px 24px rgba(0,0,0,0.5)',
+              background: t.type === 'success' ? '#5ea396' : t.type === 'error' ? '#c14e4e' : '#d8923e',
+              border: `1px solid ${t.type === 'success' ? '#4d877d' : t.type === 'error' ? '#a34141' : '#b87a2e'}`,
+              animation: 'slideIn 0.3s cubic-bezier(0.175, 0.885, 0.32, 1.275) forwards',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '10px',
+              pointerEvents: 'auto'
+            }}
+          >
+            <span>{t.type === 'success' ? '✅' : t.type === 'error' ? '❌' : 'ℹ️'}</span>
+            <span style={{ flex: 1 }}>{t.message}</span>
+            <button 
+              onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
+              style={{
+                background: 'transparent',
+                border: 'none',
+                color: '#fff',
+                opacity: 0.7,
+                cursor: 'pointer',
+                fontSize: '16px',
+                padding: '0 0 0 8px'
+              }}
+            >
+              &times;
+            </button>
+          </div>
+        ))}
+      </div>
     </div>
   );
 }
