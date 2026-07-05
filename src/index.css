@@ -1356,18 +1356,23 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   transition: opacity 0.2s;
 }
 
-.nc-badge {
+.nc-badge-container {
   position: absolute;
+  top: 32px;
   left: 8px;
+  display: flex;
+  flex-direction: column;
+  gap: 6px;
+  z-index: 2;
+}
+
+.nc-badge {
   font-size: 12px;
   background: rgba(23, 20, 15, 0.9);
   padding: 4px;
   border-radius: 4px;
-  z-index: 2;
 }
-.nc-badge.worker { top: 32px; }
-.nc-badge.trade { top: 60px; }
-.nc-badge.injured { top: 88px; background: rgba(193, 78, 78, 0.9); }
+.nc-badge.injured { background: rgba(193, 78, 78, 0.9); }
 
 .nc-bottom {
   position: absolute;

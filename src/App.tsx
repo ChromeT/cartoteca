@@ -2701,11 +2701,13 @@ export default function App() {
 
                                 <div className="nc-print">#{c.print != null ? c.print : '-'}</div>
 
-                                <ConditionWatermark condition={c.condition} />
+                                <div className="nc-badge-container">
+                                  {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
+                                  {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
+                                  {c.isInjured && <div className="nc-badge injured" title="Injured">🩹</div>}
+                                </div>
 
-                                {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
-                                {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
-                                {c.isInjured && <div className="nc-badge injured" title="Cedera">🩹</div>}
+                                <ConditionWatermark condition={c.condition} />
 
                                 <div className="nc-bottom">
                                   <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
@@ -2776,7 +2778,7 @@ export default function App() {
                                 <div style={{ display: 'flex', gap: '4px' }}>
                                   {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
                                   {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
-                                  {c.isInjured && <span className="chip injured-tag" title="Cedera" style={{ background: '#c14e4e', color: '#fff' }}>🩹 C</span>}
+                                  {c.isInjured && <span className="chip injured-tag" title="Injured" style={{ background: '#c14e4e', color: '#fff' }}>🩹 Inj</span>}
                                 </div>
                               </div>
 
