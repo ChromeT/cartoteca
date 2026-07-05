@@ -34,8 +34,8 @@ export default function LoginPage() {
   }, []);
 
   const handleDiscordLogin = () => {
-    const botUrl = import.meta.env.VITE_BOT_URL || 'http://localhost:3000';
-    window.location.href = `${botUrl}/auth/discord/login`;
+    // Arahkan ke Vercel Serverless Function
+    window.location.href = '/api/login';
   };
 
   async function handleSubmit(e: React.FormEvent) {
