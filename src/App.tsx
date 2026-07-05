@@ -1488,7 +1488,11 @@ export default function App() {
     if (!(await customConfirm('Are you sure you want to delete this card?'))) return false;
 
     if (isFirebaseConfigured() && user) {
-      await deleteDoc(doc(db, 'users', user!.uid, 'cards', id));
+      try {
+        await deleteDoc(doc(db, 'users', user!.uid, 'cards', id));
+      } catch (err) {
+        console.warn("Firebase delete failed, forcing local delete...", err);
+      }
     }
     const updated = cards.filter(c => c.id !== id);
     setCards(updated);
@@ -1498,6 +1502,7 @@ export default function App() {
     const updatedSelected = new Set(selectedCards);
     updatedSelected.delete(id);
     setSelectedCards(updatedSelected);
+    setIsCardModalOpen(false); // Force close the modal if open
     return true;
   }
 
