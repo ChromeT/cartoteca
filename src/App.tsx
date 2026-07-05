@@ -1472,7 +1472,21 @@ export default function App() {
     if (isFirebaseConfigured() && user) {
       try {
         if (cardFormId) {
-          await updateDoc(doc(db, 'users', user!.uid, 'cards', cardFormId), data);
+          const targetId = data.code ? data.code : cardFormId;
+          
+          // Use setDoc with merge to avoid 'No document to update' errors if the doc is missing remotely
+          await setDoc(doc(db, 'users', user!.uid, 'cards', targetId), data, { merge: true });
+          
+          // If the ID changed (e.g. replacing a legacy random ID with a proper code), try deleting the old one
+          if (targetId !== cardFormId) {
+            try {
+              const { deleteDoc } = await import('firebase/firestore');
+              await deleteDoc(doc(db, 'users', user!.uid, 'cards', cardFormId));
+            } catch (e) {
+              // Ignore if the old document didn't exist anyway
+            }
+          }
+          finalId = targetId;
         } else {
           if (data.code) {
             finalId = data.code;
@@ -1490,10 +1504,15 @@ export default function App() {
 
     let updatedCards = [];
     if (finalId) {
-      updatedCards = cards.map(c => c.id === finalId ? { ...data, id: finalId } : c);
-      // If finalId is from addDoc but it wasn't in cards yet, push it
-      if (!cards.some(c => c.id === finalId)) {
-        updatedCards.push({ ...data, id: finalId });
+      if (cardFormId) {
+        // We are editing an existing card. Find it by its old ID and replace it, updating its ID to finalId
+        updatedCards = cards.map(c => c.id === cardFormId ? { ...data, id: finalId } : c);
+      } else {
+        // We are adding a new card
+        updatedCards = cards.map(c => c.id === finalId ? { ...data, id: finalId } : c);
+        if (!cards.some(c => c.id === finalId)) {
+          updatedCards.push({ ...data, id: finalId });
+        }
       }
     } else {
       const newCard = { ...data, id: data.code || ('card-' + Date.now()) };
