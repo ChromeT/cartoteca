@@ -2690,7 +2690,7 @@ export default function App() {
                                   </>
                                 )}
 
-                                <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
+                                <div className="nc-print">#{c.print != null ? c.print : '-'}</div>
 
                                 <ConditionWatermark condition={c.condition} />
 
@@ -2705,8 +2705,8 @@ export default function App() {
                                     <div className="nc-meta-stats">
                                       {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
                                       {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase()}`}>{c.condition}</span>}
-                                      {c.effort !== null && <span className="nc-badge-chip">{c.effort} eff</span>}
-                                      {c.wish !== null && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
+                                      {typeof c.effort === 'number' && <span className="nc-badge-chip">{c.effort} eff</span>}
+                                      {typeof c.wish === 'number' && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
                                     </div>
                                     {c.code && (
                                       <div
@@ -2772,10 +2772,10 @@ export default function App() {
                               </div>
 
                               <div className="card-meta">
-                                {c.edition !== null && <span className="chip edition">◈{c.edition}</span>}
+                                {c.edition != null && <span className="chip edition">◈{c.edition}</span>}
                                 <span className="chip">{c.condition}</span>
-                                {c.effort !== null && <span className="chip effort">{c.effort} eff</span>}
-                                {c.wish !== null && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
+                                {typeof c.effort === 'number' && <span className="chip effort">{c.effort} eff</span>}
+                                {typeof c.wish === 'number' && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
                                 {itemTags.map(tag => (
                                   <span key={tag} className="custom-tag-chip" style={{ backgroundColor: getTagColor(tag) }}>{tag}</span>
                                 ))}
