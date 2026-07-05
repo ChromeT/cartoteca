@@ -593,15 +593,18 @@ export default function App() {
       let pWish: number | null = null;
       const unassigned: string[] = [];
 
-      segments.forEach(seg => {
+      segments.forEach((seg, idx) => {
         const s = seg.trim();
         if (!s) return;
 
-        const cleanedSeg = s.replace(/^[^a-zA-Z0-9]+/, '');
+        // Extract last word to bypass emojis like 1️⃣ which contains digit 1
+        const words = s.split(/\s+/);
+        const lastWord = words[words.length - 1] || '';
+        const cleanedSeg = lastWord.replace(/[^a-zA-Z0-9]/g, '');
 
-        const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,8})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
-        if (codeM && !pCode) {
-          const check = (codeM[1] || codeM[0]).toLowerCase();
+        const codeM = cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
+        if (codeM && !pCode && idx === 0) {
+          const check = cleanedSeg.toLowerCase();
           if (isNaN(Number(check))) {
             pCode = check;
             return;
@@ -1067,15 +1070,18 @@ export default function App() {
       if (segments.length > 1) {
         const unassigned: string[] = [];
 
-        segments.forEach(seg => {
+        segments.forEach((seg, idx) => {
           const s = seg.trim();
           if (!s) return;
 
-          const cleanedSeg = s.replace(/^[^a-zA-Z0-9]+/, '');
+          // Extract last word to bypass emojis like 1️⃣ which contains digit 1
+          const words = s.split(/\s+/);
+          const lastWord = words[words.length - 1] || '';
+          const cleanedSeg = lastWord.replace(/[^a-zA-Z0-9]/g, '');
 
-          const codeM = cleanedSeg.match(/^(?:[a-zA-Z]{2}\s+)?([a-zA-Z0-9]{5,8})$/) || cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
-          if (codeM && !parsedCode) {
-            const check = (codeM[1] || codeM[0]).toLowerCase();
+          const codeM = cleanedSeg.match(/^[a-zA-Z0-9]{5,8}$/);
+          if (codeM && !parsedCode && idx === 0) {
+            const check = cleanedSeg.toLowerCase();
             if (isNaN(Number(check))) {
               parsedCode = check;
               return;
