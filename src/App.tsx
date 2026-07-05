@@ -51,6 +51,13 @@ interface Card {
     date: number;
     price: number;
   }[];
+  rawDetails?: {
+    kv?: string;
+    kwi?: string;
+    klu?: string;
+    kci?: string;
+    priceCalc?: string;
+  };
 }
 
 interface WishlistItem {
@@ -206,7 +213,8 @@ export default function App() {
   const [publicProfileId] = useState<string | null>(pUid);
   const isReadOnly = publicProfileId !== null && (user ? publicProfileId !== user!.uid : true);
   const targetUid = publicProfileId || user?.uid;
-  const [lightboxImageUrl, setLightboxImageUrl] = useState<string | null>(null);
+  const [lightboxCard, setLightboxCard] = useState<Card | null>(null);
+  const [lightboxTab, setLightboxTab] = useState<'image' | 'kv' | 'kwi' | 'klu' | 'price'>('image');
   const [publicDisplayName, setPublicDisplayName] = useState<string | null>(null);
   const [cards, setCards] = useState<Card[]>([]);
   const [wishlist, setWishlist] = useState<WishlistItem[]>([]);
@@ -1754,8 +1762,9 @@ export default function App() {
   function handleSleeveContainerClick(id: string, e: React.MouseEvent) {
     if (isReadOnly) {
       const card = cards.find(c => c.id === id);
-      if (card?.imageUrl) {
-        setLightboxImageUrl(card.imageUrl);
+      if (card) {
+        setLightboxCard(card);
+        setLightboxTab('image');
       }
       return;
     }
@@ -2650,7 +2659,7 @@ export default function App() {
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
-                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxImageUrl(c.imageUrl || null); }} />
+                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxCard(c); setLightboxTab('image'); }} />
                                 )}
                                 {!isReadOnly && (
                                   <>
@@ -3937,10 +3946,60 @@ export default function App() {
         </div>
       )}
 
-      {lightboxImageUrl && (
-        <div className="lightbox-overlay" onClick={() => setLightboxImageUrl(null)}>
-          <button className="lightbox-close" onClick={() => setLightboxImageUrl(null)}>&times;</button>
-          <img src={lightboxImageUrl} alt="Fullscreen Card" className="lightbox-image" />
+      {lightboxCard && (
+        <div className="lightbox-overlay" onClick={() => setLightboxCard(null)}>
+          <button className="lightbox-close" onClick={() => setLightboxCard(null)}>&times;</button>
+          
+          <div className="lightbox-carousel-container" onClick={e => e.stopPropagation()} style={{
+            display: 'flex', flexDirection: 'column', width: '90%', maxWidth: '800px', height: '90%', maxHeight: '800px',
+            background: '#1c1912', borderRadius: '12px', overflow: 'hidden', boxShadow: '0 10px 40px rgba(0,0,0,0.5)'
+          }}>
+            {/* Tabs Header */}
+            <div className="lightbox-tabs-header" style={{ display: 'flex', background: '#120f0b', borderBottom: '1px solid #3a3327', overflowX: 'auto' }}>
+              <button className={`lightbox-tab ${lightboxTab === 'image' ? 'active' : ''}`} onClick={() => setLightboxTab('image')}>Card Image</button>
+              {(lightboxCard.rawDetails?.kv || lightboxCard.rawDetails?.kci) && <button className={`lightbox-tab ${lightboxTab === 'kv' ? 'active' : ''}`} onClick={() => setLightboxTab('kv')}>Card Details</button>}
+              {lightboxCard.rawDetails?.kwi && <button className={`lightbox-tab ${lightboxTab === 'kwi' ? 'active' : ''}`} onClick={() => setLightboxTab('kwi')}>Worker Details</button>}
+              {lightboxCard.rawDetails?.klu && <button className={`lightbox-tab ${lightboxTab === 'klu' ? 'active' : ''}`} onClick={() => setLightboxTab('klu')}>Character Lookup</button>}
+              {lightboxCard.rawDetails?.priceCalc && <button className={`lightbox-tab ${lightboxTab === 'price' ? 'active' : ''}`} onClick={() => setLightboxTab('price')}>Price Calculator</button>}
+            </div>
+
+            {/* Tab Content */}
+            <div style={{ flex: 1, overflowY: 'auto', padding: '24px', display: 'flex', justifyContent: 'center', alignItems: 'center', background: '#1c1912' }}>
+              {lightboxTab === 'image' && (
+                lightboxCard.imageUrl 
+                  ? <img src={lightboxCard.imageUrl} alt="Card" style={{ maxWidth: '100%', maxHeight: '100%', objectFit: 'contain', borderRadius: '8px' }} />
+                  : <div style={{ color: '#9c8f76' }}>No image available</div>
+              )}
+              {lightboxTab === 'kv' && (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
+                    {lightboxCard.rawDetails?.kci || lightboxCard.rawDetails?.kv}
+                  </pre>
+                </div>
+              )}
+              {lightboxTab === 'kwi' && (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
+                    {lightboxCard.rawDetails?.kwi}
+                  </pre>
+                </div>
+              )}
+              {lightboxTab === 'klu' && (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
+                    {lightboxCard.rawDetails?.klu}
+                  </pre>
+                </div>
+              )}
+              {lightboxTab === 'price' && (
+                <div style={{ width: '100%', height: '100%', display: 'flex', alignItems: 'flex-start' }}>
+                  <pre style={{ background: '#2f3136', color: '#dcddde', padding: '20px', borderRadius: '8px', width: '100%', whiteSpace: 'pre-wrap', fontFamily: 'Consolas, monospace', fontSize: '13px', margin: 0, borderLeft: '4px solid #202225' }}>
+                    {lightboxCard.rawDetails?.priceCalc}
+                  </pre>
+                </div>
+              )}
+            </div>
+          </div>
         </div>
       )}
 

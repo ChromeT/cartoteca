@@ -1742,3 +1742,36 @@ textarea::-webkit-scrollbar-thumb:hover {
   100% { transform: scale(1); opacity: 1; box-shadow: 0 0 8px #5ea396; }
 }
 
+/* ---------- Lightbox Tabs ---------- */
+.lightbox-tab {
+  background: none;
+  border: none;
+  color: var(--ink-soft);
+  padding: 15px 24px;
+  cursor: pointer;
+  font-family: var(--font-sans);
+  font-weight: 600;
+  font-size: 13px;
+  white-space: nowrap;
+  transition: all 0.2s ease;
+  border-bottom: 3px solid transparent;
+}
+.lightbox-tab:hover {
+  color: var(--gold);
+  background: rgba(216, 146, 62, 0.05);
+}
+.lightbox-tab.active {
+  color: var(--gold);
+  border-bottom-color: var(--gold);
+  background: rgba(216, 146, 62, 0.08);
+}
+.lightbox-tabs-header::-webkit-scrollbar {
+  height: 4px;
+}
+.lightbox-tabs-header::-webkit-scrollbar-track {
+  background: #120f0b;
+}
+.lightbox-tabs-header::-webkit-scrollbar-thumb {
+  background: #3a3327;
+  border-radius: 4px;
+}
