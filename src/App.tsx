@@ -4088,38 +4088,100 @@ export default function App() {
                                        .map(line => line.trim())
                                        .filter(line => line.length > 0 && !line.includes('★') && !line.toLowerCase().includes('card details'))
                                        .map((line, i) => {
-                                        let label = "";
-                                        let val = line;
-                                        let icon = '📌';
-                                        
-                                        const prefixes = ['Dropped on', 'Dropped in server ID', 'Dropped in', 'Dropped by', 'Owned by', 'Grabbed by', 'Grabbed after', 'Dye', 'Frame', 'Morph'];
-                                        for (const pref of prefixes) {
-                                           if (line.toLowerCase().startsWith(pref.toLowerCase())) {
-                                              label = pref;
-                                              val = line.substring(pref.length).replace(/^[:\s]+/, '');
-                                              break;
-                                           }
-                                        }
+                                          let label = "";
+                                          let val = line;
+                                          let icon = '📌';
+                                          
+                                          const prefixes = ['Dropped on', 'Dropped in server ID', 'Dropped in', 'Dropped by', 'Owned by', 'Grabbed by', 'Grabbed after', 'Dye', 'Frame', 'Morph'];
+                                          for (const pref of prefixes) {
+                                             if (line.toLowerCase().startsWith(pref.toLowerCase())) {
+                                                label = pref;
+                                                val = line.substring(pref.length).replace(/^[:\s]+/, '');
+                                                break;
+                                             }
+                                          }
+  
+                                          if(label) {
+                                             const l = label.toLowerCase();
+                                             if(l.includes('owned')) icon = '👑';
+                                             else if(l.includes('grabbed')) icon = '🖐️';
+                                             else if(l.includes('server')) icon = '🖥️';
+                                             else if(l.includes('dropped')) icon = '🎴';
+                                             else if(l.includes('after')) icon = '⏱️';
+                                             else if(l.includes('dye')) icon = '🎨';
+                                             else if(l.includes('frame')) icon = '🖼️';
+                                             else if(l.includes('morph')) icon = '🧬';
+                                          }
 
-                                        if(label) {
-                                           const l = label.toLowerCase();
-                                           if(l.includes('owned')) icon = '👑';
-                                           else if(l.includes('grabbed')) icon = '🖐️';
-                                           else if(l.includes('server')) icon = '🖥️';
-                                           else if(l.includes('dropped')) icon = '🎴';
-                                           else if(l.includes('after')) icon = '⏱️';
-                                           else if(l.includes('dye')) icon = '🎨';
-                                           else if(l.includes('frame')) icon = '🖼️';
-                                           else if(l.includes('morph')) icon = '🧬';
-                                        }
+                                          // Clean markdown stars and backticks
+                                          let cleanVal = val.replace(/\*\*/g, '').replace(/`/g, '');
+                                          
+                                          // Parse Discord timestamp <t:123456> or <t:123456:F>
+                                          const timeMatch = cleanVal.match(/<t:(\d+)(?::[a-zA-Z])?>/);
+                                          if (timeMatch) {
+                                             const date = new Date(parseInt(timeMatch[1]) * 1000);
+                                             const options: Intl.DateTimeFormatOptions = { month: 'long', day: 'numeric', year: 'numeric', hour: 'numeric', minute: '2-digit', hour12: true };
+                                             cleanVal = cleanVal.replace(/<t:\d+(?::[a-zA-Z])?>/, date.toLocaleString('en-US', options));
+                                          }
 
-                                        return (
-                                           <div key={i} className="card-info-box" style={{ gridColumn: 'span 2', padding: '8px 12px' }}>
-                                              {label && <span className="label" style={{ marginBottom: '4px' }}>{icon} {label}</span>}
-                                              <span className="value highlight" style={{ fontSize: '13px' }}>{val}</span>
-                                           </div>
-                                        );
-                                     })}
+                                          // Extract ID for capsule copying
+                                          let copyId = "";
+                                          const lowerLabel = label.toLowerCase();
+                                          if (['owned by', 'grabbed by', 'dropped by'].includes(lowerLabel)) {
+                                             const idMatch = cleanVal.match(/<@!?(\d+)>/);
+                                             if (idMatch) {
+                                                copyId = idMatch[1];
+                                                cleanVal = copyId; // clean up the display text to just the ID
+                                             }
+                                          } else if (lowerLabel === 'dropped in server id') {
+                                             copyId = cleanVal.trim();
+                                          }
+
+                                          // Render logic
+                                          let renderValue = <span className="value highlight" style={{ fontSize: '13px' }}>{cleanVal}</span>;
+                                          if (copyId) {
+                                             renderValue = (
+                                                <span 
+                                                  className="value highlight copy-capsule" 
+                                                  style={{ 
+                                                    fontSize: '12px', 
+                                                    cursor: 'pointer', 
+                                                    background: 'rgba(255,255,255,0.1)', 
+                                                    padding: '3px 10px', 
+                                                    borderRadius: '12px', 
+                                                    border: '1px solid rgba(255,255,255,0.2)',
+                                                    display: 'inline-block',
+                                                    marginTop: '4px',
+                                                    transition: 'all 0.2s',
+                                                    letterSpacing: '1px'
+                                                  }}
+                                                  onClick={(e) => {
+                                                    navigator.clipboard.writeText(copyId);
+                                                    const el = e.currentTarget as HTMLElement;
+                                                    const original = el.innerText;
+                                                    el.style.background = 'rgba(76, 175, 80, 0.4)';
+                                                    el.style.borderColor = 'rgba(76, 175, 80, 0.8)';
+                                                    el.innerText = 'Copied!';
+                                                    setTimeout(() => { 
+                                                      el.innerText = original; 
+                                                      el.style.background = 'rgba(255,255,255,0.1)';
+                                                      el.style.borderColor = 'rgba(255,255,255,0.2)';
+                                                    }, 1000);
+                                                  }}
+                                                  title="Click to copy ID"
+                                                >
+                                                  {cleanVal}
+                                                </span>
+                                             );
+                                          }
+  
+                                          return (
+                                             <div key={i} className="card-info-box" style={{ gridColumn: 'span 2', padding: '8px 12px' }}>
+                                                {label && <span className="label" style={{ marginBottom: '4px' }}>{icon} {label}</span>}
+                                                {renderValue}
+                                             </div>
+                                          );
+                                       })}
                                    </div>
                                  </>
                                )}
