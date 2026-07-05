@@ -2,12 +2,12 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import LoginPage from './LoginPage';
-import { 
-  collection, 
-  addDoc, 
-  updateDoc, 
-  deleteDoc, 
-  doc, 
+import {
+  collection,
+  addDoc,
+  updateDoc,
+  deleteDoc,
+  doc,
   setDoc,
   writeBatch,
   onSnapshot
@@ -83,7 +83,7 @@ interface Inventory {
 
 const ConditionWatermark = ({ condition }: { condition: string }) => {
   const c = condition.toLowerCase();
-  
+
   let icon = null;
   let color = 'rgba(255,255,255,0.05)';
 
@@ -220,7 +220,7 @@ export default function App() {
     window.addEventListener('resize', updateIndicator);
     return () => window.removeEventListener('resize', updateIndicator);
   }, [activeTab, user]);
-  
+
   // Filters & Search
   const [searchQuery, setSearchQuery] = useState('');
   const [selectedCondition, setSelectedCondition] = useState('');
@@ -232,7 +232,7 @@ export default function App() {
   useEffect(() => {
     setCurrentPage(1);
   }, [searchQuery, selectedCondition, selectedTag, selectedStatus, sortOption, activeTab]);
-  
+
   // Wishlist Search & Sort
   const [wishSearchQuery, setWishSearchQuery] = useState('');
   const [wishSortOption, setWishSortOption] = useState('priority-desc');
@@ -266,7 +266,7 @@ export default function App() {
     message: string;
     onConfirm: () => void;
     onCancel: () => void;
-  }>({ isOpen: false, message: '', onConfirm: () => {}, onCancel: () => {} });
+  }>({ isOpen: false, message: '', onConfirm: () => { }, onCancel: () => { } });
 
   const [kuiInputText, setKuiInputText] = useState('');
   const [kuiFeedback, setKuiFeedback] = useState({ text: '', isError: false, isSuccess: false });
@@ -311,7 +311,7 @@ export default function App() {
   const [isBulkImportModalOpen, setIsBulkImportModalOpen] = useState(false);
   const [bulkText, setBulkText] = useState('');
   const [bulkImportFeedback, setBulkImportFeedback] = useState({ text: '', isError: false, isSuccess: false });
-  
+
   const [viewMode, setViewMode] = useState<'list' | 'album'>(
     (localStorage.getItem('cartoteca:viewMode') as 'list' | 'album') || 'album'
   );
@@ -504,7 +504,7 @@ export default function App() {
       } else {
         setCustomTags(getDefaultTags());
       }
-      
+
       const savedInv = localStorage.getItem(`cartoteca:${uid}:inv`);
       if (savedInv) setInventory(JSON.parse(savedInv));
     }
@@ -574,7 +574,7 @@ export default function App() {
   function getTagColor(tagName: string) {
     const found = customTags.find(t => t.name.toLowerCase() === tagName.toLowerCase().trim());
     if (found) return found.color;
-    
+
     // Stable color hash
     let hash = 0;
     const name = tagName.trim();
@@ -660,7 +660,7 @@ export default function App() {
 
       let pName = 'Unknown Character';
       let pSeries = '';
-      
+
       // Filter out purely decorative strings like ★★☆☆
       const validUnassigned = unassigned.filter(u => !u.match(/^[★☆]+$/));
 
@@ -675,28 +675,28 @@ export default function App() {
       if (pCode && pName && pName !== 'Unknown Character') {
         const isDuplicateInBinder = cards.some(c => c.code && c.code.toLowerCase() === pCode.toLowerCase());
         const isDuplicateInBatch = newCards.some(c => c.code && c.code.toLowerCase() === pCode.toLowerCase());
-        
+
         if (!isDuplicateInBinder && !isDuplicateInBatch) {
           newCards.push({
             id: 'card-' + Date.now() + Math.random().toString(36).substr(2, 9),
             code: pCode,
-          print: pPrint,
-          edition: pEdition,
-          name: pName,
-          series: pSeries,
-          condition: pCondition,
-          effort: pEffort,
-          wish: pWish,
-          price: null,
-          isWorker: false,
-          isTrade: false,
-          frame: '',
-          dye: '',
-          tags: '',
-          notes: '',
-          createdAt: Date.now()
-        });
-        successCount++;
+            print: pPrint,
+            edition: pEdition,
+            name: pName,
+            series: pSeries,
+            condition: pCondition,
+            effort: pEffort,
+            wish: pWish,
+            price: null,
+            isWorker: false,
+            isTrade: false,
+            frame: '',
+            dye: '',
+            tags: '',
+            notes: '',
+            createdAt: Date.now()
+          });
+          successCount++;
         }
       }
     }
@@ -746,7 +746,7 @@ export default function App() {
 
     const cleanText = batchKiwiText.replace(/\r/g, '').replace(/^Owned by .*$/gim, '').trim();
     const blocks = cleanText.split(/Worker Details/i).map(b => b.trim()).filter(Boolean);
-    
+
     let updatedCount = 0;
     let notFoundCount = 0;
     let newCardsArray = [...cards];
@@ -769,7 +769,7 @@ export default function App() {
       const getStat = (name: string) => {
         const m2 = block.match(new RegExp(`(?:\\d+\\s*)?\\(([A-S])\\)\\s*${name}`, 'i'));
         if (m2) return m2[1].toUpperCase();
-        
+
         const m3 = block.match(new RegExp(`${name}\\s*:\\s*([A-S])`, 'i'));
         if (m3) return m3[1].toUpperCase();
 
@@ -785,7 +785,7 @@ export default function App() {
       const parsedGrabber = getStat('Grabber');
       const parsedDropper = getStat('Dropper');
       const parsedVanity = getStat('Vanity');
-      
+
       const effM = block.match(/(?:Effort|Eff)\s*[·:-]\s*(\d+)/i);
       const parsedEffort = effM ? parseInt(effM[1]) : undefined;
 
@@ -832,7 +832,7 @@ export default function App() {
         }
         await batch.commit();
       }
-      
+
       setBatchKiwiFeedback({ text: `✅ Successfully updated ${updatedCount} cards! (${notFoundCount} cards not found)`, isError: false, isSuccess: true });
       setTimeout(() => {
         setIsBatchKiwiModalOpen(false);
@@ -881,7 +881,7 @@ export default function App() {
         }
         await batch.commit();
       }
-      
+
       setBatchImageFeedback({ text: `✅ Successfully updated images for ${updatedCount} cards!`, isError: false, isSuccess: true });
       setTimeout(() => {
         setIsBatchImageModalOpen(false);
@@ -924,17 +924,17 @@ export default function App() {
     lines.forEach(line => {
       // Clean brackets, asterisks, underscores, backticks, tildes
       let cleanLine = line.replace(/[\*\_`~\[\]]/g, '').trim();
-      
+
       // Match key-value separated by middle dot (·), dash (-), or colon (:)
       const sepMatch = cleanLine.match(/^(.*?)\s*[\u00b7\-\:]\s*(.*)$/);
       if (sepMatch) {
         const left = sepMatch[1].trim();
         const right = sepMatch[2].trim();
-        
+
         // Find digit sequences
         const leftNumMatch = left.match(/\b\d+(?:,\d+)*\b/);
         const rightNumMatch = right.match(/\b\d+(?:,\d+)*\b/);
-        
+
         if (leftNumMatch && !rightNumMatch) {
           const val = leftNumMatch[0].replace(/,/g, '');
           const label = right;
@@ -952,7 +952,7 @@ export default function App() {
         // Fallback for space-separated format (e.g. "52 Cards burned" or "Cards burned 52")
         const leftNumMatch = cleanLine.match(/^\s*(\d+(?:,\d+)*)\s+(.+)$/);
         const rightNumMatch = cleanLine.match(/^(.+?)\s+(\d+(?:,\d+)*)\s*$/);
-        
+
         if (leftNumMatch) {
           const val = leftNumMatch[1].replace(/,/g, '');
           const label = leftNumMatch[2].trim();
@@ -1237,7 +1237,7 @@ export default function App() {
 
       if (charFallbackM) { parsedName = charFallbackM[1].trim(); if (charFallbackM[2]) parsedCode = charFallbackM[2].toLowerCase(); hasMatch = true; }
       if (effM) { parsedEffort = parseInt(effM[1]); hasMatch = true; }
-      
+
       if (purM) { parsedPurity = purM[1].toUpperCase(); hasMatch = true; }
       if (wellM) { parsedWellness = wellM[1].toUpperCase(); hasMatch = true; }
       if (toughM) { parsedToughness = toughM[1].toUpperCase(); hasMatch = true; }
@@ -1277,7 +1277,7 @@ export default function App() {
         const m = text.match(new RegExp(`${name}:?\\s*\\*?\\*?([A-S0-9]+)\\*?\\*?`, 'i'));
         return m ? m[1].toUpperCase() : 'E';
       };
-      
+
       const parsedStats = {
         toughness: getStat('Toughness'),
         quickness: getStat('Quickness'),
@@ -1289,12 +1289,12 @@ export default function App() {
         dropper: getStat('Dropper'),
         vanity: getStat('Vanity')
       };
-      
+
       if (Object.values(parsedStats).every(v => v === 'E') && !text.toLowerCase().includes('toughness')) {
         showToast("Invalid text! Make sure you copied the k!wi (Work Info) reply from the Karuta bot.", 'error');
         return;
       }
-      
+
       setFStats(parsedStats);
       showToast("Successfully extracted k!wi worker stats!", 'success');
     } catch (e) {
@@ -1339,7 +1339,7 @@ export default function App() {
       setFNotes(card.notes);
       setFImageUrl(card.imageUrl || '');
       setFStats(card.stats);
-      
+
       const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       setCardSelectedTags(tagsArray);
     } else {
@@ -1374,7 +1374,7 @@ export default function App() {
 
     const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : null;
     const currentPriceHistory = oldCard?.priceHistory ? [...oldCard.priceHistory] : [];
-    
+
     // Seed history if missing
     if (oldCard && oldCard.price !== null && currentPriceHistory.length === 0) {
       currentPriceHistory.push({ date: oldCard.createdAt, price: oldCard.price });
@@ -1407,7 +1407,7 @@ export default function App() {
       priceHistory: currentPriceHistory,
       createdAt: oldCard ? oldCard.createdAt : Date.now()
     };
-    
+
     // Remove undefined values to prevent Firestore crashes
     if (data.stats === undefined) {
       delete data.stats;
@@ -1458,7 +1458,7 @@ export default function App() {
     const updated = cards.filter(c => c.id !== id);
     setCards(updated);
     syncLocal('cards', updated);
-    
+
     // Remove from selected set
     const updatedSelected = new Set(selectedCards);
     updatedSelected.delete(id);
@@ -1537,7 +1537,7 @@ export default function App() {
   function handleClaimWish(item: WishlistItem) {
     // Delete from wishlist first
     handleDeleteWish(item.id);
-    
+
     // Open card modal pre-filled
     openCardModal({
       id: '',
@@ -1716,7 +1716,7 @@ export default function App() {
       });
       await batch.commit();
     }
-    
+
     const updated = cards.map(c => {
       if (selectedCards.has(c.id)) {
         const currentTags = c.tags ? c.tags.split(',').map(t => t.trim().toLowerCase()).filter(Boolean) : [];
@@ -1785,7 +1785,7 @@ export default function App() {
     if (file) {
       setBackupFileName(file.name);
       const reader = new FileReader();
-      reader.onload = function(evt) {
+      reader.onload = function (evt) {
         try {
           const parsed = JSON.parse(evt.target?.result as string);
           setBackupFileContent(parsed);
@@ -1828,7 +1828,7 @@ export default function App() {
       if (isFirebaseConfigured() && user) {
         try {
           showToast("Starting Cloud Firestore synchronization. Do not close the app...", 'info');
-          
+
           // Use writeBatch to write in chunks of 400 (limit is 500)
           const syncChunks = async (items: any[], path: string) => {
             for (let i = 0; i < items.length; i += 400) {
@@ -1843,14 +1843,14 @@ export default function App() {
 
           await syncChunks(importedCards, 'cards');
           await syncChunks(importedWishlist, 'wishlist');
-          
+
           const tagBatch = writeBatch(db);
           importedTags.forEach((t: any) => {
             tagBatch.set(doc(db, 'users', user!.uid, 'tags', t.name.toLowerCase()), t);
           });
           tagBatch.set(doc(db, 'users', user!.uid, 'inventory', 'main'), importedInventory);
           await tagBatch.commit();
-          
+
           showToast("Cloud Synchronization Complete! Data restored successfully.", 'success');
         } catch (e: any) {
           showToast("Cloud sync failed: " + e.message, 'error');
@@ -1866,7 +1866,7 @@ export default function App() {
   const renderStatItem = (label: string, value: any, emoji: string, accentColor: string = '#d8923e') => {
     if (value === undefined || value === null) return null;
     return (
-      <div 
+      <div
         key={label}
         className="kui-stat-item"
         style={{
@@ -1891,7 +1891,7 @@ export default function App() {
           bottom: 0,
           background: accentColor
         }}></div>
-        
+
         <div style={{
           width: '42px',
           height: '42px',
@@ -1925,7 +1925,7 @@ export default function App() {
     // Text search query
     if (searchQuery.trim()) {
       const q = searchQuery.toLowerCase().trim();
-      list = list.filter(c => 
+      list = list.filter(c =>
         (c.name || '').toLowerCase().includes(q) ||
         (c.series || '').toLowerCase().includes(q) ||
         (c.code || '').toLowerCase().includes(q) ||
@@ -1973,7 +1973,7 @@ export default function App() {
 
     if (wishSearchQuery.trim()) {
       const q = wishSearchQuery.toLowerCase().trim();
-      list = list.filter(w => 
+      list = list.filter(w =>
         (w.name || '').toLowerCase().includes(q) ||
         (w.series || '').toLowerCase().includes(q) ||
         (w.notes || '').toLowerCase().includes(q)
@@ -2035,7 +2035,7 @@ export default function App() {
     customTags.forEach(t => used.add(t.name.toLowerCase()));
     return Array.from(used).sort();
   };
-    // Auth gating
+  // Auth gating
   if (user === undefined) {
     return (
       <div style={{ minHeight: '100vh', display: 'flex', alignItems: 'center', justifyContent: 'center', background: '#17140f' }}>
@@ -2055,14 +2055,14 @@ export default function App() {
   return (
     <div id="app">
       <div className="wrap">
-        
+
         {/* HEADER */}
         <header className="hdr">
           <div className="brand">
             <div className="hanko">🎴</div>
             <div className="brand-text">
               <h1>Cartoteca</h1>
-              <p>Karuta Companion App</p>
+              <p>Karuta Tracker Assistant</p>
             </div>
           </div>
           <div className="mini-stats">
@@ -2071,9 +2071,9 @@ export default function App() {
             <div className="mini-stat"><b>{wishlist.length}</b><span>Wishlist</span></div>
           </div>
           <div className="user-menu" style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
-            <span style={{ 
-              fontFamily: "'IBM Plex Sans', sans-serif", 
-              fontSize: '11px', 
+            <span style={{
+              fontFamily: "'IBM Plex Sans', sans-serif",
+              fontSize: '11px',
               fontWeight: 700,
               color: '#d8923e',
               background: 'rgba(216, 146, 62, 0.1)',
@@ -2088,7 +2088,7 @@ export default function App() {
               boxShadow: '0 2px 6px rgba(0,0,0,0.2)'
             }}>
               <span style={{ display: 'inline-block', width: '6px', height: '6px', borderRadius: '50%', background: '#5ea396', boxShadow: '0 0 8px #5ea396', animation: 'pulse 2s infinite' }}></span>
-              👤 {displayName}
+              {displayName}
             </span>
             {!isReadOnly && (
               <>
@@ -2210,7 +2210,7 @@ export default function App() {
           }}></div>
           {activeMode === 'collection' ? (
             <>
-              <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => handleTabChange('collection')}>🎴 Binder</button>
+              <button ref={el => tabRefs.current['collection'] = el} className={`tab-btn ${activeTab === 'collection' ? 'active-text' : ''}`} onClick={() => handleTabChange('collection')}>🎴 Deck</button>
               <button ref={el => tabRefs.current['wishlist'] = el} className={`tab-btn ${activeTab === 'wishlist' ? 'active-text' : ''}`} onClick={() => handleTabChange('wishlist')}>✨ Wishlist</button>
               <button ref={el => tabRefs.current['stats'] = el} className={`tab-btn ${activeTab === 'stats' ? 'active-text' : ''}`} onClick={() => handleTabChange('stats')}>📈 Stats</button>
               {!isReadOnly && <button ref={el => tabRefs.current['tags-manager'] = el} className={`tab-btn ${activeTab === 'tags-manager' ? 'active-text' : ''}`} onClick={() => handleTabChange('tags-manager')}>🏷️ Manage Tags</button>}
@@ -2226,11 +2226,11 @@ export default function App() {
 
         {/* MAIN BODY AREA */}
         <main className="content-area">
-          
+
           {/* TAB: KUI DASHBOARD */}
           {activeTab === 'kui-stats' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              
+
               {/* KUI Import Parser Section */}
               {!isReadOnly && (
                 <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
@@ -2241,17 +2241,17 @@ export default function App() {
                     Paste the entire <code>k!ui</code> command reply from Discord below to display player stats on your public profile page.
                   </p>
                   <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
-                    <textarea 
+                    <textarea
                       className="input-dark"
-                      rows={3} 
+                      rows={3}
                       placeholder="Cards dropped · 141,273&#10;Cards grabbed · 19,990"
                       value={kuiInputText}
                       onChange={(e) => setKuiInputText(e.target.value)}
                       style={{ flex: 1, minWidth: '280px' }}
                     />
-                    <button 
-                      className="btn" 
-                      onClick={handleKUIParse} 
+                    <button
+                      className="btn"
+                      onClick={handleKUIParse}
                       disabled={!kuiInputText.trim() || (!!kuiFeedback.text && !kuiFeedback.isError)}
                       style={{ padding: '0 24px' }}
                     >
@@ -2259,10 +2259,11 @@ export default function App() {
                     </button>
                   </div>
                   {kuiFeedback.text && (
-                    <div style={{ padding: '10px', borderRadius: '4px', fontSize: '12px', 
+                    <div style={{
+                      padding: '10px', borderRadius: '4px', fontSize: '12px',
                       background: kuiFeedback.isError ? '#b85c5c20' : kuiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
                       color: kuiFeedback.isError ? '#ff8c8c' : kuiFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                      border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                      border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
                     }}>
                       {kuiFeedback.text}
                     </div>
@@ -2366,7 +2367,7 @@ export default function App() {
                       (<b style={{ color: '#e8dbce' }}>{Math.round((Number(userKUI['Cards grabbed']) / Number(userKUI['Cards dropped'])) * 100)}%</b> grab rate).
                       {userKUI['Cards burned'] && (
                         <> You have burned <b style={{ color: '#c14e4e' }}>{Number(userKUI['Cards burned']).toLocaleString()}</b> cards.
-                        Binder collection: <b style={{ color: '#d8923e' }}>{cards.length.toLocaleString()}</b> cards.</>)}
+                          Binder collection: <b style={{ color: '#d8923e' }}>{cards.length.toLocaleString()}</b> cards.</>)}
                     </div>
                   )}
                 </>
@@ -2387,25 +2388,25 @@ export default function App() {
             <div>
               <div className="toolbar" style={{ marginBottom: showFilters ? '12px' : '24px' }}>
                 <div className="search-wrapper">
-                  <input 
-                    className="search-box" 
-                    type="text" 
-                    placeholder="Search character, series, code, or tag..." 
+                  <input
+                    className="search-box"
+                    type="text"
+                    placeholder="Search character, series, code, or tag..."
                     value={searchQuery}
                     onChange={(e) => setSearchQuery(e.target.value)}
                   />
                   {searchQuery && <span className="clear-search" onClick={() => setSearchQuery('')}>&times;</span>}
                 </div>
-                
-                <button 
+
+                <button
                   className={`btn secondary ${showFilters ? 'active' : ''}`}
                   onClick={() => setShowFilters(!showFilters)}
-                  style={{ 
-                    padding: '10px 16px', 
-                    fontSize: '13.5px', 
-                    display: 'inline-flex', 
-                    alignItems: 'center', 
-                    gap: '6px', 
+                  style={{
+                    padding: '10px 16px',
+                    fontSize: '13.5px',
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '6px',
                     minWidth: '100px',
                     borderColor: showFilters ? 'var(--jade)' : 'var(--paper-line)',
                     background: showFilters ? 'rgba(94, 163, 150, 0.15)' : 'transparent',
@@ -2549,14 +2550,14 @@ export default function App() {
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
                 <div style={{ display: 'flex', gap: '4px', background: '#1c1912', borderRadius: '6px', padding: '4px' }}>
-                  <button 
+                  <button
                     title="List View"
                     onClick={() => setViewMode('list')}
                     style={{ background: viewMode === 'list' ? '#3a3327' : 'transparent', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
                   >
                     📝
                   </button>
-                  <button 
+                  <button
                     title="Album View"
                     onClick={() => setViewMode('album')}
                     style={{ background: viewMode === 'album' ? '#3a3327' : 'transparent', border: 'none', padding: '4px 8px', borderRadius: '4px', cursor: 'pointer', fontSize: '14px' }}
@@ -2596,175 +2597,175 @@ export default function App() {
                     const totalPages = Math.max(1, Math.ceil(filtered.length / CARDS_PER_PAGE));
                     const safeCurrentPage = Math.min(currentPage, totalPages);
                     const paginated = filtered.slice((safeCurrentPage - 1) * CARDS_PER_PAGE, safeCurrentPage * CARDS_PER_PAGE);
-                    
+
                     return (
                       <>
                         {paginated.map(c => {
-                    const isSelected = selectedCards.has(c.id);
-                    const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
-                    
-                    if (viewMode === 'album') {
-                      return (
-                        <div 
-                          key={c.id}
-                          className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
-                          onClick={(e) => handleSleeveContainerClick(c.id, e)}
-                        >
-                          {c.imageUrl && (
-                            <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxImageUrl(c.imageUrl || null); }} />
-                          )}
-                          {!isReadOnly && (
-                            <>
-                              <div 
-                                className="select-indicator" 
-                                style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
-                                onClick={(e) => toggleSleeveSelect(c.id, e)}
-                              />
-                              <button 
-                                className="nc-delete-btn"
-                                title="Delete Card"
-                                onClick={async (e) => { 
-                                  e.stopPropagation(); 
-                                  await handleDeleteCard(c.id); 
-                                }}
-                              >
-                                ×
-                              </button>
-                              <button 
-                                className="nc-edit-btn"
-                                title="Edit Card"
-                                onClick={(e) => { 
-                                  e.stopPropagation(); 
-                                  openCardModal(c); 
-                                }}
-                              >
-                                ✏️
-                              </button>
-                            </>
-                          )}
+                          const isSelected = selectedCards.has(c.id);
+                          const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
-                          <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
-                          
-                          <ConditionWatermark condition={c.condition} />
-                          
-                          {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
-                          {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
-                          {c.isInjured && <div className="nc-badge injured" title="Cedera">🩹</div>}
-                          
-                          <div className="nc-bottom">
-                            <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
-                            <div className="nc-series">{c.series || 'Unknown'}</div>
-                            <div className="nc-meta">
-                              <div className="nc-meta-stats">
-                                {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
-                                {c.condition && <span className={`nc-badge-chip condition-text condition-${c.condition.toLowerCase()}`}>{c.condition}</span>}
-                                {c.effort !== null && <span className="nc-badge-chip">{c.effort} eff</span>}
-                                {c.wish !== null && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
+                          if (viewMode === 'album') {
+                            return (
+                              <div
+                                key={c.id}
+                                className={`native-card condition-${c.condition.toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
+                                onClick={(e) => handleSleeveContainerClick(c.id, e)}
+                              >
+                                {c.imageUrl && (
+                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); setLightboxImageUrl(c.imageUrl || null); }} />
+                                )}
+                                {!isReadOnly && (
+                                  <>
+                                    <div
+                                      className="select-indicator"
+                                      style={{ display: selectedCards.size > 0 ? 'flex' : undefined }}
+                                      onClick={(e) => toggleSleeveSelect(c.id, e)}
+                                    />
+                                    <button
+                                      className="nc-delete-btn"
+                                      title="Delete Card"
+                                      onClick={async (e) => {
+                                        e.stopPropagation();
+                                        await handleDeleteCard(c.id);
+                                      }}
+                                    >
+                                      ×
+                                    </button>
+                                    <button
+                                      className="nc-edit-btn"
+                                      title="Edit Card"
+                                      onClick={(e) => {
+                                        e.stopPropagation();
+                                        openCardModal(c);
+                                      }}
+                                    >
+                                      ✏️
+                                    </button>
+                                  </>
+                                )}
+
+                                <div className="nc-print">#{c.print !== null ? c.print : '-'}</div>
+
+                                <ConditionWatermark condition={c.condition} />
+
+                                {c.isWorker && <div className="nc-badge worker" title="Worker">🛠️</div>}
+                                {c.isTrade && <div className="nc-badge trade" title="Trade">🔄</div>}
+                                {c.isInjured && <div className="nc-badge injured" title="Cedera">🩹</div>}
+
+                                <div className="nc-bottom">
+                                  <div className="nc-character">{c.name || '(Tanpa Nama)'}</div>
+                                  <div className="nc-series">{c.series || 'Unknown'}</div>
+                                  <div className="nc-meta">
+                                    <div className="nc-meta-stats">
+                                      {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
+                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${c.condition.toLowerCase()}`}>{c.condition}</span>}
+                                      {c.effort !== null && <span className="nc-badge-chip">{c.effort} eff</span>}
+                                      {c.wish !== null && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
+                                    </div>
+                                    {c.code && (
+                                      <div
+                                        className="nc-code-block"
+                                        title="Salin Kode"
+                                        onClick={(e) => {
+                                          e.stopPropagation();
+                                          navigator.clipboard.writeText(c.code!);
+                                          const el = e.currentTarget;
+                                          const oldText = el.innerHTML;
+                                          el.innerHTML = '📋 Copied!';
+                                          setTimeout(() => { el.innerHTML = oldText; }, 800);
+                                        }}
+                                      >
+                                        📋 {c.code}
+                                      </div>
+                                    )}
+                                  </div>
+                                </div>
                               </div>
-                              {c.code && (
-                                <div 
-                                  className="nc-code-block" 
-                                  title="Salin Kode"
-                                  onClick={(e) => {
-                                    e.stopPropagation();
-                                    navigator.clipboard.writeText(c.code!);
-                                    const el = e.currentTarget;
-                                    const oldText = el.innerHTML;
-                                    el.innerHTML = '📋 Copied!';
-                                    setTimeout(() => { el.innerHTML = oldText; }, 800);
-                                  }}
-                                >
-                                  📋 {c.code}
+                            );
+                          }
+
+                          // Standard List View
+                          return (
+                            <div
+                              key={c.id}
+                              className={`sleeve ${c.condition.toLowerCase() === 'mint' ? 'mint' : ''} ${c.condition.toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
+                              onClick={(e) => handleSleeveContainerClick(c.id, e)}
+                            >
+
+                              <div className="stampbadge">
+                                <b>{c.print !== null ? `#${c.print}` : '—'}</b>
+                                <span>PRINT</span>
+                              </div>
+
+                              <p className="card-name">{c.name || '(Tanpa Nama)'}</p>
+                              <p className="card-series" title={c.series}>{c.series || 'Series belum diisi'}</p>
+
+                              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                                {c.code ? (
+                                  <span
+                                    className="card-code"
+                                    title="Salin Kode"
+                                    style={{ cursor: 'pointer' }}
+                                    onClick={(e) => {
+                                      e.stopPropagation();
+                                      navigator.clipboard.writeText(c.code!);
+                                      const el = e.currentTarget;
+                                      const oldText = el.innerHTML;
+                                      el.innerHTML = '📋 Copied!';
+                                      setTimeout(() => { el.innerHTML = oldText; }, 800);
+                                    }}
+                                  >
+                                    📋 {c.code}
+                                  </span>
+                                ) : <span />}
+                                <div style={{ display: 'flex', gap: '4px' }}>
+                                  {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
+                                  {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
+                                  {c.isInjured && <span className="chip injured-tag" title="Cedera" style={{ background: '#c14e4e', color: '#fff' }}>🩹 C</span>}
+                                </div>
+                              </div>
+
+                              <div className="card-meta">
+                                {c.edition !== null && <span className="chip edition">◈{c.edition}</span>}
+                                <span className="chip">{c.condition}</span>
+                                {c.effort !== null && <span className="chip effort">{c.effort} eff</span>}
+                                {c.wish !== null && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
+                                {itemTags.map(tag => (
+                                  <span key={tag} className="custom-tag-chip" style={{ backgroundColor: getTagColor(tag) }}>{tag}</span>
+                                ))}
+                              </div>
+
+                              {(c.price || c.frame || c.dye || c.notes) && (
+                                <div className="card-details-row">
+                                  {c.price && <div><span>Est. Price:</span> <b>{c.price} Tickets</b></div>}
+                                  {c.frame && <div><span>Frame:</span> <b>{c.frame}</b></div>}
+                                  {c.dye && <div><span>Dye:</span> <b>{c.dye}</b></div>}
+                                  {c.notes && <div style={{ display: 'block', fontStyle: 'italic', marginTop: '2px' }}>"{c.notes}"</div>}
                                 </div>
                               )}
+
+                              {!isReadOnly && (<div className="card-actions" style={{ justifyContent: 'space-between' }}>
+                                <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => { e.stopPropagation(); toggleSleeveSelect(c.id, e as any); }}>
+                                  <input
+                                    type="checkbox"
+                                    checked={isSelected}
+                                    readOnly
+                                    style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--stamp)', margin: 0 }}
+                                  />
+                                  <span style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', fontWeight: 600 }}>Select</span>
+                                </div>
+                                <div style={{ display: 'flex', gap: '8px' }}>
+                                  <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
+                                  <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Delete</button>
+                                </div>
+                              </div>)}
                             </div>
-                          </div>
-                        </div>
-                      );
-                    }
-
-                    // Standard List View
-                    return (
-                      <div 
-                        key={c.id}
-                        className={`sleeve ${c.condition.toLowerCase() === 'mint' ? 'mint' : ''} ${c.condition.toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
-                        onClick={(e) => handleSleeveContainerClick(c.id, e)}
-                      >
-
-                        <div className="stampbadge">
-                          <b>{c.print !== null ? `#${c.print}` : '—'}</b>
-                          <span>PRINT</span>
-                        </div>
-
-                        <p className="card-name">{c.name || '(Tanpa Nama)'}</p>
-                        <p className="card-series" title={c.series}>{c.series || 'Series belum diisi'}</p>
-
-                        <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                          {c.code ? (
-                            <span 
-                              className="card-code" 
-                              title="Salin Kode"
-                              style={{ cursor: 'pointer' }}
-                              onClick={(e) => {
-                                e.stopPropagation();
-                                navigator.clipboard.writeText(c.code!);
-                                const el = e.currentTarget;
-                                const oldText = el.innerHTML;
-                                el.innerHTML = '📋 Copied!';
-                                setTimeout(() => { el.innerHTML = oldText; }, 800);
-                              }}
-                            >
-                              📋 {c.code}
-                            </span>
-                          ) : <span />}
-                          <div style={{ display: 'flex', gap: '4px' }}>
-                            {c.isWorker && <span className="chip worker-tag" title="Worker Deck">🛠️ W</span>}
-                            {c.isTrade && <span className="chip trade-tag" title="Up for Trade">🔄 T</span>}
-                            {c.isInjured && <span className="chip injured-tag" title="Cedera" style={{ background: '#c14e4e', color: '#fff' }}>🩹 C</span>}
-                          </div>
-                        </div>
-
-                        <div className="card-meta">
-                          {c.edition !== null && <span className="chip edition">◈{c.edition}</span>}
-                          <span className="chip">{c.condition}</span>
-                          {c.effort !== null && <span className="chip effort">{c.effort} eff</span>}
-                          {c.wish !== null && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
-                          {itemTags.map(tag => (
-                            <span key={tag} className="custom-tag-chip" style={{ backgroundColor: getTagColor(tag) }}>{tag}</span>
-                          ))}
-                        </div>
-
-                        {(c.price || c.frame || c.dye || c.notes) && (
-                          <div className="card-details-row">
-                            {c.price && <div><span>Est. Price:</span> <b>{c.price} Tickets</b></div>}
-                            {c.frame && <div><span>Frame:</span> <b>{c.frame}</b></div>}
-                            {c.dye && <div><span>Dye:</span> <b>{c.dye}</b></div>}
-                            {c.notes && <div style={{ display: 'block', fontStyle: 'italic', marginTop: '2px' }}>"{c.notes}"</div>}
-                          </div>
-                        )}
-
-                        {!isReadOnly && (                        <div className="card-actions" style={{ justifyContent: 'space-between' }}>
-                          <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }} onClick={(e) => { e.stopPropagation(); toggleSleeveSelect(c.id, e as any); }}>
-                            <input 
-                              type="checkbox" 
-                              checked={isSelected}
-                              readOnly
-                              style={{ width: '15px', height: '15px', cursor: 'pointer', accentColor: 'var(--stamp)', margin: 0 }}
-                            />
-                            <span style={{ fontSize: '13px', color: 'var(--ink-soft)', cursor: 'pointer', fontWeight: 600 }}>Select</span>
-                          </div>
-                          <div style={{ display: 'flex', gap: '8px' }}>
-                            <button className="icon-btn" onClick={(e) => { e.stopPropagation(); openCardModal(c); }}>✏️ Edit</button>
-                            <button className="icon-btn delete" onClick={(e) => { e.stopPropagation(); handleDeleteCard(c.id); }}>🗑️ Delete</button>
-                          </div>
-                        </div>)}
-                      </div>
-                    );
+                          );
                         })}
                         {totalPages > 1 && (
                           <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)', flexWrap: 'wrap' }}>
                             <button className="pag-btn" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>←</button>
-                            
+
                             {(() => {
                               const pages = [];
                               if (totalPages <= 7) {
@@ -2782,8 +2783,8 @@ export default function App() {
                                 p === '...' ? (
                                   <span key={`dots-${i}`} style={{ color: 'var(--ink-soft)', padding: '0 4px', fontWeight: 600 }}>...</span>
                                 ) : (
-                                  <button 
-                                    key={`page-${p}`} 
+                                  <button
+                                    key={`page-${p}`}
                                     className={`pag-btn ${safeCurrentPage === p ? 'active' : ''}`}
                                     onClick={() => setCurrentPage(p as number)}
                                   >
@@ -2808,10 +2809,10 @@ export default function App() {
           {activeTab === 'wishlist' && (
             <div>
               <div className="toolbar">
-                <input 
-                  className="search-box" 
-                  type="text" 
-                  placeholder="Search wishlist..." 
+                <input
+                  className="search-box"
+                  type="text"
+                  placeholder="Search wishlist..."
                   value={wishSearchQuery}
                   onChange={(e) => setWishSearchQuery(e.target.value)}
                 />
@@ -2850,11 +2851,11 @@ export default function App() {
 
                       {w.notes && <div style={{ fontSize: '11.5px', color: 'var(--ink-soft)', marginTop: '4px', fontStyle: 'italic' }}>"{w.notes}"</div>}
 
-                      {!isReadOnly && (                      <div className="card-actions">
+                      {!isReadOnly && (<div className="card-actions">
                         <button className="icon-btn" onClick={() => openWishModal(w)}>✏️ Edit</button>
                         <button className="icon-btn delete" onClick={() => handleDeleteWish(w.id)}>🗑️ Delete</button>
-                        <button 
-                          className="btn btn-sm" 
+                        <button
+                          className="btn btn-sm"
                           style={{ marginLeft: 'auto', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }}
                           onClick={() => handleClaimWish(w)}
                         >
@@ -2955,8 +2956,8 @@ export default function App() {
                 <h4>Add / Edit Tag</h4>
                 <div className="field">
                   <label>Tag Name *</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="e.g., waifu, trade, deck-1"
                     value={tagNameInput}
                     onChange={(e) => setTagNameInput(e.target.value)}
@@ -2965,17 +2966,17 @@ export default function App() {
                 <div className="field">
                   <label>Tag Color</label>
                   <div className="tag-color-picker">
-                    <input 
-                      type="color" 
-                      value={tagColorInput} 
+                    <input
+                      type="color"
+                      value={tagColorInput}
                       onChange={(e) => setTagColorInput(e.target.value)}
                     />
                     <div className="color-presets">
                       {['#5ea396', '#d8923e', '#e0b84c', '#b85c5c', '#8b5cf6', '#3b82f6'].map(color => (
-                        <span 
-                          key={color} 
-                          className="preset" 
-                          style={{ backgroundColor: color }} 
+                        <span
+                          key={color}
+                          className="preset"
+                          style={{ backgroundColor: color }}
                           onClick={() => setTagColorInput(color)}
                         />
                       ))}
@@ -2984,8 +2985,8 @@ export default function App() {
                 </div>
                 <div className="field">
                   <label>Tag Description</label>
-                  <input 
-                    type="text" 
+                  <input
+                    type="text"
                     placeholder="Optional description"
                     value={tagDescInput}
                     onChange={(e) => setTagDescInput(e.target.value)}
@@ -3044,7 +3045,7 @@ export default function App() {
                 <p style={{ color: 'var(--ink-soft)', fontSize: '13px', marginBottom: '20px' }}>
                   Select your 5 best worker cards (Slots A - E), enter the estimated Node Multiplier, and see potential Bits generated.
                 </p>
-                
+
                 <div style={{ display: 'flex', gap: '20px', marginBottom: '30px', overflowX: 'auto' }}>
                   {[0, 1, 2, 3, 4].map(slotIdx => {
                     const card = cards.find(c => c.id === workerSlotIds[slotIdx]);
@@ -3059,7 +3060,7 @@ export default function App() {
                             <div style={{ fontSize: '12px', color: '#d8923e', marginBottom: '12px', fontFamily: 'monospace' }}>Effort: {card.effort || 0}</div>
                             {card.stats && (
                               <div style={{ display: 'flex', flexWrap: 'wrap', gap: '4px', justifyContent: 'center', marginBottom: '12px' }}>
-                                {Object.entries(card.stats).map(([k,v]) => (
+                                {Object.entries(card.stats).map(([k, v]) => (
                                   <div key={k} style={{ fontSize: '9px', background: '#2a251b', padding: '2px 4px', borderRadius: '2px', color: v === 'S' ? '#d8923e' : v === 'A' ? '#5ea396' : '#e8dbce' }}>
                                     {k[0].toUpperCase()}:{v}
                                   </div>
@@ -3079,11 +3080,11 @@ export default function App() {
                 <div style={{ background: '#1c1912', padding: '20px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px' }}>
                   <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
                     <div style={{ fontSize: '14px', color: '#9c8f76' }}>Node Multiplier:</div>
-                    <input 
-                      type="number" 
-                      step="0.01" 
+                    <input
+                      type="number"
+                      step="0.01"
                       min="0"
-                      value={nodeMultiplier} 
+                      value={nodeMultiplier}
                       onChange={e => handleSetNodeMultiplier(Number(e.target.value))}
                       disabled={isReadOnly}
                       style={{ width: '80px', padding: '8px', background: '#17140f', border: '1px solid #3a3327', color: '#e8dbce', borderRadius: '4px', opacity: isReadOnly ? 0.6 : 1 }}
@@ -3135,11 +3136,11 @@ export default function App() {
                 <h4 style={{ marginBottom: '16px' }}>Your Worker Cards</h4>
                 <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '16px' }}>Click a card below to assign it to an empty slot. (Shows cards flagged as 'Worker').</p>
                 <div style={{ display: 'flex', gap: '12px', overflowX: 'auto', paddingBottom: '16px' }}>
-                  {cards.filter(c => c.isWorker || (c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).some(t => t === 'worker' || t === 'worker-deck'))).sort((a,b) => (b.effort||0)-(a.effort||0)).slice(0, 50).map(c => {
+                  {cards.filter(c => c.isWorker || (c.tags && c.tags.split(',').map(t => t.trim().toLowerCase()).some(t => t === 'worker' || t === 'worker-deck'))).sort((a, b) => (b.effort || 0) - (a.effort || 0)).slice(0, 50).map(c => {
                     const isUsed = workerSlotIds.includes(c.id);
                     return (
-                      <div 
-                        key={c.id} 
+                      <div
+                        key={c.id}
                         onClick={() => {
                           if (isReadOnly) return;
                           if (!isUsed) {
@@ -3148,8 +3149,8 @@ export default function App() {
                             else handleSetWorker(4, c.id); // overwrite 5th slot if full
                           }
                         }}
-                        style={{ 
-                          minWidth: '120px', maxWidth: '140px', padding: '12px', background: isUsed ? '#2a251b' : '#1c1912', border: '1px solid #3a3327', 
+                        style={{
+                          minWidth: '120px', maxWidth: '140px', padding: '12px', background: isUsed ? '#2a251b' : '#1c1912', border: '1px solid #3a3327',
                           borderRadius: '8px', cursor: isReadOnly ? 'default' : (isUsed ? 'not-allowed' : 'pointer'), opacity: isUsed ? 0.5 : 1, transition: '0.2s'
                         }}
                       >
@@ -3174,7 +3175,7 @@ export default function App() {
               <h3 style={{ margin: '0 0 24px 0', color: '#e8dbce', fontSize: '20px', display: 'flex', alignItems: 'center', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '16px' }}>
                 🎒 Inventory & Assets
               </h3>
-              
+
               <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
 
                 {/* === k!inv PARSER === */}
@@ -3200,7 +3201,7 @@ export default function App() {
                         const p = part.trim();
                         // Remove emojis/clutter at start
                         const cleanPart = p.replace(/^[^a-zA-Z0-9]+/, '').trim();
-                        
+
                         // Parse count if it is a number
                         const numStr = cleanPart.replace(/,/g, '');
                         if (/^\d+$/.test(numStr)) {
@@ -3280,8 +3281,8 @@ export default function App() {
                 {/* Tickets */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🎟️ Tickets</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.tickets === 0 ? '' : inventory.tickets}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, tickets: Number(e.target.value) })}
@@ -3292,8 +3293,8 @@ export default function App() {
                 {/* Gold */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🪙 Gold</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.gold === 0 ? '' : inventory.gold}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, gold: Number(e.target.value) })}
@@ -3304,8 +3305,8 @@ export default function App() {
                 {/* Gems */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>💠 Gems</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.gems === 0 ? '' : inventory.gems}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, gems: Number(e.target.value) })}
@@ -3316,8 +3317,8 @@ export default function App() {
                 {/* Trade License */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>📜 Trade License</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.tradeLicense === 0 ? '' : (inventory.tradeLicense || '')}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, tradeLicense: Number(e.target.value) })}
@@ -3328,8 +3329,8 @@ export default function App() {
                 {/* Work Permit */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>📜 Work Permit</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.workPermit === 0 ? '' : (inventory.workPermit || '')}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, workPermit: Number(e.target.value) })}
@@ -3340,8 +3341,8 @@ export default function App() {
                 {/* Bits */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
                   <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>🔵 Bits</span>
-                  <input 
-                    type="number" 
+                  <input
+                    type="number"
                     value={inventory.bits === 0 ? '' : inventory.bits}
                     placeholder="0"
                     onChange={e => handleUpdateInventory({ ...inventory, bits: Number(e.target.value) })}
@@ -3381,7 +3382,7 @@ export default function App() {
 
         {/* FOOTER */}
         <footer className="footer">
-          <div>CARTOTECA • Karuta Companion App</div>
+          <div>CARTOTECA • Karuta Tracker Assistant</div>
           <div style={{ fontSize: '10px', marginTop: '4px', opacity: 0.6 }}>© 2026 ChromeT</div>
         </footer>
 
@@ -3401,12 +3402,12 @@ export default function App() {
               <details>
                 <summary>✨ <b>Auto-fill via Discord Text</b></summary>
                 <div className="parser-body" style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                  
+
                   {/* Card Info (k!c) */}
                   <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#d8923e', marginBottom: '8px' }}>1. Paste Card Info (k!c)</div>
-                    <textarea 
-                      placeholder="Paste card info text here..." 
+                    <textarea
+                      placeholder="Paste card info text here..."
                       rows={2}
                       value={discordText}
                       onChange={(e) => setDiscordText(e.target.value)}
@@ -3420,8 +3421,8 @@ export default function App() {
                   {/* Worker/Effort Info (k!w) */}
                   <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
                     <div style={{ fontSize: '12px', fontWeight: 'bold', color: '#5ea396', marginBottom: '8px' }}>2. Paste Worker/Effort Info (k!w / k!wi)</div>
-                    <textarea 
-                      placeholder="Paste worker details text here..." 
+                    <textarea
+                      placeholder="Paste worker details text here..."
                       rows={2}
                       value={effortDiscordText}
                       onChange={(e) => setEffortDiscordText(e.target.value)}
@@ -3434,17 +3435,17 @@ export default function App() {
                       </div>
                     </div>
                   </div>
-                  
+
                 </div>
               </details>
             </div>
-            
+
             {fStats && (
               <div style={{ background: '#1c1912', padding: '12px', borderRadius: '8px', border: '1px dashed #3a3327', marginBottom: '16px', display: 'flex', gap: '8px', flexWrap: 'wrap', justifyContent: 'center' }}>
                 <div style={{ width: '100%', fontSize: '11px', color: '#9c8f76', textAlign: 'center', marginBottom: '4px' }}>Worker Stats (k!wi)</div>
                 {Object.entries(fStats).map(([k, v]) => (
                   <div key={k} style={{ background: '#2a251b', padding: '4px 8px', borderRadius: '4px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '6px' }}>
-                    <span style={{ color: '#9c8f76', textTransform: 'capitalize' }}>{k.substring(0,3)}</span>
+                    <span style={{ color: '#9c8f76', textTransform: 'capitalize' }}>{k.substring(0, 3)}</span>
                     <span style={{ color: v === 'S' ? '#d8923e' : v === 'A' ? '#5ea396' : '#fff', fontWeight: 'bold' }}>{v}</span>
                   </div>
                 ))}
@@ -3596,7 +3597,7 @@ export default function App() {
                 {customTags.map(t => {
                   const isSel = cardSelectedTags.includes(t.name.toLowerCase());
                   return (
-                    <span 
+                    <span
                       key={t.name}
                       className={`tag-select-chip ${isSel ? 'selected' : ''}`}
                       style={isSel ? { backgroundColor: t.color, borderColor: 'transparent', color: '#fff' } : undefined}
@@ -3619,8 +3620,8 @@ export default function App() {
               {fImageUrl && (
                 <div style={{ marginBottom: '8px', position: 'relative', width: '120px', height: '180px', borderRadius: '6px', overflow: 'hidden', border: '1px solid var(--paper-line)' }}>
                   <img src={fImageUrl} alt="Card" style={{ width: '100%', height: '100%', objectFit: 'cover' }} />
-                  <button 
-                    className="icon-btn delete" 
+                  <button
+                    className="icon-btn delete"
                     title="Delete Image"
                     style={{ position: 'absolute', top: 4, right: 4, background: 'rgba(0,0,0,0.7)', padding: '2px 6px', color: '#fff', border: 'none', borderRadius: '4px', cursor: 'pointer' }}
                     onClick={() => setFImageUrl('')}
@@ -3630,9 +3631,9 @@ export default function App() {
                 </div>
               )}
               <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-                <input 
-                  type="text" 
-                  placeholder="Paste image URL from Discord (optional)" 
+                <input
+                  type="text"
+                  placeholder="Paste image URL from Discord (optional)"
                   value={fImageUrl}
                   onChange={(e) => setFImageUrl(e.target.value)}
                   style={{ flex: 1 }}
@@ -3642,9 +3643,9 @@ export default function App() {
 
             <div className="modal-actions" style={{ display: 'flex', justifyContent: 'space-between', width: '100%' }}>
               {cardFormId ? (
-                <button 
-                  className="btn secondary" 
-                  style={{ color: '#d35d5d', borderColor: '#d35d5d' }} 
+                <button
+                  className="btn secondary"
+                  style={{ color: '#d35d5d', borderColor: '#d35d5d' }}
                   onClick={async () => {
                     const deleted = await handleDeleteCard(cardFormId);
                     if (deleted) setIsCardModalOpen(false);
@@ -3729,19 +3730,19 @@ export default function App() {
               <h3>📥 Impor Data</h3>
               <p>Muat data koleksi dari file backup JSON sebelumnya. Data lama akan tertimpa.</p>
               <div className="import-area">
-                <input 
-                  type="file" 
-                  accept=".json" 
-                  style={{ display: 'none' }} 
-                  ref={fileInputRef} 
+                <input
+                  type="file"
+                  accept=".json"
+                  style={{ display: 'none' }}
+                  ref={fileInputRef}
                   onChange={handleFileSelect}
                 />
                 <button className="btn secondary" style={{ width: '100%' }} onClick={() => fileInputRef.current?.click()}>Pilih File JSON</button>
                 <div style={{ marginTop: '8px', fontSize: '12.5px', color: 'var(--ink-soft)' }}>{backupFileName}</div>
               </div>
-              <button 
-                className="btn" 
-                style={{ width: '100%', marginTop: '12px', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }} 
+              <button
+                className="btn"
+                style={{ width: '100%', marginTop: '12px', background: 'var(--jade)', color: '#fff', borderColor: 'var(--jade-soft)' }}
                 disabled={!backupFileContent}
                 onClick={handleApplyRestore}
               >
@@ -3770,7 +3771,7 @@ export default function App() {
               {customTags.map(t => {
                 const isSel = batchSelectedTags.includes(t.name.toLowerCase());
                 return (
-                  <span 
+                  <span
                     key={t.name}
                     className={`tag-select-chip ${isSel ? 'selected' : ''}`}
                     style={isSel ? { backgroundColor: t.color, borderColor: 'transparent', color: '#fff' } : undefined}
@@ -3798,7 +3799,7 @@ export default function App() {
               <h3>Command Companion</h3>
               <button className="close-modal-btn" onClick={() => setIsCommandModalOpen(false)}>&times;</button>
             </div>
-            
+
             <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
               <label>Select Command Type</label>
               <select value={commandType} onChange={(e) => setCommandType(e.target.value)} className="form-control">
@@ -3813,11 +3814,11 @@ export default function App() {
             {(commandType === 'mt' || commandType === 'mut' || commandType === 'mb') && (
               <div className="form-group" style={{ marginBottom: '12px', display: 'flex', flexDirection: 'column', gap: '6px' }}>
                 <label>Tag Name</label>
-                <input 
-                  type="text" 
-                  value={commandArg} 
-                  onChange={(e) => setCommandArg(e.target.value)} 
-                  className="form-control" 
+                <input
+                  type="text"
+                  value={commandArg}
+                  onChange={(e) => setCommandArg(e.target.value)}
+                  className="form-control"
                   placeholder="e.g., Worker"
                 />
               </div>
@@ -3837,7 +3838,7 @@ export default function App() {
               } else if (commandType === 'wi') {
                 cmdStr = `kwi ${selectedCodes.join(' ')}`;
               }
-              
+
               return (
                 <div style={{ background: 'var(--paper-dark)', padding: '12px', borderRadius: '8px', border: '1px solid var(--border)' }}>
                   <p style={{ fontSize: '12px', margin: '0 0 8px 0', color: 'var(--ink-soft)' }}>Command Output:</p>
@@ -3845,8 +3846,8 @@ export default function App() {
                     {cmdStr}
                   </code>
                   <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '12px' }}>
-                    <button 
-                      className="btn btn-sm" 
+                    <button
+                      className="btn btn-sm"
                       onClick={(e) => {
                         navigator.clipboard.writeText(cmdStr);
                         e.currentTarget.innerText = '📋 Copied!';
@@ -3875,7 +3876,7 @@ export default function App() {
               Paste the response message from the Karuta bot after you run <code>k!mb</code> to automatically gain materials and delete {selectedCards.size} cards from your Cartoteca collection.
             </p>
             <div className="form-group">
-              <textarea 
+              <textarea
                 className="form-control"
                 placeholder="Misal: 🔥 You burned 5 cards and received 100 Gold and 15 Dust."
                 rows={4}
@@ -3883,7 +3884,7 @@ export default function App() {
                 onChange={(e) => setBurnDiscordText(e.target.value)}
               />
             </div>
-            
+
             {(() => {
               if (!burnDiscordText.trim()) return null;
               let cleanText = burnDiscordText.replace(/[\*_`~▫▪●○]/g, '');
@@ -3904,7 +3905,7 @@ export default function App() {
               if (tMatch) tickets = parseInt(tMatch[1].replace(/,/g, ''));
               const bMatch = cleanText.match(/([\d,]+)\s+Bit/i);
               if (bMatch) bits = parseInt(bMatch[1].replace(/,/g, ''));
-              
+
               if (gold === 0 && dust0 === 0 && dust1 === 0 && dust2 === 0 && dust3 === 0 && dust4 === 0 && tickets === 0 && bits === 0) {
                 return <p style={{ fontSize: '12px', color: '#c14e4e' }}>Tidak ada hadiah terdeteksi di teks.</p>;
               }
@@ -3931,9 +3932,9 @@ export default function App() {
 
             <div className="modal-actions" style={{ marginTop: '16px' }}>
               <button className="btn secondary" onClick={() => setIsBurnResolveModalOpen(false)}>Cancel</button>
-              <button 
-                className="btn" 
-                style={{ 
+              <button
+                className="btn"
+                style={{
                   background: burnDiscordText.trim() ? '#c14e4e' : 'transparent',
                   color: burnDiscordText.trim() ? 'white' : 'var(--ink-soft)',
                   borderColor: burnDiscordText.trim() ? '#a34141' : 'var(--paper-line)'
@@ -3970,7 +3971,7 @@ export default function App() {
                     tickets: inventory.tickets + tickets,
                     bits: inventory.bits + bits
                   });
-                  
+
                   // Delete burned cards from Firebase
                   if (isFirebaseConfigured() && user) {
                     const batch = writeBatch(db);
@@ -3979,7 +3980,7 @@ export default function App() {
                     });
                     batch.commit().catch(err => console.error("Burn delete error:", err));
                   }
-                  
+
                   const newCards = cards.filter(c => !selectedCards.has(c.id));
                   setCards(newCards);
                   syncLocal('cards', newCards);
@@ -4005,7 +4006,7 @@ export default function App() {
               </h3>
               <button onClick={() => setIsBackupModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
-            
+
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
                 <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Export (Back Up Data)</h4>
@@ -4018,10 +4019,10 @@ export default function App() {
               <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
                 <h4 style={{ color: '#e8dbce', marginBottom: '8px', fontSize: '14px' }}>Import (Restore Data)</h4>
                 <p style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '12px' }}>Select a JSON backup file to restore your collection. (Warning: this will overwrite all existing local data).</p>
-                <input 
-                  type="file" 
-                  accept=".json" 
-                  onChange={handleFileSelect} 
+                <input
+                  type="file"
+                  accept=".json"
+                  onChange={handleFileSelect}
                   ref={fileInputRef}
                   style={{ display: 'none' }}
                 />
@@ -4031,9 +4032,9 @@ export default function App() {
                     {backupFileName}
                   </span>
                 </div>
-                <button 
-                  className="btn" 
-                  style={{ width: '100%', background: backupFileContent ? '#b85c5c' : '#3a3327', color: backupFileContent ? '#fff' : '#9c8f76', opacity: backupFileContent ? 1 : 0.5, cursor: backupFileContent ? 'pointer' : 'not-allowed' }} 
+                <button
+                  className="btn"
+                  style={{ width: '100%', background: backupFileContent ? '#b85c5c' : '#3a3327', color: backupFileContent ? '#fff' : '#9c8f76', opacity: backupFileContent ? 1 : 0.5, cursor: backupFileContent ? 'pointer' : 'not-allowed' }}
                   onClick={handleApplyRestore}
                   disabled={!backupFileContent}
                 >
@@ -4055,24 +4056,25 @@ export default function App() {
               </h3>
               <button onClick={() => setIsBulkImportModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
-            
+
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ fontSize: '12px', color: 'var(--ink-soft)' }}>
                 Open Discord, run the command <code style={{ background: '#1c1912', padding: '2px 4px', borderRadius: '4px' }}>k!c</code>, then copy the entire response text and paste it below:
               </p>
-              <textarea 
-                className="input-field" 
+              <textarea
+                className="input-field"
                 style={{ width: '100%', height: '250px', fontFamily: 'monospace', fontSize: '12px', whiteSpace: 'pre-wrap', background: '#1c1912', color: '#e8dbce', border: '1px solid #3a3327', borderRadius: '8px', padding: '12px' }}
                 placeholder={`Example:\nkd · mz4xq · ◈3 · #14 · Mint · 420 effort · Megumi Kato · Saekano\nkd · asdfg · ◈2 · #100 · Good · 330 effort · Rem · Re:Zero`}
                 value={bulkText}
                 onChange={(e) => setBulkText(e.target.value)}
               />
-              
+
               {bulkImportFeedback.text && (
-                <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                <div style={{
+                  padding: '12px', borderRadius: '6px', fontSize: '13px',
                   background: bulkImportFeedback.isError ? '#b85c5c20' : bulkImportFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
                   color: bulkImportFeedback.isError ? '#ff8c8c' : bulkImportFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                  border: `1px solid ${bulkImportFeedback.isError ? '#b85c5c50' : bulkImportFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                  border: `1px solid ${bulkImportFeedback.isError ? '#b85c5c50' : bulkImportFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
                 }}>
                   {bulkImportFeedback.text}
                 </div>
@@ -4096,25 +4098,26 @@ export default function App() {
               </h3>
               <button onClick={() => setIsBatchKiwiModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
-            
+
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
                 Paste multiple k!wi bot replies below at once. The system will automatically detect the card code in parentheses, e.g., <code>(a1b2c)</code>, and match it to your collection.
               </p>
-              
-              <textarea 
+
+              <textarea
                 className="input-dark"
-                rows={10} 
+                rows={10}
                 placeholder="Worker Details\nCharacter · ... (a1b2c)\nEffort · 200\n\n... paste more replies ..."
                 value={batchKiwiText}
                 onChange={(e) => setBatchKiwiText(e.target.value)}
               />
- 
+
               {batchKiwiFeedback.text && (
-                <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                <div style={{
+                  padding: '12px', borderRadius: '6px', fontSize: '13px',
                   background: batchKiwiFeedback.isError ? '#b85c5c20' : batchKiwiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
                   color: batchKiwiFeedback.isError ? '#ff8c8c' : batchKiwiFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                  border: `1px solid ${batchKiwiFeedback.isError ? '#b85c5c50' : batchKiwiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                  border: `1px solid ${batchKiwiFeedback.isError ? '#b85c5c50' : batchKiwiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
                 }}>
                   {batchKiwiFeedback.text}
                 </div>
@@ -4138,7 +4141,7 @@ export default function App() {
               </h3>
               <button onClick={() => { setIsBatchImageModalOpen(false); setQuickImageMode(false); }} style={{ background: 'transparent', border: 'none', color: '#9c8f76', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
             </div>
-            
+
             <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
               <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid #3a3327', paddingBottom: '12px' }}>
                 <button className={`tab-btn ${!quickImageMode ? 'active-text' : ''}`} onClick={() => setQuickImageMode(false)} style={{ flex: 1 }}>📜 Batch Text Format</button>
@@ -4150,20 +4153,21 @@ export default function App() {
                   <p style={{ fontSize: '13px', color: 'var(--ink-soft)', lineHeight: '1.5' }}>
                     Paste in the format: <code>code|image_url</code> (one per line). Ideal for mass updates if you have data in a spreadsheet or notepad.
                   </p>
-                  
-                  <textarea 
+
+                  <textarea
                     className="input-dark"
-                    rows={10} 
+                    rows={10}
                     placeholder="a1b2c|https://...\nx9y8z|https://..."
                     value={batchImageText}
                     onChange={(e) => setBatchImageText(e.target.value)}
                   />
 
                   {batchImageFeedback.text && (
-                    <div style={{ padding: '12px', borderRadius: '6px', fontSize: '13px', 
+                    <div style={{
+                      padding: '12px', borderRadius: '6px', fontSize: '13px',
                       background: batchImageFeedback.isError ? '#b85c5c20' : batchImageFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
                       color: batchImageFeedback.isError ? '#ff8c8c' : batchImageFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                      border: `1px solid ${batchImageFeedback.isError ? '#b85c5c50' : batchImageFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                      border: `1px solid ${batchImageFeedback.isError ? '#b85c5c50' : batchImageFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}`
                     }}>
                       {batchImageFeedback.text}
                     </div>
@@ -4192,11 +4196,11 @@ export default function App() {
                         <div style={{ fontSize: '12px', color: 'var(--ink-soft)', marginBottom: '8px' }}>Card {quickImageIndex + 1} of {cardsWithoutImage.length}</div>
                         <div style={{ fontSize: '16px', fontWeight: 'bold', color: '#e8dbce', marginBottom: '4px' }}>{c.name}</div>
                         <div style={{ fontSize: '13px', color: 'var(--ink-soft)', marginBottom: '16px' }}>{c.series} • {c.code}</div>
-                        
+
                         <div style={{ display: 'flex', gap: '8px' }}>
-                          <input 
-                            type="text" 
-                            className="input-dark" 
+                          <input
+                            type="text"
+                            className="input-dark"
                             placeholder="Paste image URL (https://...)"
                             value={batchImageText}
                             onChange={(e) => setBatchImageText(e.target.value)}
@@ -4257,8 +4261,8 @@ export default function App() {
         pointerEvents: 'none'
       }}>
         {toasts.map(t => (
-          <div 
-            key={t.id} 
+          <div
+            key={t.id}
             style={{
               padding: '12px 18px',
               borderRadius: '8px',
@@ -4277,7 +4281,7 @@ export default function App() {
           >
             <span>{t.type === 'success' ? '✅' : t.type === 'error' ? '❌' : 'ℹ️'}</span>
             <span style={{ flex: 1 }}>{t.message}</span>
-            <button 
+            <button
               onClick={() => setToasts(prev => prev.filter(item => item.id !== t.id))}
               style={{
                 background: 'transparent',
