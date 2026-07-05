@@ -573,7 +573,7 @@ export default function App() {
   async function handleBulkImportExecute() {
     if (!bulkText.trim()) return;
 
-    const cleanBulkText = bulkText.replace(/^Owned by .*$/gim, '');
+    const cleanBulkText = bulkText.replace(/\r/g, '').replace(/^Owned by .*$/gim, '');
     const lines = cleanBulkText.trim().split('\n');
     const newCards: Card[] = [];
     let successCount = 0;
@@ -725,7 +725,7 @@ export default function App() {
   async function handleBatchKiwiParse() {
     if (!batchKiwiText.trim()) return;
 
-    const cleanText = batchKiwiText.replace(/^Owned by .*$/gim, '').trim();
+    const cleanText = batchKiwiText.replace(/\r/g, '').replace(/^Owned by .*$/gim, '').trim();
     const blocks = cleanText.split(/Worker Details/i).map(b => b.trim()).filter(Boolean);
     
     let updatedCount = 0;
@@ -899,7 +899,7 @@ export default function App() {
   // Parser must use Label as key, NUMBER as value.
   const handleKUIParse = async () => {
     if (!kuiInputText.trim()) return;
-    const lines = kuiInputText.split('\n');
+    const lines = kuiInputText.replace(/\r/g, '').split('\n');
     const newKUI: Record<string, string> = {};
 
     lines.forEach(line => {
@@ -982,6 +982,7 @@ export default function App() {
     }
 
     const cleanText = discordText
+      .replace(/\r/g, '')
       .replace(/^Owned by .*$/gim, '')
       .replace(/[\*_`~▫▪●○]/g, '')
       .trim();
@@ -2955,7 +2956,7 @@ export default function App() {
                 {(() => {
                   const handleInvParse = () => {
                     if (!invPasteText.trim()) return;
-                    const lines = invPasteText.split('\n');
+                    const lines = invPasteText.replace(/\r/g, '').split('\n');
                     const updates: Partial<typeof inventory> = {};
 
                     lines.forEach(line => {
