@@ -249,7 +249,6 @@ export default function App() {
   const [burnDiscordText, setBurnDiscordText] = useState('');
   const [commandType, setCommandType] = useState('mt');
   const [commandArg, setCommandArg] = useState('');
-  const [isProfileModalOpen, setIsProfileModalOpen] = useState(false);
 
   // Batch Input Modals
   const [isBatchKiwiModalOpen, setIsBatchKiwiModalOpen] = useState(false);
@@ -2012,8 +2011,15 @@ export default function App() {
                   💾 Backup
                 </button>
                 <button
-                  onClick={() => setIsProfileModalOpen(true)}
-                  title="Profile"
+                  onClick={() => {
+                    if (user?.uid) {
+                      const shareUrl = `${window.location.origin}/?p=${user.uid}`;
+                      navigator.clipboard.writeText(shareUrl)
+                        .then(() => alert('Your public read-only profile link has been copied to clipboard!'))
+                        .catch(() => alert('Failed to copy link.'));
+                    }
+                  }}
+                  title="Share Profile"
                   style={{
                     background: 'transparent', border: '1px solid #3a3327',
                     borderRadius: '6px', padding: '4px 10px',
@@ -2024,7 +2030,7 @@ export default function App() {
                   onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#d8923e'; (e.target as HTMLButtonElement).style.color = '#fff'; }}
                   onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
                 >
-                  Profile
+                  🔗 Share Profile
                 </button>
                 <button
                   onClick={() => signOut(auth)}
@@ -2082,7 +2088,7 @@ export default function App() {
                 color: activeMode === 'gameplay' ? '#1c1912' : '#9c8f76'
               }}
             >
-              🎮 Gameplay
+              👤 User Info
             </button>
           </div>
         </div>
@@ -2127,6 +2133,46 @@ export default function App() {
           {/* TAB: KUI DASHBOARD */}
           {activeTab === 'kui-stats' && (
             <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              
+              {/* KUI Import Parser Section */}
+              {!isReadOnly && (
+                <div style={{ background: '#1c1912', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                  <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px', display: 'flex', alignItems: 'center', gap: '8px' }}>
+                    📥 Import Karuta User Info (k!ui)
+                  </h4>
+                  <p style={{ fontSize: '12px', color: 'var(--ink-soft)', margin: 0 }}>
+                    Paste the entire <code>k!ui</code> command reply from Discord below to display player stats on your public profile page.
+                  </p>
+                  <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', alignItems: 'stretch' }}>
+                    <textarea 
+                      className="input-dark"
+                      rows={3} 
+                      placeholder="Cards dropped · 141,273&#10;Cards grabbed · 19,990"
+                      value={kuiInputText}
+                      onChange={(e) => setKuiInputText(e.target.value)}
+                      style={{ flex: 1, minWidth: '280px' }}
+                    />
+                    <button 
+                      className="btn" 
+                      onClick={handleKUIParse} 
+                      disabled={!kuiInputText.trim() || (!!kuiFeedback.text && !kuiFeedback.isError)}
+                      style={{ padding: '0 24px' }}
+                    >
+                      Update Stats
+                    </button>
+                  </div>
+                  {kuiFeedback.text && (
+                    <div style={{ padding: '10px', borderRadius: '4px', fontSize: '12px', 
+                      background: kuiFeedback.isError ? '#b85c5c20' : kuiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
+                      color: kuiFeedback.isError ? '#ff8c8c' : kuiFeedback.isSuccess ? '#5ea396' : '#d8923e',
+                      border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
+                    }}>
+                      {kuiFeedback.text}
+                    </div>
+                  )}
+                </div>
+              )}
+
               {Object.keys(userKUI).length > 0 ? (
                 <>
                   {/* Section: Cards */}
@@ -2234,7 +2280,7 @@ export default function App() {
                   {/* Section: Gameplay Stats (KUI) */}
                   {(userKUI['Total morphs rolled'] || userKUI['Total morphs applied'] || userKUI['Morph attempts'] || userKUI['Total dyes applied'] || userKUI['Dye refills'] || userKUI['Total trims applied']) && (
                     <div style={{ background: '#1c1912', border: '1px solid #3a3327', borderRadius: '8px', padding: '20px' }}>
-                      <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎮 Gameplay Details (KUI)</div>
+                      <div style={{ fontSize: '11px', color: '#ff6b6b', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>👤 Player Details (KUI)</div>
                       <div className="kui-dashboard-grid">
                         {[
                           [userKUI['Total morphs rolled'], '🌀 Morphs Rolled'],
@@ -2270,7 +2316,7 @@ export default function App() {
                   <div style={{ fontSize: '32px', marginBottom: '12px' }}>📊</div>
                   <h3 style={{ color: '#e8dbce', marginBottom: '8px' }}>No Player Stats Loaded</h3>
                   <p style={{ color: '#9c8f76', fontSize: '14px' }}>
-                    Open the <b>Profile</b> menu and paste the text from your Karuta <code>k!ui</code> bot response to initialize the player stats dashboard here.
+                    Paste the text from your Karuta <code>k!ui</code> bot response into the input field above to initialize your player stats dashboard.
                   </p>
                 </div>
               )}
@@ -2321,32 +2367,96 @@ export default function App() {
               </div>
 
               <div className={`filter-panel ${showFilters ? 'show' : ''}`}>
-                <select value={sortOption} onChange={(e) => setSortOption(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="recent">Recently Added</option>
-                  <option value="effort-desc">Highest Effort</option>
-                  <option value="effort-asc">Lowest Effort</option>
-                  <option value="print-asc">Lowest Print</option>
-                  <option value="edition-desc">Latest Edition (◈)</option>
-                  <option value="wish-desc">Most Wishlisted</option>
-                  <option value="name">Name A-Z</option>
-                </select>
-                
-                <select value={selectedCondition} onChange={(e) => setSelectedCondition(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="">All Conditions</option>
-                  <option value="Damaged">Damaged</option>
-                  <option value="Poor">Poor</option>
-                  <option value="Average">Average</option>
-                  <option value="Good">Good</option>
-                  <option value="Great">Great</option>
-                  <option value="Mint">Mint</option>
-                </select>
+                {/* Group: Sort By */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Sort By</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { value: 'recent', label: 'Recently Added' },
+                      { value: 'effort-desc', label: 'Highest Effort' },
+                      { value: 'effort-asc', label: 'Lowest Effort' },
+                      { value: 'print-asc', label: 'Lowest Print' },
+                      { value: 'edition-desc', label: 'Latest Edition (◈)' },
+                      { value: 'wish-desc', label: 'Most Wishlisted' },
+                      { value: 'name', label: 'Name A-Z' }
+                    ].map(opt => {
+                      const active = sortOption === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSortOption(opt.value)}
+                          className="tag-select-chip"
+                          style={{
+                            borderColor: active ? 'var(--stamp)' : 'var(--paper-line)',
+                            background: active ? 'rgba(216, 146, 62, 0.15)' : 'transparent',
+                            color: active ? 'var(--stamp)' : 'var(--ink-soft)'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
 
-                <select value={selectedTag} onChange={(e) => setSelectedTag(e.target.value)} style={{ flex: '1', minWidth: '160px' }}>
-                  <option value="">All Tags</option>
-                  {getUsedTags().map(t => (
-                    <option key={t} value={t}>{t}</option>
-                  ))}
-                </select>
+                {/* Group: Condition */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Condition</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { value: '', label: 'All Conditions' },
+                      { value: 'Damaged', label: 'Damaged' },
+                      { value: 'Poor', label: 'Poor' },
+                      { value: 'Average', label: 'Average' },
+                      { value: 'Good', label: 'Good' },
+                      { value: 'Great', label: 'Great' },
+                      { value: 'Mint', label: 'Mint' }
+                    ].map(opt => {
+                      const active = selectedCondition === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSelectedCondition(opt.value)}
+                          className="tag-select-chip"
+                          style={{
+                            borderColor: active ? 'var(--stamp)' : 'var(--paper-line)',
+                            background: active ? 'rgba(216, 146, 62, 0.15)' : 'transparent',
+                            color: active ? 'var(--stamp)' : 'var(--ink-soft)'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
+
+                {/* Group: Tags */}
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                  <div style={{ fontSize: '11px', color: '#9c8f76', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1px' }}>Tags</div>
+                  <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
+                    {[
+                      { value: '', label: 'All Tags' },
+                      ...getUsedTags().map(t => ({ value: t, label: t }))
+                    ].map(opt => {
+                      const active = selectedTag === opt.value;
+                      return (
+                        <button
+                          key={opt.value}
+                          onClick={() => setSelectedTag(opt.value)}
+                          className="tag-select-chip"
+                          style={{
+                            borderColor: active ? 'var(--stamp)' : 'var(--paper-line)',
+                            background: active ? 'rgba(216, 146, 62, 0.15)' : 'transparent',
+                            color: active ? 'var(--stamp)' : 'var(--ink-soft)'
+                          }}
+                        >
+                          {opt.label}
+                        </button>
+                      );
+                    })}
+                  </div>
+                </div>
               </div>
 
               <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '16px' }}>
@@ -4015,131 +4125,7 @@ export default function App() {
         </div>
       )}
 
-      {/* MODAL: COLLECTOR PROFILE */}
-      {isProfileModalOpen && (
-        <div className="modal-overlay open">
-          <div className="modal" style={{ maxWidth: '420px', padding: '0', overflow: 'hidden' }}>
-            <div style={{ background: '#d8923e', padding: '16px 20px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '12px' }}>
-                <div style={{ width: '48px', height: '48px', borderRadius: '50%', background: '#17140f', display: 'flex', alignItems: 'center', justifyContent: 'center', fontSize: '24px' }}>
-                  👤
-                </div>
-                <div>
-                  <h3 style={{ margin: '0', color: '#17140f', fontSize: '18px', fontWeight: 800 }}>{displayName}</h3>
-                  <div style={{ color: '#6d481b', fontSize: '12px', fontWeight: 600 }}>Collector Profile</div>
-                </div>
-              </div>
-              <button onClick={() => setIsProfileModalOpen(false)} style={{ background: 'transparent', border: 'none', color: '#17140f', fontSize: '24px', cursor: 'pointer', padding: '0' }}>&times;</button>
-            </div>
-            
-            <div style={{ padding: '20px', display: 'flex', flexDirection: 'column', gap: '16px' }}>
-              {/* User Account Info */}
-              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '10px' }}>
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', fontSize: '13px' }}>
-                  <span style={{ color: '#9c8f76' }}>Username:</span>
-                  <span style={{ color: '#e8dbce', fontWeight: 600 }}>{displayName}</span>
-                </div>
-                <button
-                  className="btn"
-                  style={{ width: '100%', marginTop: '4px', background: '#5ea396', color: '#fff', border: 'none', padding: '8px', borderRadius: '4px', cursor: 'pointer', fontSize: '12px', fontWeight: 600 }}
-                  onClick={() => {
-                    if (user?.uid) {
-                      const shareUrl = `${window.location.origin}/?p=${user.uid}`;
-                      navigator.clipboard.writeText(shareUrl)
-                        .then(() => alert('Your public read-only profile link has been copied to clipboard!'))
-                        .catch(() => alert('Failed to copy link.'));
-                    }
-                  }}
-                >
-                  🔗 Copy Public Profile Link
-                </button>
-              </div>
 
-              {/* KUI Import Section */}
-              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327', display: 'flex', flexDirection: 'column', gap: '12px' }}>
-                <h4 style={{ margin: 0, color: '#e8dbce', fontSize: '14px' }}>Karuta User Info (k!ui)</h4>
-                <p style={{ fontSize: '12px', color: 'var(--ink-soft)', lineHeight: '1.5', margin: 0 }}>
-                  Paste the k!ui command reply from Discord below to display player stats on your public profile page.
-                </p>
-                <textarea 
-                  className="input-dark"
-                  rows={4} 
-                  placeholder="Cards dropped · 141,273&#10;Cards grabbed · 19,990"
-                  value={kuiInputText}
-                  onChange={(e) => setKuiInputText(e.target.value)}
-                />
-                {kuiFeedback.text && (
-                  <div style={{ padding: '10px', borderRadius: '4px', fontSize: '12px', 
-                    background: kuiFeedback.isError ? '#b85c5c20' : kuiFeedback.isSuccess ? '#5ea39620' : '#d8923e20',
-                    color: kuiFeedback.isError ? '#ff8c8c' : kuiFeedback.isSuccess ? '#5ea396' : '#d8923e',
-                    border: `1px solid ${kuiFeedback.isError ? '#b85c5c50' : kuiFeedback.isSuccess ? '#5ea39650' : '#d8923e50'}` 
-                  }}>
-                    {kuiFeedback.text}
-                  </div>
-                )}
-                <button className="btn secondary" onClick={handleKUIParse} disabled={!!kuiFeedback.text && !kuiFeedback.isError}>
-                  📥 Update Stats
-                </button>
-              </div>
-
-
-              {/* Stats Grid */}
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ background: '#17140f', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                  <div style={{ fontSize: '11px', color: '#9c8f76', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Total Cards</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#e8dbce' }}>{totalCards}</div>
-                </div>
-                <div style={{ background: '#17140f', padding: '12px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                  <div style={{ fontSize: '11px', color: '#9c8f76', textTransform: 'uppercase', letterSpacing: '1px', marginBottom: '4px' }}>Wishlisted</div>
-                  <div style={{ fontSize: '20px', fontWeight: 700, color: '#e8dbce' }}>{cards.reduce((sum, c) => sum + (c.wish || 0), 0)}</div>
-                </div>
-              </div>
-
-              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Prints</div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px' }}>
-                  <span><span style={{ color: '#9c8f76' }}>SP (1-9):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print < 10).length}</span></span>
-                  <span><span style={{ color: '#9c8f76' }}>LP (10-99):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 10 && c.print <= 99).length}</span></span>
-                </div>
-                <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '13px', marginTop: '6px' }}>
-                  <span><span style={{ color: '#9c8f76' }}>MP (100-999):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 100 && c.print <= 999).length}</span></span>
-                  <span><span style={{ color: '#9c8f76' }}>HP (1000+):</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.print && c.print >= 1000).length}</span></span>
-                </div>
-              </div>
-
-              <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Editions</div>
-                <div style={{ display: 'flex', gap: '16px', fontSize: '13px', flexWrap: 'wrap' }}>
-                  {[1, 2, 3, 4, 5, 6].map(ed => (
-                    <span key={ed}><span style={{ color: '#9c8f76' }}>◈{ed}:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.edition === ed).length}</span></span>
-                  ))}
-                </div>
-              </div>
-
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                  <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Conditions</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
-                    <span><span style={{ color: '#9c8f76' }}>Mint:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Mint').length}</span></span>
-                    <span><span style={{ color: '#9c8f76' }}>Excellent:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Excellent' || c.condition === 'Great').length}</span></span>
-                    <span><span style={{ color: '#9c8f76' }}>Good:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Good' || c.condition === 'Average').length}</span></span>
-                    <span><span style={{ color: '#9c8f76' }}>Poor:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.condition === 'Poor' || c.condition === 'Damaged').length}</span></span>
-                  </div>
-                </div>
-                
-                <div style={{ background: '#17140f', padding: '16px', borderRadius: '8px', border: '1px solid #3a3327' }}>
-                  <div style={{ fontSize: '12px', color: '#d8923e', fontWeight: 700, marginBottom: '10px', textTransform: 'uppercase' }}>Upgrades</div>
-                  <div style={{ display: 'flex', flexDirection: 'column', gap: '4px', fontSize: '13px' }}>
-                    <span><span style={{ color: '#9c8f76' }}>Framed:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.frame && c.frame.trim() !== '').length}</span></span>
-                    <span><span style={{ color: '#9c8f76' }}>Dyed:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.dye && c.dye.trim() !== '').length}</span></span>
-                    <span><span style={{ color: '#9c8f76' }}>Worker:</span> <span style={{ color: '#e8dbce' }}>{cards.filter(c => c.isWorker).length}</span></span>
-                  </div>
-                </div>
-              </div>
-            </div>
-          </div>
-        </div>
-      )}
 
 
       {confirmState.isOpen && (
