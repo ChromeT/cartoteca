@@ -21,7 +21,8 @@ const app = initializeApp(firebaseConfig);
 // Initialize Services
 // Gunakan long-polling untuk mengatasi masalah blocking WebChannel (misal: di Firefox ETP / uBlock)
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true
+  experimentalForceLongPolling: true,
+  ignoreUndefinedProperties: true
 });
 export const auth = getAuth(app);
 export const storage = getStorage(app);

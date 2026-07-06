@@ -1433,7 +1433,7 @@ export default function App() {
       return;
     }
 
-    const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : null;
+    const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : (fCode.trim() ? cards.find(c => c.code?.toLowerCase() === fCode.trim().toLowerCase()) : null);
     const currentPriceHistory = oldCard?.priceHistory ? [...oldCard.priceHistory] : [];
 
     // Seed history if missing
@@ -1466,7 +1466,7 @@ export default function App() {
       imageUrl: fImageUrl,
       stats: fStats,
       priceHistory: currentPriceHistory,
-      createdAt: oldCard ? oldCard.createdAt : Date.now()
+      createdAt: (oldCard && oldCard.createdAt) ? oldCard.createdAt : Date.now()
     };
 
     // Remove undefined values to prevent Firestore crashes
