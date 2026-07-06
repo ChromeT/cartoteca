@@ -2169,6 +2169,7 @@ export default function App() {
     : (user?.email?.replace('@cartoteca.app', '') || 'Pengguna');
 
   const handleLinkDiscord = async () => {
+    if (!user) return;
     try {
       const idToken = await user.getIdToken();
       window.location.href = `/api/login?idToken=${encodeURIComponent(idToken)}`;
