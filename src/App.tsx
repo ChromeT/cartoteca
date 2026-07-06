@@ -4021,11 +4021,11 @@ export default function App() {
               }
               const rd = lightboxCard.rawDetails;
               if (rd) {
+                 if (rd.priceCalc) stackItems.push({ id: 'price', type: 'text', content: rd.priceCalc });
                  if (rd.kv) stackItems.push({ id: 'kv', type: 'text', content: rd.kv });
                  if (rd.kci) stackItems.push({ id: 'kci', type: 'text', content: rd.kci });
                  if (rd.kwi) stackItems.push({ id: 'kwi', type: 'text', content: rd.kwi });
                  if (rd.klu) stackItems.push({ id: 'klu', type: 'text', content: rd.klu });
-                 if (rd.priceCalc) stackItems.push({ id: 'price', type: 'text', content: rd.priceCalc });
               }
               
               if (stackItems.length === 0) {
@@ -4220,7 +4220,7 @@ export default function App() {
                                    <div className="card-info-grid" style={{ marginBottom: '16px' }}>
                                      <div className="card-info-box" style={{ gridColumn: 'span 2', padding: '16px' }}>
                                         <span className="label">💪 Total Effort</span>
-                                        <span className="value highlight" style={{ fontSize: '24px' }}>{lightboxCard.effort || '?'}</span>
+                                        <span className="value highlight" style={{ fontSize: '24px' }}>{lightboxCard.effort !== null && lightboxCard.effort !== undefined ? lightboxCard.effort : '?'}</span>
                                      </div>
                                    </div>
                                    {lightboxCard.stats && (
