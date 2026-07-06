@@ -377,7 +377,8 @@ export default function App() {
   const [fEdition, setFEdition] = useState<number | ''>('');
   const [fName, setFName] = useState('');
   const [fSeries, setFSeries] = useState('');
-  const [fCondition, setFCondition] = useState('Good');
+  const [fCondition, setFCondition] = useState('2 Good');
+  const [fCreatedAt, setFCreatedAt] = useState<number | null>(null);
   const [fEffort, setFEffort] = useState<number | ''>('');
   const [fWish, setFWish] = useState<number | ''>('');
   const [fPrice, setFPrice] = useState<number | ''>('');
@@ -591,6 +592,47 @@ export default function App() {
     const m = localStorage.getItem(`cartoteca:${user!.uid}:nodemult`);
     if (m) setNodeMultiplier(parseFloat(m));
   }, [user]);
+
+  // Condition 0-4 Migration
+  useEffect(() => {
+    if (cards.length === 0) return;
+    const needsMigration = cards.some(c => c.condition && !/^\d/.test(c.condition));
+    if (needsMigration) {
+      const migratedCards = cards.map(c => {
+        if (c.condition && !/^\d/.test(c.condition)) {
+          const s = c.condition.toLowerCase().trim();
+          let newCond = '2 Good';
+          if (['mint', 'mt', '★★★★'].includes(s)) newCond = '4 Mint';
+          else if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) newCond = '3 Excellent';
+          else if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) newCond = '2 Good';
+          else if (['fair', 'fr', 'average', '★☆☆☆', '1 poor', 'poor', 'pr'].includes(s)) newCond = '1 Poor';
+          else if (['damaged', 'dm', '☆☆☆☆'].includes(s)) newCond = '0 Damaged';
+          
+          return { ...c, condition: newCond };
+        }
+        return c;
+      });
+      setCards(migratedCards);
+      syncLocal('cards', migratedCards);
+      if (isFirebaseConfigured() && user && !isReadOnly) {
+        (async () => {
+          for (let i = 0; i < migratedCards.length; i += 400) {
+            const chunk = migratedCards.slice(i, i + 400);
+            const batch = writeBatch(db);
+            let hasChanges = false;
+            chunk.forEach(item => {
+              const oldCond = cards.find(c => c.id === item.id)?.condition || '';
+              if (item.condition && !/^\d/.test(oldCond)) {
+                batch.update(doc(db, 'users', user.uid, 'cards', item.id), { condition: item.condition });
+                hasChanges = true;
+              }
+            });
+            if (hasChanges) await batch.commit();
+          }
+        })();
+      }
+    }
+  }, [cards, user, isReadOnly]);
 
   const handleSetWorker = (index: number, cardId: string | null) => {
     if (!user) return;
@@ -1102,6 +1144,7 @@ export default function App() {
       const condM = line.match(/(?:Condition|Kondisi|Rating)\s*:\s*[·•]?\s*([a-zA-Z★☆]+)/i);
       const effM = line.match(/(?:Effort|Eff)\s*[·:-]?\s*(\d+)/i);
       const wishM = line.match(/(?:Wishlisted|Wishlists|Wishlist|Wish)\s*[:·-]?\s*([\d,.]+)/i);
+      const dateM = line.match(/(?:Printed|Dropped|Claimed)\s*:\s*(?:<t:(\d+)(?::[a-zA-Z])?>|(\d{4}-\d{2}-\d{2}))/i);
 
       // Support both Keqing `Purity: A` and Karuta `1 (S) Purity` formats
       const purM = line.match(/(?:Purity)\s*:\s*([a-zA-Z0-9]+)/i) || line.match(/\((.*?)\)\s*Purity/i);
@@ -1127,6 +1170,11 @@ export default function App() {
       if (effM) { parsedEffort = parseInt(effM[1]); hasLabelMatch = true; }
       if (wishM) {
         parsedWish = parseInt(wishM[1].replace(/[,.]/g, ''));
+        hasLabelMatch = true;
+      }
+      if (dateM) {
+        if (dateM[1]) setFCreatedAt(parseInt(dateM[1]) * 1000);
+        else if (dateM[2]) setFCreatedAt(new Date(dateM[2]).getTime());
         hasLabelMatch = true;
       }
 
@@ -1364,13 +1412,12 @@ export default function App() {
   };
 
   function mapConditionString(str: string): string | null {
-    const s = str.replace(/[·•]/g, '').trim().toLowerCase();
-    if (['mint', 'mt', '★★★★'].includes(s)) return 'Mint';
-    if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) return 'Great';
-    if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) return 'Good';
-    if (['fair', 'fr', 'average', '★☆☆☆'].includes(s)) return 'Average';
-    if (['poor', 'pr'].includes(s)) return 'Poor';
-    if (['damaged', 'dm', '☆☆☆☆'].includes(s)) return 'Damaged';
+    const s = str.toLowerCase().trim();
+    if (['mint', 'mt', '★★★★', '4 mint'].includes(s)) return '4 Mint';
+    if (['excellent', 'ex', 'great', '★★★☆', '3 excellent'].includes(s)) return '3 Excellent';
+    if (['fine', 'fn', 'good', 'gd', '★★☆☆', '2 good'].includes(s)) return '2 Good';
+    if (['fair', 'fr', 'average', '★☆☆☆', '1 poor', 'poor', 'pr'].includes(s)) return '1 Poor';
+    if (['damaged', 'dm', '☆☆☆☆', '0 damaged'].includes(s)) return '0 Damaged';
     return null;
   }
 
@@ -1400,6 +1447,7 @@ export default function App() {
       setFNotes(card.notes);
       setFImageUrl(card.imageUrl || '');
       setFStats(card.stats);
+      setFCreatedAt(card.createdAt || null);
 
       const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
       setCardSelectedTags(tagsArray);
@@ -1410,7 +1458,7 @@ export default function App() {
       setFEdition('');
       setFName('');
       setFSeries('');
-      setFCondition('Good');
+      setFCondition('2 Good');
       setFEffort('');
       setFWish('');
       setFPrice('');
@@ -1422,6 +1470,7 @@ export default function App() {
       setFNotes('');
       setFImageUrl('');
       setFStats(undefined);
+      setFCreatedAt(null);
       setCardSelectedTags([]);
     }
     setIsCardModalOpen(true);
@@ -1466,7 +1515,7 @@ export default function App() {
       imageUrl: fImageUrl,
       stats: fStats,
       priceHistory: currentPriceHistory,
-      createdAt: oldCard ? (oldCard.createdAt ?? 0) : Date.now()
+      createdAt: fCreatedAt !== null ? fCreatedAt : (oldCard ? (oldCard.createdAt ?? 0) : Date.now())
     };
 
     // Remove undefined values to prevent Firestore crashes
@@ -1636,7 +1685,7 @@ export default function App() {
       edition: null,
       name: item.name,
       series: item.series,
-      condition: 'Good',
+      condition: '2 Good',
       effort: null,
       wish: item.targetWish,
       price: null,
@@ -2113,10 +2162,10 @@ export default function App() {
   const efforts = cards.map(c => Number(c.effort)).filter(n => !isNaN(n) && n > 0);
   const avgEffort = efforts.length ? Math.round(efforts.reduce((a, b) => a + b, 0) / efforts.length) : 0;
   const lowPrint = cards.filter(c => c.print !== null && Number(c.print) <= 99).length;
-  const mintCount = cards.filter(c => c.condition === 'Mint').length;
+  const mintCount = cards.filter(c => c.condition === '4 Mint').length;
 
   const getConditionStats = () => {
-    const counts: Record<string, number> = { 'Damaged': 0, 'Poor': 0, 'Average': 0, 'Good': 0, 'Great': 0, 'Mint': 0 };
+    const counts: Record<string, number> = { '0 Damaged': 0, '1 Poor': 0, '2 Good': 0, '3 Excellent': 0, '4 Mint': 0 };
     cards.forEach(c => { if (counts[c.condition] !== undefined) counts[c.condition]++; });
     return counts;
   };
@@ -2567,12 +2616,11 @@ export default function App() {
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
                       { value: '', label: 'All Conditions' },
-                      { value: 'Damaged', label: 'Damaged' },
-                      { value: 'Poor', label: 'Poor' },
-                      { value: 'Average', label: 'Average' },
-                      { value: 'Good', label: 'Good' },
-                      { value: 'Great', label: 'Great' },
-                      { value: 'Mint', label: 'Mint' }
+                      { value: '0 Damaged', label: '0 Damaged' },
+                      { value: '1 Poor', label: '1 Poor' },
+                      { value: '2 Good', label: '2 Good' },
+                      { value: '3 Excellent', label: '3 Excellent' },
+                      { value: '4 Mint', label: '4 Mint' }
                     ].map(opt => {
                       const active = selectedCondition === opt.value;
                       return (
@@ -2710,7 +2758,7 @@ export default function App() {
                             return (
                               <div
                                 key={c.id}
-                                className={`native-card condition-${(c.condition || '').toLowerCase()} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
+                                className={`native-card condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
@@ -2762,7 +2810,7 @@ export default function App() {
                                   <div className="nc-meta">
                                     <div className="nc-meta-stats">
                                       {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
-                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase()}`}>{c.condition}</span>}
+                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')}`}>{c.condition}</span>}
                                       {typeof c.effort === 'number' && <span className="nc-badge-chip">{c.effort} eff</span>}
                                       {typeof c.wish === 'number' && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
                                     </div>
@@ -2792,7 +2840,7 @@ export default function App() {
                           return (
                             <div
                               key={c.id}
-                              className={`sleeve ${(c.condition || '').toLowerCase() === 'mint' ? 'mint' : ''} ${(c.condition || '').toLowerCase() === 'great' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
+                              className={`sleeve ${(c.condition || '').toLowerCase() === '4 mint' ? 'mint' : ''} ${(c.condition || '').toLowerCase() === '3 excellent' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
                               onClick={(e) => handleSleeveContainerClick(c.id, e)}
                             >
 
@@ -3445,12 +3493,11 @@ export default function App() {
               <div className="field">
                 <label>Condition</label>
                 <select value={fCondition} onChange={(e) => setFCondition(e.target.value)}>
-                  <option value="Damaged">Damaged</option>
-                  <option value="Poor">Poor</option>
-                  <option value="Average">Average</option>
-                  <option value="Good">Good</option>
-                  <option value="Great">Great</option>
-                  <option value="Mint">Mint</option>
+                  <option value="0 Damaged">0 Damaged</option>
+                  <option value="1 Poor">1 Poor</option>
+                  <option value="2 Good">2 Good</option>
+                  <option value="3 Excellent">3 Excellent</option>
+                  <option value="4 Mint">4 Mint</option>
                 </select>
               </div>
               <div className="field">

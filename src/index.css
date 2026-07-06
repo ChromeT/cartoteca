@@ -1445,12 +1445,12 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   white-space: nowrap;
 }
 
-.nc-badge-chip.condition-mint { color: #5ea396; border-color: rgba(94, 163, 150, 0.3); background: rgba(94, 163, 150, 0.1); }
-.nc-badge-chip.condition-great { color: #71b8ab; border-color: rgba(113, 184, 171, 0.3); background: rgba(113, 184, 171, 0.1); }
-.nc-badge-chip.condition-good { color: #d8923e; border-color: rgba(216, 146, 62, 0.3); background: rgba(216, 146, 62, 0.1); }
-.nc-badge-chip.condition-average { color: #c47c2b; border-color: rgba(196, 124, 43, 0.3); background: rgba(196, 124, 43, 0.1); }
-.nc-badge-chip.condition-poor { color: #e67e22; border-color: rgba(230, 126, 34, 0.35); background: rgba(230, 126, 34, 0.15); }
-.nc-badge-chip.condition-damaged { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.4); background: rgba(255, 107, 107, 0.15); }
+/* Card Rarity/Condition Specific Themes */
+.nc-badge-chip.condition-4-mint { color: #5ea396; border-color: rgba(94, 163, 150, 0.3); background: rgba(94, 163, 150, 0.1); }
+.nc-badge-chip.condition-3-excellent { color: #71b8ab; border-color: rgba(113, 184, 171, 0.3); background: rgba(113, 184, 171, 0.1); }
+.nc-badge-chip.condition-2-good { color: #d8923e; border-color: rgba(216, 146, 62, 0.3); background: rgba(216, 146, 62, 0.1); }
+.nc-badge-chip.condition-1-poor { color: #e67e22; border-color: rgba(230, 126, 34, 0.35); background: rgba(230, 126, 34, 0.15); }
+.nc-badge-chip.condition-0-damaged { color: #ff6b6b; border-color: rgba(255, 107, 107, 0.4); background: rgba(255, 107, 107, 0.15); }
 
 .nc-code-block {
   background: rgba(216, 146, 62, 0.15);
@@ -1475,12 +1475,11 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
 }
 
 /* Condition Frames */
-.native-card.condition-mint { border: 2px solid #5ea396; }
-.native-card.condition-great { border: 1px solid #71b8ab; }
-.native-card.condition-good { border: 1px solid #6d481b; }
-.native-card.condition-average { border: 1px dashed #6d481b; }
-.native-card.condition-poor { border: 1px solid #5c4535; filter: saturate(0.7); }
-.native-card.condition-damaged { border: 1px dashed #5c4535; filter: saturate(0.5); opacity: 0.8; }
+.native-card.condition-4-mint { border: 2px solid #5ea396; }
+.native-card.condition-3-excellent { border: 1px solid #71b8ab; }
+.native-card.condition-2-good { border: 1px solid #6d481b; }
+.native-card.condition-1-poor { border: 1px solid #5c4535; filter: saturate(0.7); }
+.native-card.condition-0-damaged { border: 1px dashed #5c4535; filter: saturate(0.5); opacity: 0.8; }
 
 /* ---------- Responsive ---------- */
 @media (max-width: 520px) {
