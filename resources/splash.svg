@@ -1,0 +1,22 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 2732 2732" width="2732" height="2732">
+  <rect width="2732" height="2732" fill="#17140f" />
+  <g transform="translate(1366, 1366) scale(1.5)">
+    <!-- Hanko Stamp Box -->
+    <rect x="-180" y="-180" width="360" height="360" rx="64" fill="#d8923e" />
+    
+    <!-- Hanafuda Card Outer Black Border -->
+    <rect x="-90" y="-130" width="180" height="260" rx="16" fill="#17140f" />
+    
+    <!-- Hanafuda Card Inner White Border -->
+    <rect x="-82" y="-122" width="164" height="244" rx="8" fill="#ffffff" />
+    
+    <!-- Red Sky Background -->
+    <rect x="-76" y="-116" width="152" height="232" rx="4" fill="#f03816" />
+    
+    <!-- White Moon -->
+    <circle cx="0" cy="-30" r="50" fill="#ffffff" />
+    
+    <!-- Black Mountain / Hill -->
+    <path d="M-76 116 L-76 30 Q-40 0 0 20 T76 10 L76 116 Z" fill="#17140f" />
+  </g>
+</svg>
