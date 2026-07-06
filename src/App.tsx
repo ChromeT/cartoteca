@@ -90,7 +90,8 @@ interface Inventory {
 }
 
 const ConditionWatermark = ({ condition }: { condition: string }) => {
-  const c = (condition || '').toLowerCase();
+  // Strip numeric prefix like "3 Excellent" -> "excellent"
+  const c = (condition || '').replace(/^\d+\s*/, '').toLowerCase();
 
   let icon = null;
   let color = 'rgba(255,255,255,0.05)';
@@ -104,6 +105,7 @@ const ConditionWatermark = ({ condition }: { condition: string }) => {
         </svg>
       );
       break;
+    case 'excellent':
     case 'great':
       color = 'rgba(120, 255, 180, 0.1)';
       icon = (
@@ -119,15 +121,6 @@ const ConditionWatermark = ({ condition }: { condition: string }) => {
         <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
           <path d="M22 11.08V12a10 10 0 1 1-5.93-9.14" />
           <polyline points="22 4 12 14.01 9 11.01" />
-        </svg>
-      );
-      break;
-    case 'average':
-      color = 'rgba(150, 150, 150, 0.05)';
-      icon = (
-        <svg viewBox="0 0 24 24" fill="none" stroke="currentColor" strokeWidth="1.5" strokeLinecap="round" strokeLinejoin="round">
-          <circle cx="12" cy="12" r="10" />
-          <line x1="8" y1="12" x2="16" y2="12" />
         </svg>
       );
       break;
@@ -593,44 +586,45 @@ export default function App() {
     if (m) setNodeMultiplier(parseFloat(m));
   }, [user]);
 
-  // Condition 0-4 Migration
+  // Run migration only once when cards first loaded - use a ref to prevent infinite loop
+  const migrationDoneRef = React.useRef(false);
   useEffect(() => {
+    if (migrationDoneRef.current) return;
     if (cards.length === 0) return;
     const needsMigration = cards.some(c => c.condition && !/^\d/.test(c.condition));
-    if (needsMigration) {
-      const migratedCards = cards.map(c => {
-        if (c.condition && !/^\d/.test(c.condition)) {
-          const s = c.condition.toLowerCase().trim();
-          let newCond = '2 Good';
-          if (['mint', 'mt', '★★★★'].includes(s)) newCond = '4 Mint';
-          else if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) newCond = '3 Excellent';
-          else if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) newCond = '2 Good';
-          else if (['fair', 'fr', 'average', '★☆☆☆', '1 poor', 'poor', 'pr'].includes(s)) newCond = '1 Poor';
-          else if (['damaged', 'dm', '☆☆☆☆'].includes(s)) newCond = '0 Damaged';
-          
-          return { ...c, condition: newCond };
-        }
-        return c;
-      });
-      setCards(migratedCards);
-      syncLocal('cards', migratedCards);
-      if (isFirebaseConfigured() && user && !isReadOnly) {
-        (async () => {
-          for (let i = 0; i < migratedCards.length; i += 400) {
-            const chunk = migratedCards.slice(i, i + 400);
-            const batch = writeBatch(db);
-            let hasChanges = false;
-            chunk.forEach(item => {
-              const oldCond = cards.find(c => c.id === item.id)?.condition || '';
-              if (item.condition && !/^\d/.test(oldCond)) {
-                batch.update(doc(db, 'users', user.uid, 'cards', item.id), { condition: item.condition });
-                hasChanges = true;
-              }
-            });
-            if (hasChanges) await batch.commit();
-          }
-        })();
+    if (!needsMigration) { migrationDoneRef.current = true; return; }
+    migrationDoneRef.current = true;
+    const migratedCards = cards.map(c => {
+      if (c.condition && !/^\d/.test(c.condition)) {
+        const s = c.condition.toLowerCase().trim();
+        let newCond = '2 Good';
+        if (['mint', 'mt', '★★★★'].includes(s)) newCond = '4 Mint';
+        else if (['excellent', 'ex', 'great', '★★★☆'].includes(s)) newCond = '3 Excellent';
+        else if (['fine', 'fn', 'good', 'gd', '★★☆☆'].includes(s)) newCond = '2 Good';
+        else if (['fair', 'fr', 'average', '★☆☆☆', 'poor', 'pr'].includes(s)) newCond = '1 Poor';
+        else if (['damaged', 'dm', '☆☆☆☆'].includes(s)) newCond = '0 Damaged';
+        return { ...c, condition: newCond };
       }
+      return c;
+    });
+    setCards(migratedCards);
+    syncLocal('cards', migratedCards);
+    if (isFirebaseConfigured() && user && !isReadOnly) {
+      (async () => {
+        for (let i = 0; i < migratedCards.length; i += 400) {
+          const chunk = migratedCards.slice(i, i + 400);
+          const batch = writeBatch(db);
+          let hasChanges = false;
+          chunk.forEach(item => {
+            const orig = cards.find(c => c.id === item.id);
+            if (orig && !/^\d/.test(orig.condition || '')) {
+              batch.update(doc(db, 'users', user.uid, 'cards', item.id), { condition: item.condition });
+              hasChanges = true;
+            }
+          });
+          if (hasChanges) await batch.commit();
+        }
+      })();
     }
   }, [cards, user, isReadOnly]);
 
@@ -2810,7 +2804,7 @@ export default function App() {
                                   <div className="nc-meta">
                                     <div className="nc-meta-stats">
                                       {c.edition && <span className="nc-badge-chip">◈{c.edition}</span>}
-                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')}`}>{c.condition}</span>}
+                                      {c.condition && <span className={`nc-badge-chip condition-text condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')}`}>{(c.condition || '').replace(/^\d+\s*/, '')}</span>}
                                       {typeof c.effort === 'number' && <span className="nc-badge-chip">{c.effort} eff</span>}
                                       {typeof c.wish === 'number' && <span className="nc-badge-chip">♡ {c.wish.toLocaleString()}</span>}
                                     </div>
@@ -2879,7 +2873,7 @@ export default function App() {
 
                               <div className="card-meta">
                                 {c.edition != null && <span className="chip edition">◈{c.edition}</span>}
-                                <span className="chip">{c.condition}</span>
+                                <span className="chip">{(c.condition || '').replace(/^\d+\s*/, '')}</span>
                                 {typeof c.effort === 'number' && <span className="chip effort">{c.effort} eff</span>}
                                 {typeof c.wish === 'number' && <span className="chip wish">♡ {c.wish.toLocaleString()}</span>}
                                 {itemTags.map(tag => (
@@ -4146,7 +4140,7 @@ export default function App() {
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">✨ Condition</span>
-                                        <span className="value">{lightboxCard.condition || 'Unknown'}</span>
+                                        <span className="value">{(lightboxCard.condition || '').replace(/^\d+\s*/, '') || 'Unknown'}</span>
                                      </div>
                                      <div className="card-info-box">
                                         <span className="label">📚 Series</span>
