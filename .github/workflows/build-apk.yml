@@ -30,6 +30,9 @@ jobs:
       - name: Build Web App
         run: npm run build
 
+      - name: Add Android Platform
+        run: npx cap add android
+
       - name: Generate Icons
         run: npx --yes @capacitor/assets generate --android
 
