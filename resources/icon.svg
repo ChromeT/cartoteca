@@ -1,0 +1,30 @@
+<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <defs>
+    <!-- Shadow for the stamp -->
+    <filter id="stamp-shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="32" stdDeviation="0" flood-color="#b87a2e" flood-opacity="1"/>
+      <feDropShadow dx="0" dy="64" stdDeviation="32" flood-color="#000000" flood-opacity="0.35"/>
+    </filter>
+  </defs>
+
+  <g transform="translate(512, 512) rotate(-3)">
+    <!-- Hanko Stamp Box -->
+    <rect x="-380" y="-380" width="760" height="760" rx="140" fill="#d8923e" filter="url(#stamp-shadow)" />
+    
+    <!-- Hanafuda Card Outer Black Border -->
+    <rect x="-160" y="-250" width="320" height="500" rx="32" fill="#17140f" />
+    
+    <!-- Hanafuda Card Inner White Border -->
+    <rect x="-144" y="-234" width="288" height="468" rx="20" fill="#ffffff" />
+    
+    <!-- Red Sky Background -->
+    <rect x="-132" y="-222" width="264" height="444" rx="12" fill="#f03816" />
+    
+    <!-- White Moon -->
+    <circle cx="0" cy="-60" r="90" fill="#ffffff" />
+    
+    <!-- Black Mountain / Hill (using path) -->
+    <!-- The hill starts from bottom left, curves up, then goes to bottom right -->
+    <path d="M-132 222 L-132 60 Q-40 0 0 40 T132 20 L132 222 Z" fill="#17140f" />
+  </g>
+</svg>
