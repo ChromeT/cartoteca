@@ -1466,7 +1466,7 @@ export default function App() {
       imageUrl: fImageUrl,
       stats: fStats,
       priceHistory: currentPriceHistory,
-      createdAt: (oldCard && oldCard.createdAt) ? oldCard.createdAt : Date.now()
+      createdAt: oldCard ? (oldCard.createdAt ?? 0) : Date.now()
     };
 
     // Remove undefined values to prevent Firestore crashes
