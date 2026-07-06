@@ -31,7 +31,7 @@ jobs:
         run: npm run build
 
       - name: Generate Icons
-        run: npx --yes @capacitor/assets generate --iconOnly --android
+        run: npx --yes @capacitor/assets generate --android
 
       - name: Sync Capacitor
         run: npx cap sync android
