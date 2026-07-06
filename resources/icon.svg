@@ -1,30 +1,67 @@
 <svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 1024 1024" width="1024" height="1024">
+  <!-- Soft background shadow -->
   <defs>
-    <!-- Shadow for the stamp -->
-    <filter id="stamp-shadow" x="-10%" y="-10%" width="120%" height="120%">
-      <feDropShadow dx="0" dy="32" stdDeviation="0" flood-color="#b87a2e" flood-opacity="1"/>
-      <feDropShadow dx="0" dy="64" stdDeviation="32" flood-color="#000000" flood-opacity="0.35"/>
+    <filter id="shadow" x="-10%" y="-10%" width="120%" height="120%">
+      <feDropShadow dx="0" dy="16" stdDeviation="12" flood-color="#000000" flood-opacity="0.25"/>
     </filter>
   </defs>
 
-  <g transform="translate(512, 512) rotate(-3)">
-    <!-- Hanko Stamp Box -->
-    <rect x="-380" y="-380" width="760" height="760" rx="140" fill="#d8923e" filter="url(#stamp-shadow)" />
-    
-    <!-- Hanafuda Card Outer Black Border -->
-    <rect x="-160" y="-250" width="320" height="500" rx="32" fill="#17140f" />
-    
-    <!-- Hanafuda Card Inner White Border -->
-    <rect x="-144" y="-234" width="288" height="468" rx="20" fill="#ffffff" />
-    
-    <!-- Red Sky Background -->
-    <rect x="-132" y="-222" width="264" height="444" rx="12" fill="#f03816" />
+  <!-- Orange/Brown Rounded Square -->
+  <rect x="112" y="112" width="800" height="800" rx="160" fill="#b87a2e" /> <!-- Darker 3D bottom edge -->
+  <rect x="112" y="100" width="800" height="800" rx="160" fill="#d8923e" filter="url(#shadow)" /> <!-- Main orange -->
+
+  <g transform="translate(512, 512)">
+    <!-- Hanafuda Card Background -->
+    <rect x="-180" y="-280" width="360" height="560" rx="24" fill="#17140f" />
+    <rect x="-165" y="-265" width="330" height="530" rx="12" fill="#ffffff" />
+    <rect x="-150" y="-250" width="300" height="500" rx="6" fill="#9d191c" />
     
     <!-- White Moon -->
-    <circle cx="0" cy="-60" r="90" fill="#ffffff" />
+    <circle cx="10" cy="-40" r="100" fill="#ffffff" />
     
-    <!-- Black Mountain / Hill (using path) -->
-    <!-- The hill starts from bottom left, curves up, then goes to bottom right -->
-    <path d="M-132 222 L-132 60 Q-40 0 0 40 T132 20 L132 222 Z" fill="#17140f" />
+    <!-- Mountain / Slope on the right -->
+    <path d="M 150 80 L 80 150 L 80 250 L 150 250 Z" fill="#17140f" />
+    <path d="M 150 80 L 80 150" fill="none" stroke="#d8923e" stroke-width="4" stroke-linecap="round" />
+
+    <!-- Anime Boy Silhouette (Hand-crafted SVG Replica) -->
+    <g stroke="#d8923e" stroke-width="4" stroke-linejoin="round" stroke-linecap="round">
+      <!-- Main body and head shape -->
+      <path d="M -150 250 
+               C -150 150, -90 130, -70 90
+               C -100 50, -80 -20, -40 -60
+               C -10 -90, 40 -80, 70 -40
+               C 80 -20, 70 10, 50 30
+               L 65 45 
+               L 55 55 
+               L 60 60 
+               L 50 70 
+               L 60 85 
+               L 35 95 
+               C 30 115, 20 120, 30 140
+               C 40 150, 80 150, 110 180
+               C 130 200, 140 230, 140 250
+               Z" 
+            fill="#17140f" />
+            
+      <!-- Inner Details (Hair lines, clothing folds) -->
+      <!-- Hair spikes -->
+      <path d="M 10 -70 C 20 -40, -10 -10, -20 -20" fill="none" />
+      <path d="M 50 -50 C 40 -20, 10 0, 0 -10" fill="none" />
+      <path d="M 70 -30 C 50 0, 30 10, 20 0" fill="none" />
+      
+      <!-- Ear -->
+      <path d="M -10 30 C -25 25, -30 45, -15 50 C -5 45, 0 35, -10 30 Z" fill="none" stroke-width="3" />
+      
+      <!-- Coat Lapels -->
+      <path d="M -70 90 C -40 130, -20 190, -30 250" fill="none" />
+      <path d="M 30 140 C 20 180, 40 220, 60 250" fill="none" />
+      
+      <!-- Collar / Shirt -->
+      <path d="M -40 140 C -10 160, 20 160, 35 130" fill="none" />
+      
+      <!-- Extra sleeve fold -->
+      <path d="M -110 170 C -110 200, -100 230, -90 250" fill="none" />
+      <path d="M 110 180 C 100 210, 90 230, 100 250" fill="none" />
+    </g>
   </g>
 </svg>
