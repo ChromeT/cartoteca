@@ -82,7 +82,7 @@ export default async function handler(req, res) {
         console.log(`✅ Berhasil menghubungkan Discord ${discordId} ke UID ${targetUid}`);
       } catch (verifyErr) {
         console.error('Invalid ID Token during linking:', verifyErr);
-        return res.status(401).send('Gagal menghubungkan: Sesi tidak valid atau kedaluwarsa.');
+        return res.status(401).send('Gagal menghubungkan: Sesi tidak valid atau kedaluwarsa. Detail: ' + verifyErr.message);
       }
     } else {
       // MODE LOGIN BIASA
