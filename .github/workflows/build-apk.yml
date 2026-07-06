@@ -16,7 +16,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: 20
+          node-version: 22
 
       - name: Setup Java
         uses: actions/setup-java@v4
@@ -31,7 +31,7 @@ jobs:
         run: npm run build
 
       - name: Generate Icons
-        run: npx @capacitor/assets generate --iconOnly --android
+        run: npx --yes @capacitor/assets generate --iconOnly --android
 
       - name: Sync Capacitor
         run: npx cap sync android
