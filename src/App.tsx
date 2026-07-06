@@ -2168,6 +2168,15 @@ export default function App() {
     ? (publicDisplayName ? `Profil Publik: ${publicDisplayName}` : `Profil Publik: ${publicProfileId.substring(0, 8)}`)
     : (user?.email?.replace('@cartoteca.app', '') || 'Pengguna');
 
+  const handleLinkDiscord = async () => {
+    try {
+      const idToken = await user.getIdToken();
+      window.location.href = `/api/login?idToken=${encodeURIComponent(idToken)}`;
+    } catch (err) {
+      showToast('Failed to get auth token for linking.', 'error');
+    }
+  };
+
   return (
     <div id="app">
       <div className="wrap">
@@ -2244,6 +2253,24 @@ export default function App() {
                   onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = 'transparent'; (e.target as HTMLButtonElement).style.color = '#d8923e'; }}
                 >
                   🔗 Share Profile
+                </button>
+                <button
+                  onClick={handleLinkDiscord}
+                  title="Link Discord"
+                  style={{
+                    background: '#5865F2', border: '1px solid #4752C4',
+                    borderRadius: '6px', padding: '4px 10px', display: 'flex', alignItems: 'center', gap: '6px',
+                    fontFamily: "'IBM Plex Sans', sans-serif", fontSize: '11px',
+                    fontWeight: 600, color: '#fff', cursor: 'pointer',
+                    transition: 'all 0.15s'
+                  }}
+                  onMouseEnter={e => { (e.target as HTMLButtonElement).style.background = '#4752C4'; }}
+                  onMouseLeave={e => { (e.target as HTMLButtonElement).style.background = '#5865F2'; }}
+                >
+                  <svg width="14" height="14" viewBox="0 0 127.14 96.36" fill="currentColor">
+                    <path d="M107.7,8.07A105.15,105.15,0,0,0,81.47,0a72.06,72.06,0,0,0-3.36,6.83A97.68,97.68,0,0,0,49,6.83,72.37,72.37,0,0,0,45.64,0,105.89,105.89,0,0,0,19.39,8.09C2.79,32.65-1.71,56.6.54,80.21h0A105.73,105.73,0,0,0,32.71,96.36,77.7,77.7,0,0,0,39.6,85.25a68.42,68.42,0,0,1-10.85-5.18c.91-.66,1.8-1.34,2.66-2a75.57,75.57,0,0,0,64.32,0c.87.71,1.76,1.39,2.66,2a68.68,68.68,0,0,1-10.87,5.19,77,77,0,0,0,6.89,11.1,105.25,105.25,0,0,0,32.19-16.14c0,0,.04-.06.09-.09C129.24,52.84,122.09,29.11,107.7,8.07ZM42.45,65.69C36.18,65.69,31,60,31,53s5-12.74,11.43-12.74S54,46,53.89,53,48.84,65.69,42.45,65.69Zm42.24,0C78.41,65.69,73.31,60,73.31,53s5-12.74,11.43-12.74S96.1,46,96,53,91.08,65.69,84.69,65.69Z"/>
+                  </svg>
+                  Link Discord
                 </button>
                 <button
                   onClick={() => signOut(auth)}

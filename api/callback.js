@@ -1,5 +1,6 @@
 import { initializeApp, getApps, cert } from 'firebase-admin/app';
 import { getAuth } from 'firebase-admin/auth';
+import { getFirestore } from 'firebase-admin/firestore';
 
 // Inisialisasi Firebase Admin di Vercel menggunakan Environment Variable
 if (!getApps().length) {
@@ -21,6 +22,7 @@ if (!getApps().length) {
 
 export default async function handler(req, res) {
   const code = req.query.code;
+  const state = req.query.state; // idToken (opsional untuk mode tautkan akun)
   const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
   const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
   
@@ -64,12 +66,38 @@ export default async function handler(req, res) {
     }
 
     const discordId = userData.id;
+    const db = getFirestore();
+    let targetUid = discordId;
 
-    // Optional: Kita tidak bisa langsung menyimpan profil ke db dari sini tanpa import firestore,
-    // tapi kita cukup mencetak token. Firestore sync bisa dilakukan dari Frontend setelah berhasil masuk.
-    const customToken = await getAuth().createCustomToken(discordId);
+    if (state) {
+      // MODE TAUTKAN AKUN (LINKING)
+      try {
+        const decodedToken = await getAuth().verifyIdToken(state);
+        targetUid = decodedToken.uid;
+        
+        await db.collection('discord_links').doc(discordId).set({
+          uid: targetUid,
+          linkedAt: new Date().getTime()
+        }, { merge: true });
+        console.log(`✅ Berhasil menghubungkan Discord ${discordId} ke UID ${targetUid}`);
+      } catch (verifyErr) {
+        console.error('Invalid ID Token during linking:', verifyErr);
+        return res.status(401).send('Gagal menghubungkan: Sesi tidak valid atau kedaluwarsa.');
+      }
+    } else {
+      // MODE LOGIN BIASA
+      const linkDoc = await db.collection('discord_links').doc(discordId).get();
+      if (linkDoc.exists && linkDoc.data().uid) {
+        targetUid = linkDoc.data().uid;
+        console.log(`✅ Login via Discord ${discordId}, menggunakan UID asli ${targetUid}`);
+      } else {
+        targetUid = discordId; // Belum ditautkan, pakai discordId sebagai UID default
+      }
+    }
+
+    const customToken = await getAuth().createCustomToken(targetUid);
     
-    // Kembali ke frontend membawa oleh-oleh berupa token VIP
+    // Kembali ke frontend membawa token VIP
     res.redirect(`${BASE_URL}?token=${customToken}`);
 
   } catch (error) {

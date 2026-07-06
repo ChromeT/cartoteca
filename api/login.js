@@ -8,6 +8,12 @@ export default function handler(req, res) {
     return res.status(500).send('DISCORD_CLIENT_ID is missing in Vercel Environment Variables.');
   }
   
-  const discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+  const idToken = req.query.idToken;
+  let discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
+  
+  if (idToken) {
+    discordAuthUrl += `&state=${encodeURIComponent(idToken)}`;
+  }
+  
   res.redirect(discordAuthUrl);
 }
