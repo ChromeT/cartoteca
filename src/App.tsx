@@ -1533,11 +1533,21 @@ export default function App() {
     };
 
     // Deep remove undefined values to prevent Firestore crashes
-    Object.keys(data).forEach(key => {
-      if ((data as any)[key] === undefined) {
-        delete (data as any)[key];
+    const cleanUndefined = (obj: any) => {
+      if (Array.isArray(obj)) {
+        obj.forEach(cleanUndefined);
+      } else if (obj !== null && typeof obj === 'object') {
+        Object.keys(obj).forEach(key => {
+          if (obj[key] === undefined) {
+            delete obj[key];
+          } else {
+            cleanUndefined(obj[key]);
+          }
+        });
       }
-    });
+    };
+    cleanUndefined(data);
+
     if (data.priceHistory) {
       data.priceHistory = data.priceHistory.map(ph => ({
         date: ph.date || Date.now(),
