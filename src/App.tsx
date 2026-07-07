@@ -1441,21 +1441,21 @@ export default function App() {
 
     if (card) {
       setCardFormId(card.id);
-      setFCode(card.code);
+      setFCode(card.code || '');
       setFPrint(card.print !== null ? card.print : '');
       setFEdition(card.edition !== null ? card.edition : '');
-      setFName(card.name);
-      setFSeries(card.series);
-      setFCondition(card.condition);
+      setFName(card.name || '');
+      setFSeries(card.series || '');
+      setFCondition(card.condition || '2 Good');
       setFEffort(card.effort !== null ? card.effort : '');
       setFWish(card.wish !== null ? card.wish : '');
       setFPrice(card.price !== null ? card.price : '');
-      setFIsWorker(card.isWorker);
-      setFIsTrade(card.isTrade);
+      setFIsWorker(card.isWorker || false);
+      setFIsTrade(card.isTrade || false);
       setFIsInjured(!!card.isInjured);
-      setFFrame(card.frame);
-      setFDye(card.dye);
-      setFNotes(card.notes);
+      setFFrame(card.frame || '');
+      setFDye(card.dye || '');
+      setFNotes(card.notes || '');
       setFImageUrl(card.imageUrl || '');
       setFStats(card.stats);
       setFRawDetails(card.rawDetails);
@@ -1490,12 +1490,12 @@ export default function App() {
   }
 
   async function handleSaveCard() {
-    if (!fName.trim()) {
+    if (!(fName || '').trim()) {
       showToast("Character name is required!", 'error');
       return;
     }
 
-    const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : (fCode.trim() ? cards.find(c => c.code?.toLowerCase() === fCode.trim().toLowerCase()) : null);
+    const oldCard = cardFormId ? cards.find(c => c.id === cardFormId) : ((fCode || '').trim() ? cards.find(c => c.code?.toLowerCase() === (fCode || '').trim().toLowerCase()) : null);
     const currentPriceHistory = oldCard?.priceHistory ? [...oldCard.priceHistory] : [];
 
     // Seed history if missing
@@ -1509,11 +1509,11 @@ export default function App() {
     }
 
     const data: Omit<Card, 'id'> = {
-      code: fCode.trim().toLowerCase(),
+      code: (fCode || '').trim().toLowerCase(),
       print: fPrint !== '' ? Number(fPrint) : null,
       edition: fEdition !== '' ? Number(fEdition) : null,
-      name: fName.trim(),
-      series: fSeries.trim(),
+      name: (fName || '').trim(),
+      series: (fSeries || '').trim(),
       condition: fCondition,
       effort: fEffort !== '' ? Number(fEffort) : null,
       wish: fWish !== '' ? Number(fWish) : null,
@@ -1521,10 +1521,10 @@ export default function App() {
       isWorker: fIsWorker,
       isTrade: fIsTrade,
       isInjured: fIsInjured,
-      frame: fFrame.trim(),
-      dye: fDye.trim(),
+      frame: (fFrame || '').trim(),
+      dye: (fDye || '').trim(),
       tags: cardSelectedTags.join(', '),
-      notes: fNotes.trim(),
+      notes: (fNotes || '').trim(),
       imageUrl: fImageUrl,
       stats: fStats,
       rawDetails: fRawDetails,
