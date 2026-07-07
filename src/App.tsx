@@ -2610,11 +2610,11 @@ export default function App() {
                   <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap' }}>
                     {[
                       { value: '', label: 'All Conditions' },
-                      { value: '0 Damaged', label: '0 Damaged' },
-                      { value: '1 Poor', label: '1 Poor' },
-                      { value: '2 Good', label: '2 Good' },
-                      { value: '3 Excellent', label: '3 Excellent' },
-                      { value: '4 Mint', label: '4 Mint' }
+                      { value: '0 Damaged', label: 'Damaged' },
+                      { value: '1 Poor', label: 'Poor' },
+                      { value: '2 Good', label: 'Good' },
+                      { value: '3 Excellent', label: 'Excellent' },
+                      { value: '4 Mint', label: 'Mint' }
                     ].map(opt => {
                       const active = selectedCondition === opt.value;
                       return (
@@ -3487,11 +3487,11 @@ export default function App() {
               <div className="field">
                 <label>Condition</label>
                 <select value={fCondition} onChange={(e) => setFCondition(e.target.value)}>
-                  <option value="0 Damaged">0 Damaged</option>
-                  <option value="1 Poor">1 Poor</option>
-                  <option value="2 Good">2 Good</option>
-                  <option value="3 Excellent">3 Excellent</option>
-                  <option value="4 Mint">4 Mint</option>
+                  <option value="0 Damaged">Damaged</option>
+                  <option value="1 Poor">Poor</option>
+                  <option value="2 Good">Good</option>
+                  <option value="3 Excellent">Excellent</option>
+                  <option value="4 Mint">Mint</option>
                 </select>
               </div>
               <div className="field">
@@ -4297,7 +4297,7 @@ export default function App() {
                                    <div className="card-info-grid">
                                      <div className="card-info-box" style={{ gridColumn: 'span 2' }}>
                                         <span className="label">🎟️ Estimated Price</span>
-                                        <span className="value highlight">{lightboxCard.price ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
+                                        <span className="value highlight">{lightboxCard.price != null ? `${lightboxCard.price} Tickets` : 'Unknown'}</span>
                                      </div>
                                    </div>
                                  </>
