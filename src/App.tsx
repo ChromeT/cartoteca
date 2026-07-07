@@ -1541,7 +1541,7 @@ export default function App() {
     if (data.priceHistory) {
       data.priceHistory = data.priceHistory.map(ph => ({
         date: ph.date || Date.now(),
-        price: ph.price !== undefined ? ph.price : null
+        price: ph.price != null ? ph.price : 0
       }));
     }
 
