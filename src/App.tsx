@@ -442,6 +442,22 @@ export default function App() {
     return () => unsubAuth();
   }, []);
 
+  // Sync lightboxCard with cards updates
+  useEffect(() => {
+    if (lightboxCard) {
+      const updatedCard = cards.find(c => c.id === lightboxCard.id);
+      if (updatedCard) {
+        if (updatedCard !== lightboxCard) {
+          setLightboxCard(updatedCard);
+        }
+      } else {
+        // Card was deleted
+        setLightboxCard(null);
+        setIsClosingLightbox(false);
+      }
+    }
+  }, [cards, lightboxCard]);
+
   // --- DATA LOADING & PERSISTENCE ---
   useEffect(() => {
     if (!targetUid) return;
@@ -1481,7 +1497,7 @@ export default function App() {
 
     // Seed history if missing
     if (oldCard && oldCard.price !== null && currentPriceHistory.length === 0) {
-      currentPriceHistory.push({ date: oldCard.createdAt, price: oldCard.price });
+      currentPriceHistory.push({ date: oldCard.createdAt || Date.now(), price: oldCard.price });
     }
 
     const parsedNewPrice = fPrice !== '' ? Number(fPrice) : null;
@@ -1512,12 +1528,17 @@ export default function App() {
       createdAt: fCreatedAt !== null ? fCreatedAt : (oldCard ? (oldCard.createdAt ?? 0) : Date.now())
     };
 
-    // Remove undefined values to prevent Firestore crashes
-    if (data.stats === undefined) {
-      delete data.stats;
-    }
-    if (data.priceHistory === undefined) {
-      delete data.priceHistory;
+    // Deep remove undefined values to prevent Firestore crashes
+    Object.keys(data).forEach(key => {
+      if ((data as any)[key] === undefined) {
+        delete (data as any)[key];
+      }
+    });
+    if (data.priceHistory) {
+      data.priceHistory = data.priceHistory.map(ph => ({
+        date: ph.date || Date.now(),
+        price: ph.price !== undefined ? ph.price : null
+      }));
     }
 
     let finalId = cardFormId;
