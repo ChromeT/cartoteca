@@ -385,6 +385,7 @@ export default function App() {
   const [cardSelectedTags, setCardSelectedTags] = useState<string[]>([]);
   const [showFilters, setShowFilters] = useState(false);
   const [fStats, setFStats] = useState<Card['stats'] | undefined>(undefined);
+  const [fRawDetails, setFRawDetails] = useState<Card['rawDetails'] | undefined>(undefined);
 
   // Parser text area
   const [discordText, setDiscordText] = useState('');
@@ -838,7 +839,7 @@ export default function App() {
           }
         };
         await syncChunks(newCards);
-        setBulkImportFeedback({ text: `✅ ${successCount} cards successfully imported & synchronized to the Cloud! Reloading page...`, isError: false, isSuccess: true });
+        setBulkImportFeedback({ text: `✅ ${successCount} cards successfully imported & synchronized to the Cloud! Reloading page...`, isError: true, isSuccess: true });
       } catch (err: any) {
         setBulkImportFeedback({ text: `⚠️ Some cards failed to sync to the cloud: ${err.message}`, isError: true, isSuccess: false });
       }
@@ -1457,6 +1458,7 @@ export default function App() {
       setFNotes(card.notes);
       setFImageUrl(card.imageUrl || '');
       setFStats(card.stats);
+      setFRawDetails(card.rawDetails);
       setFCreatedAt(card.createdAt || null);
 
       const tagsArray = card.tags ? card.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
@@ -1480,6 +1482,7 @@ export default function App() {
       setFNotes('');
       setFImageUrl('');
       setFStats(undefined);
+      setFRawDetails(undefined);
       setFCreatedAt(null);
       setCardSelectedTags([]);
     }
@@ -1524,6 +1527,7 @@ export default function App() {
       notes: fNotes.trim(),
       imageUrl: fImageUrl,
       stats: fStats,
+      rawDetails: fRawDetails,
       priceHistory: currentPriceHistory,
       createdAt: fCreatedAt !== null ? fCreatedAt : (oldCard ? (oldCard.createdAt ?? 0) : Date.now())
     };
@@ -3589,7 +3593,6 @@ export default function App() {
                 <input type="text" placeholder="e.g., Purple Haze" value={fDye} onChange={(e) => setFDye(e.target.value)} />
               </div>
             </div>
-
             <div className="field">
               <label>Collection Tags (Click to select)</label>
               <div className="tag-selector-grid">
@@ -3612,6 +3615,16 @@ export default function App() {
             <div className="field">
               <label>Additional Notes</label>
               <textarea placeholder="Write notes, trade details, etc..." rows={2} value={fNotes} onChange={(e) => setFNotes(e.target.value)} />
+            </div>
+
+            <div className="form-group" style={{ marginBottom: '16px' }}>
+              <label>Raw Data (K!V, KCI, dll)</label>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px' }}>
+                <textarea placeholder="Paste K!V result here" rows={2} value={fRawDetails?.kv || ''} onChange={(e) => setFRawDetails(prev => ({ ...prev, kv: e.target.value }))} style={{ fontSize: '11px', fontFamily: 'monospace' }} />
+                <textarea placeholder="Paste KCI result here" rows={2} value={fRawDetails?.kci || ''} onChange={(e) => setFRawDetails(prev => ({ ...prev, kci: e.target.value }))} style={{ fontSize: '11px', fontFamily: 'monospace' }} />
+                <textarea placeholder="Paste KWI result here" rows={2} value={fRawDetails?.kwi || ''} onChange={(e) => setFRawDetails(prev => ({ ...prev, kwi: e.target.value }))} style={{ fontSize: '11px', fontFamily: 'monospace' }} />
+                <textarea placeholder="Paste KLU result here" rows={2} value={fRawDetails?.klu || ''} onChange={(e) => setFRawDetails(prev => ({ ...prev, klu: e.target.value }))} style={{ fontSize: '11px', fontFamily: 'monospace' }} />
+              </div>
             </div>
 
             <div className="form-group" style={{ marginBottom: '16px' }}>
