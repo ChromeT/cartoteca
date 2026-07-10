@@ -1994,3 +1994,59 @@ textarea::-webkit-scrollbar-thumb:hover {
   background: #888d94;
   border-radius: 4px;
 }
+
+/* =========================================================
+   ?? MOBILE & PERFORMANCE OPTIMIZATIONS (REACT NATIVE FEEL)
+   ========================================================= */
+
+/* 1. Hardware Acceleration & Virtual Rendering for Cards */
+.sleeve {
+  /* Lazy Rendering (Virtualization at CSS level) */
+  content-visibility: auto;
+  contain-intrinsic-size: auto 340px; /* Approximate height of a card */
+  /* Hardware Acceleration for smoother transform animations */
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+  will-change: transform, box-shadow;
+}
+
+.modal, .batch-panel, .floating-timers {
+  transform: translateZ(0);
+  -webkit-transform: translateZ(0);
+}
+
+/* 2. Mobile Specific Overrides */
+@media (max-width: 768px) {
+  
+  /* Disable heavy glassmorphism blur on mobile to save GPU cycles */
+  .batch-panel, .floating-timers, .modal-overlay {
+    backdrop-filter: none !important;
+    -webkit-backdrop-filter: none !important;
+  }
+  
+  .modal-overlay {
+    background: rgba(10, 8, 5, 0.95) !important; /* Solid dark background instead of blur */
+  }
+  
+  .batch-panel, .floating-timers {
+    background: rgba(23, 20, 15, 0.98) !important;
+    border: 1px solid rgba(255, 255, 255, 0.15) !important;
+    box-shadow: 0 -4px 12px rgba(0,0,0,0.5) !important; /* Simple shadow */
+  }
+
+  /* Simplify card shadows on mobile to improve scroll FPS */
+  .sleeve {
+    box-shadow: 0 2px 5px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1) !important;
+  }
+  
+  .sleeve:hover, .sleeve:active {
+    /* Prevent heavy hover/active repaints on mobile */
+    transform: translateY(-2px) translateZ(0) !important;
+    box-shadow: 0 4px 10px rgba(0,0,0,0.25) !important;
+  }
+  
+  /* Ensure smooth scrolling globally on mobile */
+  body {
+    -webkit-overflow-scrolling: touch;
+  }
+}
