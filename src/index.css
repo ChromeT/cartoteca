@@ -2019,13 +2019,13 @@ textarea::-webkit-scrollbar-thumb:hover {
 @media (max-width: 768px) {
   
   /* Disable heavy glassmorphism blur on mobile to save GPU cycles */
-  .batch-panel, .floating-timers, .modal-overlay {
+  .batch-panel, .floating-timers, .modal-overlay, .lightbox-overlay {
     backdrop-filter: none !important;
     -webkit-backdrop-filter: none !important;
   }
   
-  .modal-overlay {
-    background: rgba(10, 8, 5, 0.95) !important; /* Solid dark background instead of blur */
+  .modal-overlay, .lightbox-overlay {
+    background: rgba(10, 8, 5, 0.98) !important; /* Solid dark background instead of blur */
   }
   
   .batch-panel, .floating-timers {
@@ -2046,6 +2046,18 @@ textarea::-webkit-scrollbar-thumb:hover {
     /* Prevent heavy hover/active repaints on mobile */
     transform: translateY(-2px) translateZ(0) !important;
     box-shadow: 0 4px 10px rgba(0,0,0,0.25) !important;
+  }
+  
+  /* FIX: Smooth out Lightbox Stacked Cards Swipe & Zoom */
+  .poker-stack-container, .poker-card, .poker-card.image-card img {
+    will-change: transform, opacity !important;
+    transform: translateZ(0);
+    -webkit-transform: translateZ(0);
+  }
+  
+  .poker-card, .poker-card.image-card img {
+    /* Remove heavy shadows during swipe */
+    box-shadow: 0 5px 15px rgba(0,0,0,0.4) !important;
   }
   
   /* Ensure smooth scrolling globally on mobile */
