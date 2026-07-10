@@ -2037,6 +2037,9 @@ textarea::-webkit-scrollbar-thumb:hover {
   /* Simplify card shadows on mobile to improve scroll FPS */
   .sleeve {
     box-shadow: 0 2px 5px rgba(0,0,0,0.2), 0 4px 8px rgba(0,0,0,0.1) !important;
+    /* CRITICAL FIX: clip-path is a massive GPU killer on mobile. Remove it. */
+    clip-path: none !important;
+    border-radius: 12px !important;
   }
   
   .sleeve:hover, .sleeve:active {
@@ -2048,5 +2051,7 @@ textarea::-webkit-scrollbar-thumb:hover {
   /* Ensure smooth scrolling globally on mobile */
   body {
     -webkit-overflow-scrolling: touch;
+    /* CRITICAL FIX: repeating gradients cause full-screen repaints on scroll */
+    background: var(--paper) !important;
   }
 }
