@@ -318,6 +318,12 @@ export default function App() {
   const [selectedStatus, setSelectedStatus] = useState<'all' | 'worker' | 'trade' | 'injured'>('all');
   const [sortOption, setSortOption] = useState('recent');
   const [currentPage, setCurrentPage] = useState(1);
+  const [pageDirection, setPageDirection] = useState<'next' | 'prev'>('next');
+
+  const handlePageChange = (newPage: number) => {
+    setPageDirection(newPage > currentPage ? 'next' : 'prev');
+    setCurrentPage(newPage);
+  };
 
   useEffect(() => {
     setCurrentPage(1);
@@ -2848,7 +2854,7 @@ export default function App() {
 
                     return (
                       <>
-                        {paginated.map(c => {
+                        {paginated.map((c, i) => {
                           const isSelected = selectedCards.has(c.id);
                           const itemTags = c.tags ? c.tags.split(',').map(t => t.trim()).filter(Boolean) : [];
 
@@ -2856,7 +2862,8 @@ export default function App() {
                             return (
                               <div
                                 key={c.id}
-                                className={`native-card condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''}`}
+                                className={`native-card condition-${(c.condition || '').toLowerCase().replace(/\s+/g, '-')} ${isSelected ? 'selected' : ''} ${c.imageUrl ? 'has-image' : ''} page-transition ${pageDirection}`}
+                                style={{ animationDelay: `${i * 0.02}s` }}
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
@@ -2938,7 +2945,8 @@ export default function App() {
                           return (
                             <div
                               key={c.id}
-                              className={`sleeve ${(c.condition || '').toLowerCase() === '4 mint' ? 'mint' : ''} ${(c.condition || '').toLowerCase() === '3 excellent' ? 'great' : ''} ${isSelected ? 'selected' : ''}`}
+                              className={`sleeve ${(c.condition || '').toLowerCase() === '4 mint' ? 'mint' : ''} ${(c.condition || '').toLowerCase() === '3 excellent' ? 'great' : ''} ${isSelected ? 'selected' : ''} page-transition ${pageDirection}`}
+                              style={{ animationDelay: `${i * 0.02}s` }}
                               onClick={(e) => handleSleeveContainerClick(c.id, e)}
                             >
 
@@ -3014,7 +3022,7 @@ export default function App() {
                         })}
                         {totalPages > 1 && (
                           <div className="pagination" style={{ gridColumn: '1 / -1', display: 'flex', justifyContent: 'center', alignItems: 'center', gap: '8px', marginTop: '24px', padding: '16px 0', borderTop: '1px dashed var(--paper-line)', flexWrap: 'wrap' }}>
-                            <button className="pag-btn" disabled={safeCurrentPage === 1} onClick={() => setCurrentPage(p => Math.max(1, p - 1))}>←</button>
+                            <button className="pag-btn" disabled={safeCurrentPage === 1} onClick={() => handlePageChange(Math.max(1, safeCurrentPage - 1))}>←</button>
 
                             {(() => {
                               const pages = [];
@@ -3036,7 +3044,7 @@ export default function App() {
                                   <button
                                     key={`page-${p}`}
                                     className={`pag-btn ${safeCurrentPage === p ? 'active' : ''}`}
-                                    onClick={() => setCurrentPage(p as number)}
+                                    onClick={() => handlePageChange(p as number)}
                                   >
                                     {p}
                                   </button>
@@ -3044,7 +3052,7 @@ export default function App() {
                               ));
                             })()}
 
-                            <button className="pag-btn" disabled={safeCurrentPage === totalPages} onClick={() => setCurrentPage(p => Math.min(totalPages, p + 1))}>→</button>
+                            <button className="pag-btn" disabled={safeCurrentPage === totalPages} onClick={() => handlePageChange(Math.min(totalPages, safeCurrentPage + 1))}>→</button>
                           </div>
                         )}
                       </>
