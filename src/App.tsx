@@ -93,33 +93,34 @@ interface Inventory {
 }
 
 const CachedImage = ({ url, className, onClick }: { url: string, className?: string, onClick?: (e: React.MouseEvent) => void }) => {
-  const [cachedUrl, setCachedUrl] = useState<string | undefined>(undefined);
+  const [bgUrl, setBgUrl] = useState<string | null>(null);
   
   useEffect(() => {
     let isMounted = true;
     if (!url) return;
     
-    // Fallback URL immediately to avoid blank screen while checking cache
-    setCachedUrl(url);
+    setBgUrl(null); // Clear image while checking cache (avoids flicker)
 
     caches.open('cartoteca-images').then(cache => {
       cache.match(url).then(res => {
         if (res) {
           res.blob().then(blob => {
-            if (isMounted) setCachedUrl(URL.createObjectURL(blob));
+            if (isMounted) setBgUrl(URL.createObjectURL(blob));
           });
         } else {
+          // Not cached: use native browser URL immediately
+          if (isMounted) setBgUrl(url);
+          // Fetch silently to populate cache for NEXT time
           fetch(url, { mode: 'cors', credentials: 'omit' }).then(fetchRes => {
             if (fetchRes.ok) {
               cache.put(url, fetchRes.clone());
-              fetchRes.blob().then(blob => {
-                if (isMounted) setCachedUrl(URL.createObjectURL(blob));
-              });
             }
           }).catch(() => {});
         }
       });
-    }).catch(() => {});
+    }).catch(() => {
+      if (isMounted) setBgUrl(url);
+    });
     
     return () => { isMounted = false; };
   }, [url]);
@@ -127,7 +128,7 @@ const CachedImage = ({ url, className, onClick }: { url: string, className?: str
   return (
     <div 
       className={className} 
-      style={{ backgroundImage: `url(${cachedUrl || url})` }} 
+      style={bgUrl ? { backgroundImage: `url(${bgUrl})` } : {}} 
       onClick={onClick} 
     />
   );

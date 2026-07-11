@@ -1,5 +1,6 @@
 import React, { useState } from 'react';
-import { auth } from './firebase';
+import { auth, db } from './firebase';
+import { doc, onSnapshot, deleteDoc } from 'firebase/firestore';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -34,8 +35,42 @@ export default function LoginPage() {
   }, []);
 
   const handleDiscordLogin = () => {
-    // Arahkan ke Vercel Serverless Function
-    window.location.href = '/api/login';
+    const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
+
+    if (isCapacitor) {
+      setLoading(true);
+      const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
+      
+      window.open(`https://cartoteca.vercel.app/api/login?session=${sessionId}`, '_system');
+
+      const sessionRef = doc(db, 'auth_sessions', sessionId);
+      const unsubscribe = onSnapshot(sessionRef, async (snap) => {
+        if (snap.exists() && snap.data().token) {
+          unsubscribe();
+          try {
+            await signInWithCustomToken(auth, snap.data().token);
+            await deleteDoc(sessionRef).catch(() => {});
+          } catch (err: any) {
+            setError('Discord Login Failed: ' + err.message);
+            setLoading(false);
+          }
+        }
+      }, (err) => {
+        setError('Session error: ' + err.message);
+        setLoading(false);
+        unsubscribe();
+      });
+
+      // Timeout setelah 5 menit jika tidak login
+      setTimeout(() => {
+        unsubscribe();
+        setLoading(false);
+      }, 5 * 60 * 1000);
+
+    } else {
+      // Arahkan ke Vercel Serverless Function (Web)
+      window.location.href = '/api/login';
+    }
   };
 
   async function handleSubmit(e: React.FormEvent) {

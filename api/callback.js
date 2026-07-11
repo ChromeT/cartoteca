@@ -22,7 +22,13 @@ if (!getApps().length) {
 
 export default async function handler(req, res) {
   const code = req.query.code;
-  const state = req.query.state; // idToken (opsional untuk mode tautkan akun)
+  const rawState = req.query.state;
+  let statePayload = {};
+  try {
+    if (rawState) statePayload = JSON.parse(rawState);
+  } catch (e) {
+    if (rawState) statePayload.idToken = rawState;
+  }
   const DISCORD_CLIENT_ID = process.env.DISCORD_CLIENT_ID;
   const DISCORD_CLIENT_SECRET = process.env.DISCORD_CLIENT_SECRET;
   
@@ -69,10 +75,10 @@ export default async function handler(req, res) {
     const db = getFirestore();
     let targetUid = discordId;
 
-    if (state) {
+    if (statePayload.idToken) {
       // MODE TAUTKAN AKUN (LINKING)
       try {
-        const decodedToken = await getAuth().verifyIdToken(state);
+        const decodedToken = await getAuth().verifyIdToken(statePayload.idToken);
         targetUid = decodedToken.uid;
         
         await db.collection('discord_links').doc(discordId).set({
@@ -97,6 +103,20 @@ export default async function handler(req, res) {
 
     const customToken = await getAuth().createCustomToken(targetUid);
     
+    if (statePayload.session) {
+      await db.collection('auth_sessions').doc(statePayload.session).set({ 
+        token: customToken, 
+        timestamp: new Date().getTime() 
+      });
+      return res.send(`
+        <div style="font-family:sans-serif; text-align:center; padding: 50px;">
+          <div style="font-size: 50px; margin-bottom: 20px;">✅</div>
+          <h2>Login Berhasil!</h2>
+          <p style="color: #666;">Anda sudah terhubung dengan Discord. Silakan tutup browser ini dan kembali ke aplikasi Cartoteca.</p>
+        </div>
+      `);
+    }
+
     // Kembali ke frontend membawa token VIP
     res.redirect(`${BASE_URL}?token=${customToken}`);
 

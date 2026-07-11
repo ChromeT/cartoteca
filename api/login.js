@@ -9,10 +9,14 @@ export default function handler(req, res) {
   }
   
   const idToken = req.query.idToken;
+  const session = req.query.session;
   let discordAuthUrl = `https://discord.com/api/oauth2/authorize?client_id=${DISCORD_CLIENT_ID}&redirect_uri=${encodeURIComponent(DISCORD_REDIRECT_URI)}&response_type=code&scope=identify`;
   
-  if (idToken) {
-    discordAuthUrl += `&state=${encodeURIComponent(idToken)}`;
+  if (idToken || session) {
+    const stateObj = {};
+    if (idToken) stateObj.idToken = idToken;
+    if (session) stateObj.session = session;
+    discordAuthUrl += `&state=${encodeURIComponent(JSON.stringify(stateObj))}`;
   }
   
   res.redirect(discordAuthUrl);
