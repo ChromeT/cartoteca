@@ -2537,7 +2537,7 @@ export default function App() {
                       <div style={{ fontSize: '11px', color: '#d8923e', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '1.5px', marginBottom: '16px' }}>🎴 Cards</div>
                       <div className="kui-dashboard-grid">
                         {renderStatItem('Dropped', userKUI['Cards dropped'], '📥', '#d8923e')}
-                        {renderStatItem('Grabbed', userKUI['Cards grabbed'], '🤲', '#5ea396')}
+                        {renderStatItem('Grabbed', userKUI['Cards grabbed'], '✊', '#5ea396')}
                         {renderStatItem('Burned', userKUI['Cards burned'], '🔥', '#c14e4e')}
                         {renderStatItem('Given', userKUI['Cards given'], '🎁', '#ff8c8c')}
                         {renderStatItem('Upgrades OK', userKUI['Successful card upgrades'], '⬆️', '#5ea396')}
@@ -3465,7 +3465,7 @@ export default function App() {
 
                 {/* Gems */}
                 <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', background: '#17140f', padding: '12px 16px', borderRadius: '8px' }}>
-                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>💠 Gems</span>
+                  <span style={{ color: '#e8dbce', display: 'flex', alignItems: 'center', gap: '8px', fontWeight: 600 }}>💎 Gems</span>
                   <input
                     type="number"
                     value={inventory.gems === 0 ? '' : inventory.gems}
