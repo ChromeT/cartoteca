@@ -11,7 +11,10 @@ import {
   setDoc,
   writeBatch,
   onSnapshot,
-  getDocs
+  getDocs,
+  query,
+  orderBy,
+  limit
 } from 'firebase/firestore';
 
 
@@ -88,6 +91,48 @@ interface Inventory {
   tradeLicense: number;
   workPermit: number;
 }
+
+const CachedImage = ({ url, className, onClick }: { url: string, className?: string, onClick?: (e: React.MouseEvent) => void }) => {
+  const [cachedUrl, setCachedUrl] = useState<string | undefined>(undefined);
+  
+  useEffect(() => {
+    let isMounted = true;
+    if (!url) return;
+    
+    // Fallback URL immediately to avoid blank screen while checking cache
+    setCachedUrl(url);
+
+    caches.open('cartoteca-images').then(cache => {
+      cache.match(url).then(res => {
+        if (res) {
+          res.blob().then(blob => {
+            if (isMounted) setCachedUrl(URL.createObjectURL(blob));
+          });
+        } else {
+          fetch(url, { mode: 'cors', credentials: 'omit' }).then(fetchRes => {
+            if (fetchRes.ok) {
+              cache.put(url, fetchRes.clone());
+              fetchRes.blob().then(blob => {
+                if (isMounted) setCachedUrl(URL.createObjectURL(blob));
+              });
+            }
+          }).catch(() => {});
+        }
+      });
+    }).catch(() => {});
+    
+    return () => { isMounted = false; };
+  }, [url]);
+
+  return (
+    <div 
+      className={className} 
+      style={{ backgroundImage: `url(${cachedUrl || url})` }} 
+      onClick={onClick} 
+    />
+  );
+};
+
 
 const ConditionWatermark = ({ condition }: { condition: string }) => {
   // Strip numeric prefix like "3 Excellent" -> "excellent"
@@ -469,6 +514,7 @@ export default function App() {
       let unsubProfile: (() => void) | undefined;
       let unsubKui: (() => void) | undefined;
       let unsubCards: (() => void) | undefined;
+      let unsubFastCards: (() => void) | undefined;
       let unsubWishlist: (() => void) | undefined;
       let unsubTags: (() => void) | undefined;
       let unsubInventory: (() => void) | undefined;
@@ -496,8 +542,29 @@ export default function App() {
           console.error("KUI listener error:", error);
         });
 
-        // Cards
+        // Cards - Progressive Loading
+        let isFullSyncComplete = false;
+        
+        // 1. Fast Initial Query (Priority: Latest 24 Cards)
+        const fastQuery = query(
+          collection(db, 'users', targetUid as string, 'cards'),
+          orderBy('createdAt', 'desc'),
+          limit(24)
+        );
+        
+        unsubFastCards = onSnapshot(fastQuery, (fastSnap) => {
+          if (!isFullSyncComplete) {
+            const fastList: Card[] = [];
+            fastSnap.forEach((d) => fastList.push({ id: d.id, ...d.data() } as Card));
+            setCards(fastList);
+          }
+        }, (error) => {
+          console.error("Fast cards listener error:", error);
+        });
+
+        // 2. Background Sync (All Cards)
         unsubCards = onSnapshot(collection(db, 'users', targetUid as string, 'cards'), (cardsSnap) => {
+          isFullSyncComplete = true; // Mark full sync as complete
           const cList: Card[] = [];
           cardsSnap.forEach((d) => cList.push({ id: d.id, ...d.data() } as Card));
           setCards(cList);
@@ -553,6 +620,7 @@ export default function App() {
       return () => {
         if (unsubProfile) unsubProfile();
         if (unsubKui) unsubKui();
+        if (unsubFastCards) unsubFastCards();
         if (unsubCards) unsubCards();
         if (unsubWishlist) unsubWishlist();
         if (unsubTags) unsubTags();
@@ -2791,7 +2859,7 @@ export default function App() {
                                 onClick={(e) => handleSleeveContainerClick(c.id, e)}
                               >
                                 {c.imageUrl && (
-                                  <div className="nc-bg-image" style={{ backgroundImage: `url(${c.imageUrl})` }} onClick={(e) => { e.stopPropagation(); openLightbox(c, e); }} />
+                                  <CachedImage className="nc-bg-image" url={c.imageUrl} onClick={(e) => { e.stopPropagation(); openLightbox(c, e); }} />
                                 )}
                                 {!isReadOnly && (
                                   <>
