@@ -1,5 +1,5 @@
 import { initializeApp } from "firebase/app";
-import { initializeFirestore } from "firebase/firestore";
+import { initializeFirestore, persistentLocalCache, persistentMultipleTabManager } from "firebase/firestore";
 import { getAuth } from "firebase/auth";
 import { getStorage } from "firebase/storage";
 
@@ -21,7 +21,7 @@ const app = initializeApp(firebaseConfig);
 // Initialize Services
 // Gunakan long-polling untuk mengatasi masalah blocking WebChannel (misal: di Firefox ETP / uBlock)
 export const db = initializeFirestore(app, {
-  experimentalForceLongPolling: true,
+  localCache: persistentLocalCache({tabManager: persistentMultipleTabManager()}),
   ignoreUndefinedProperties: true
 });
 export const auth = getAuth(app);
