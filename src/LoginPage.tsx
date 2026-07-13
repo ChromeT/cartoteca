@@ -138,14 +138,16 @@ export default function LoginPage() {
 
         {/* Brand */}
         <div style={{ textAlign: 'center' }}>
-          <div style={{
-            width: '72px', height: '72px', borderRadius: '14px',
-            background: '#d8923e',
-            display: 'flex', alignItems: 'center', justifyContent: 'center',
-            fontSize: '44px', margin: '0 auto 16px',
-            boxShadow: '0 4px 0 #b87a2e, 0 10px 24px rgba(0,0,0,0.4)',
-            transform: 'rotate(-3deg)'
-          }}>🎴</div>
+          <img
+            src="/logo.png"
+            alt="Cartoteca"
+            style={{
+              width: '90px', height: '90px', borderRadius: '18px',
+              objectFit: 'cover',
+              margin: '0 auto 16px',
+              display: 'block'
+            }}
+          />
           <h1 style={{
             fontFamily: "'Spectral', serif", fontSize: '36px',
             fontWeight: 800, color: '#ede3ce', margin: '0 0 4px',
