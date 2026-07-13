@@ -2,6 +2,14 @@ import React, { useState, useEffect, useRef } from 'react';
 import { db, auth } from './firebase';
 import { onAuthStateChanged, signOut, User } from 'firebase/auth';
 import LoginPage from './LoginPage';
+import { StatusBar, Style } from '@capacitor/status-bar';
+
+// Sembunyikan status bar di native Android/iOS
+if ((window as any).Capacitor?.isNativePlatform()) {
+  StatusBar.hide().catch(() => {});
+  StatusBar.setOverlaysWebView({ overlay: true }).catch(() => {});
+}
+
 import {
   collection,
   addDoc,
