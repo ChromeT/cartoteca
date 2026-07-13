@@ -1,0 +1,7 @@
+<?xml version='1.0' encoding='utf-8'?>
+<resources>
+    <string name="app_name">Cartoteca</string>
+    <string name="title_activity_main">Cartoteca</string>
+    <string name="package_name">com.cartoteca.app</string>
+    <string name="custom_url_scheme">com.cartoteca.app</string>
+</resources>

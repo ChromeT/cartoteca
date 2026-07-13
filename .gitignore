@@ -6,9 +6,9 @@ node_modules/
 dist/
 dist-ssr/
 
-# Capacitor Android/iOS native projects (generate dengan: npx cap add android)
-android/
-ios/
+# Capacitor Android/iOS native projects (disarankan di-commit ke Git)
+# android/
+# ios/
 
 # Environment files
 .env
