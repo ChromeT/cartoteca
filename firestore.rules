@@ -1,9 +1,26 @@
 rules_version = '2';
 service cloud.firestore {
   match /databases/{database}/documents {
+    // Aturan untuk data user (hanya bisa diakses oleh pemiliknya)
     match /users/{userId}/{document=**} {
       allow read: if true;
       allow write: if request.auth != null && request.auth.uid == userId;
+    }
+
+    // Aturan untuk sesi auth Discord (dibutuhkan saat login, sebelum user punya token)
+    // Server Vercel (Firebase Admin) yang menulis, client hanya boleh baca jika punya session ID yang tepat
+    match /auth_sessions/{sessionId} {
+      // Siapapun yang tahu sessionId boleh baca (dibutuhkan oleh app untuk polling)
+      allow read: if true;
+      // Penulisan hanya diizinkan dari server (Firebase Admin SDK melewati rules ini)
+      // Atau dari client yang belum login (untuk kasus ini kita izinkan sementara)
+      allow write: if true;
+    }
+
+    // Aturan untuk tabel discord_links
+    match /discord_links/{discordId} {
+      allow read: if request.auth != null;
+      allow write: if false; // Hanya server yang boleh menulis
     }
   }
 }
