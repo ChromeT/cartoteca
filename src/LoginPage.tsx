@@ -1,6 +1,7 @@
 import React, { useState } from 'react';
 import { auth, db } from './firebase';
 import { doc, onSnapshot, deleteDoc } from 'firebase/firestore';
+import { Browser } from '@capacitor/browser';
 import {
   signInWithEmailAndPassword,
   createUserWithEmailAndPassword,
@@ -34,19 +35,20 @@ export default function LoginPage() {
     }
   }, []);
 
-  const handleDiscordLogin = () => {
+  const handleDiscordLogin = async () => {
     const isCapacitor = typeof window !== 'undefined' && (window as any).Capacitor?.isNativePlatform();
 
     if (isCapacitor) {
       setLoading(true);
       const sessionId = Math.random().toString(36).substring(2, 15) + Math.random().toString(36).substring(2, 15);
       
-      window.open(`https://cartoteca.vercel.app/api/login?session=${sessionId}`, '_system');
+      await Browser.open({ url: `https://cartoteca.vercel.app/api/login?session=${sessionId}` });
 
       const sessionRef = doc(db, 'auth_sessions', sessionId);
       const unsubscribe = onSnapshot(sessionRef, async (snap) => {
         if (snap.exists() && snap.data().token) {
           unsubscribe();
+          await Browser.close().catch(() => {});
           try {
             await signInWithCustomToken(auth, snap.data().token);
             await deleteDoc(sessionRef).catch(() => {});
@@ -118,7 +120,7 @@ export default function LoginPage() {
       display: 'flex',
       alignItems: 'center',
       justifyContent: 'center',
-      padding: '20px',
+      padding: 'calc(20px + env(safe-area-inset-top)) 20px 20px',
       background: `
         radial-gradient(circle at 12% 4%, rgba(216,146,62,0.08), transparent 45%),
         radial-gradient(circle at 88% 92%, rgba(94,163,150,0.06), transparent 42%),
