@@ -107,6 +107,12 @@ const CachedImage = ({ url, className, onClick }: { url: string, className?: str
     let isMounted = true;
     if (!url) return;
     
+    // Data URLs and non-HTTP URLs cannot be cached via Cache API
+    if (url.startsWith('data:') || url.startsWith('blob:')) {
+      setBgUrl(url);
+      return;
+    }
+    
     setBgUrl(null); // Clear image while checking cache (avoids flicker)
 
     caches.open('cartoteca-images').then(cache => {
