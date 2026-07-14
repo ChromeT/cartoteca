@@ -580,10 +580,22 @@ export default function App() {
         // 2. Background Sync (All Cards)
         unsubCards = onSnapshot(collection(db, 'users', targetUid as string, 'cards'), (cardsSnap) => {
           isFullSyncComplete = true; // Mark full sync as complete
-          const cList: Card[] = [];
-          cardsSnap.forEach((d) => cList.push({ id: d.id, ...d.data() } as Card));
-          setCards(cList);
-          if (!isReadOnly) syncLocal('cards', cList);
+          
+          setCards(prevCards => {
+            const cardsMap = new Map(prevCards.map(c => [c.id, c]));
+            
+            cardsSnap.docChanges().forEach(change => {
+              if (change.type === 'removed') {
+                cardsMap.delete(change.doc.id);
+              } else {
+                cardsMap.set(change.doc.id, { id: change.doc.id, ...change.doc.data() } as Card);
+              }
+            });
+            
+            const newCardsList = Array.from(cardsMap.values());
+            if (!isReadOnly) syncLocal('cards', newCardsList);
+            return newCardsList;
+          });
         }, (error) => {
           console.error("Cards listener error:", error);
         });
