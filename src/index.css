@@ -1551,7 +1551,6 @@ input[type=text]:focus, input[type=number]:focus, select:focus, textarea:focus {
   justify-content: center;
   align-items: center;
   animation: fadeInOverlay 0.3s ease-out forwards;
-  backdrop-filter: blur(5px);
 }
 .lightbox-overlay.closing {
   animation: fadeOutOverlay 0.3s ease-out forwards;
@@ -1798,12 +1797,13 @@ textarea::-webkit-scrollbar-thumb:hover {
   width: 100%;
   height: 100%;
   border-radius: 12px;
-  box-shadow: 0 15px 35px rgba(0, 0, 0, 0.6), 0 0 0 2px rgba(216, 146, 62, 0.4);
+  box-shadow: 0 4px 12px rgba(0, 0, 0, 0.4), 0 0 0 2px rgba(216, 146, 62, 0.4);
   background: linear-gradient(135deg, #2b251a, #15130d);
   overflow: hidden;
   transition: transform 0.5s cubic-bezier(0.2, 0.8, 0.2, 1), opacity 0.4s ease;
   cursor: pointer;
   user-select: none;
+  will-change: transform;
 }
 
 /* Shrink non-image cards to match the transparent margins of Karuta image frames */
@@ -1826,7 +1826,7 @@ textarea::-webkit-scrollbar-thumb:hover {
   height: 100%;
   object-fit: cover;
   border-radius: 12px;
-  box-shadow: 0 15px 35px rgba(0,0,0,0.8);
+  box-shadow: 0 4px 12px rgba(0,0,0,0.5);
 }
 
 .poker-card.animating-out {
