@@ -2073,11 +2073,9 @@ textarea::-webkit-scrollbar-thumb:hover {
     box-shadow: 0 4px 10px rgba(0,0,0,0.25) !important;
   }
   
-  /* FIX: Smooth out Lightbox Stacked Cards Swipe & Zoom */
-  .poker-stack-container, .poker-card, .poker-card.image-card img {
-    will-change: transform, opacity !important;
-    transform: translateZ(0);
-    -webkit-transform: translateZ(0);
+  /* FIX: Smooth out Lightbox Stacked Cards Swipe & Zoom without killing GPU */
+  .poker-stack-container.animating, .poker-card.active {
+    will-change: transform;
   }
   
   .poker-card, .poker-card.image-card img {
